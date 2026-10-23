@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Kids Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kids Lab">
+<meta name="theme-color" content="#EAF1FB">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: a toy-box. Chunky "pressable block" tiles on a sky-wash ground; one screen at a time, no scrolling on iPad. */
+:root {
+  --bg: #EAF1FB;
+  --bg-2: #DCE8F7;
+  --ink: #1E2240;
+  --muted: #5B6188;
+  --card: #FFFFFF;
+  --grape: #6E44A8;
+  --leaf: #2F9358;
+  --sun: #E9A21F;
+  --sky: #2F7FC6;
+  --berry: #D4466F;
+  --tang: #E26A2C;
+  --locked: #B9C0D6;
+  --shadow: rgba(30, 34, 64, .22);
+  --display: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Nunito", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --r: 28px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141830; --bg-2: #1B2042; --ink: #EEF0FB; --muted: #A9AFD3; --card: #232850;
+    --grape: #8A5FCB; --leaf: #3AAA69; --sun: #E3A630; --sky: #3E8FD6; --berry: #DC5A81; --tang: #E57A3E;
+    --locked: #3E4470; --shadow: rgba(0, 0, 0, .45); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141830; --bg-2: #1B2042; --ink: #EEF0FB; --muted: #A9AFD3; --card: #232850;
+  --grape: #8A5FCB; --leaf: #3AAA69; --sun: #E3A630; --sky: #3E8FD6; --berry: #DC5A81; --tang: #E57A3E;
+  --locked: #3E4470; --shadow: rgba(0, 0, 0, .45); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 12% 8%, var(--bg-2) 0 120px, transparent 121px),
+    radial-gradient(circle at 92% 96%, var(--bg-2) 0 160px, transparent 161px),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-weight: 700;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overflow-x: hidden;
+}
+button { font: inherit; color: inherit; touch-action: manipulation; }
+button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
+
+.screen {
+  min-height: 100%;
+  display: flex; flex-direction: column;
+  padding-block: 20px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  max-width: 1100px; margin: 0 auto;
+}
+
+/* ---------- top bar ---------- */
+.bar { display: flex; align-items: center; gap: 12px; min-height: 64px; }
+.brand {
+  font-family: var(--display); font-weight: 800; font-size: 1.6rem; letter-spacing: .01em;
+  display: flex; align-items: center; gap: 10px; margin-right: auto;
+}
+.brand-mark { width: 40px; height: 40px; border-radius: 12px; display: block; }
+.round {
+  width: 64px; height: 64px; border-radius: 50%; border: 0; background: var(--card);
+  font-size: 30px; display: grid; place-items: center; cursor: pointer;
+  box-shadow: 0 5px 0 var(--shadow); transition: transform .08s, box-shadow .08s; position: relative;
+}
+.round:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--shadow); }
+.round.small { width: 52px; height: 52px; font-size: 24px; }
+.hold-ring { position: absolute; inset: -4px; pointer-events: none; }
+.hold-ring circle { fill: none; stroke: var(--sun); stroke-width: 5; stroke-linecap: round;
+  stroke-dasharray: 201; stroke-dashoffset: 201; transform: rotate(-90deg); transform-origin: 50% 50%; }
+
+/* ---------- headings ---------- */
+.hello { text-align: center; margin: 18px 0 26px; }
+.hello h1 {
+  font-family: var(--display); font-weight: 800; margin: 0;
+  font-size: clamp(2.4rem, 7vw, 4.2rem); line-height: 1; text-wrap: balance;
+}
+.hello p { margin: 10px 0 0; color: var(--muted); font-size: 1.15rem; }
+
+/* ---------- chunky block button (players + lessons share it) ---------- */
+.block {
+  --c: var(--grape);
+  border: 0; cursor: pointer; color: #fff; text-align: center;
+  background: var(--c);
+  border-radius: var(--r);
+  box-shadow: 0 10px 0 color-mix(in srgb, var(--c) 62%, #000), 0 16px 24px var(--shadow);
+  transition: transform .09s ease, box-shadow .09s ease;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  position: relative; overflow: hidden; isolation: isolate;
+}
+.block::before { /* soft top sheen, like a plastic toy brick */
+  content: ""; position: absolute; inset: 0 0 55% 0; z-index: -1;
+  background: linear-gradient(rgba(255,255,255,.22), rgba(255,255,255,0));
+}
+.block:active, .block.pressed {
+  transform: translateY(8px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--c) 62%, #000), 0 4px 10px var(--shadow);
+}
+.c-grape { --c: var(--grape); } .c-leaf { --c: var(--leaf); } .c-sun { --c: var(--sun); }
+.c-sky { --c: var(--sky); } .c-berry { --c: var(--berry); } .c-tang { --c: var(--tang); }
+
+.emoji { font-size: clamp(64px, 11vw, 104px); line-height: 1; filter: drop-shadow(0 4px 0 rgba(0,0,0,.15)); }
+.label { font-family: var(--display); font-weight: 800; font-size: clamp(1.4rem, 3.2vw, 2rem); line-height: 1.05; text-shadow: 0 2px 0 rgba(0,0,0,.18); }
+
+/* ---------- who's playing ---------- */
+.players {
+  display: grid; gap: clamp(18px, 3vw, 32px); margin: auto 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  align-items: stretch; padding-bottom: 16px;
+}
+.players .block { min-height: clamp(200px, 30vw, 300px); }
+.players .emoji { font-size: clamp(80px, 13vw, 128px); }
+
+/* ---------- lessons ---------- */
+.stars {
+  display: flex; align-items: center; gap: 6px; height: 52px; padding: 0 18px 0 12px;
+  background: var(--card); border-radius: 26px; box-shadow: 0 5px 0 var(--shadow);
+  font-family: var(--display); font-size: 1.5rem; font-variant-numeric: tabular-nums;
+}
+.stars span:first-child { font-size: 1.6rem; }
+.lessons {
+  display: grid; gap: clamp(18px, 2.6vw, 28px);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  padding-bottom: 16px;
+}
+.lessons .block { aspect-ratio: 1 / 1; max-width: 100%; padding: 16px; }
+.block.locked { --c: var(--locked); color: var(--ink); }
+.block.locked .label { text-shadow: none; opacity: .85; }
+.block.locked .emoji { filter: grayscale(.85) opacity(.55); }
+.badge {
+  position: absolute; top: 14px; right: 14px; padding: 4px 12px; border-radius: 999px;
+  background: var(--card); color: var(--muted); font-size: .85rem; letter-spacing: .06em; text-transform: uppercase;
+}
+.empty { text-align: center; color: var(--muted); font-size: 1.2rem; margin: 40px auto; max-width: 30ch; }
+
+.shake { animation: shake .45s; }
+@keyframes shake { 20%,60% { transform: translateX(-10px) rotate(-2deg); } 40%,80% { transform: translateX(10px) rotate(2deg); } }
+.pop-in { animation: pop .4s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes pop { from { transform: scale(.85); opacity: .4; } to { transform: none; opacity: 1; } }
+
+/* ---------- parent corner ---------- */
+.sheet-wrap {
+  position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
+  background: rgba(10, 12, 30, .5);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px;
+}
+.sheet {
+  width: min(560px, 100%); max-height: 100%; overflow-y: auto;
+  background: var(--card); color: var(--ink); border-radius: 24px; padding: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35); font-weight: 600; user-select: text; -webkit-user-select: text;
+}
+.sheet h2 { font-family: var(--display); font-weight: 800; font-size: 1.7rem; margin: 0 0 4px; }
+.sheet .sub { color: var(--muted); margin: 0 0 18px; }
+.sheet h3 { font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; }
+.row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid color-mix(in srgb, var(--muted) 25%, transparent); }
+.row:first-of-type { border-top: 0; }
+.row .grow { flex: 1; min-width: 0; }
+.row .meta { color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.pill { font-size: .78rem; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--leaf) 18%, transparent); color: var(--leaf); }
+.pill.soon { background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }
+.btn {
+  border: 0; border-radius: 12px; padding: 10px 16px; cursor: pointer; font-weight: 800;
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+}
+.btn.danger { background: color-mix(in srgb, var(--berry) 16%, transparent); color: var(--berry); }
+.btn.primary { background: var(--grape); color: #fff; }
+.sheet .foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+.sheet .fine { color: var(--muted); font-size: .85rem; }
+.toggle { display: flex; align-items: center; gap: 10px; }
+.toggle input { width: 22px; height: 22px; accent-color: var(--grape); }
+
+/* many cousins: smaller player tiles */
+.players.many { grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); margin: 0; }
+.players.many .block { min-height: 170px; }
+.players.many .emoji { font-size: clamp(56px, 8vw, 80px); }
+.players.many .label { font-size: 1.4rem; }
+
+/* ---------- leaderboard ---------- */
+.seg { display: flex; gap: 6px; background: var(--card); padding: 6px; border-radius: 999px; box-shadow: 0 5px 0 var(--shadow); margin: 0 auto; }
+.seg button { border: 0; background: transparent; border-radius: 999px; padding: 10px 20px; font-family: var(--display); font-size: 1.25rem; font-weight: 800; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--sun); color: #2a1a00; }
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: clamp(10px, 2vw, 22px);
+  width: min(720px, 100%); margin: 26px auto 0; }
+.step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
+.step .face { font-size: clamp(48px, 9vw, 84px); line-height: 1; position: relative; }
+.step .crown { position: absolute; top: -.55em; left: 50%; transform: translateX(-50%) rotate(-8deg); font-size: .5em; }
+.step .nm { font-family: var(--display); font-weight: 800; font-size: clamp(1.1rem, 2.6vw, 1.6rem); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.step .pillar {
+  --c: var(--grape);
+  width: 100%; border-radius: 20px 20px 8px 8px; background: var(--c); color: #fff;
+  box-shadow: 0 8px 0 color-mix(in srgb, var(--c) 62%, #000);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 12px; gap: 2px;
+  font-family: var(--display); font-weight: 800;
+}
+.step .pillar .rk { font-size: clamp(1.8rem, 5vw, 2.8rem); line-height: 1; text-shadow: 0 2px 0 rgba(0,0,0,.2); }
+.step .pillar .sc { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.step.p1 .pillar { height: 170px; } .step.p2 .pillar { height: 125px; } .step.p3 .pillar { height: 95px; }
+.ranks { width: min(720px, 100%); margin: 30px auto 0; display: flex; flex-direction: column; gap: 10px; }
+.rank-row {
+  display: grid; grid-template-columns: 40px 44px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  background: var(--card); border-radius: 18px; padding: 10px 16px; box-shadow: 0 4px 0 var(--shadow);
+}
+.rank-row.me { box-shadow: inset 0 0 0 3px var(--sun), 0 4px 0 var(--shadow); }
+.rank-row .n { font-family: var(--display); font-size: 1.4rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rank-row .f { font-size: 34px; line-height: 1; }
+.rank-row .nm { font-family: var(--display); font-weight: 800; font-size: 1.3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-row .sc { font-family: var(--display); font-size: 1.3rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.board-note { text-align: center; color: var(--muted); font-weight: 600; font-size: .95rem; margin: 22px auto 0; max-width: 46ch; }
+
+@media (prefers-reduced-motion: reduce) {
+  .block, .round { transition: none; }
+  .shake, .pop-in { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- WHO'S PLAYING -->
+<section class="screen" id="who">
+  <div class="bar">
+    <div class="brand"><img class="brand-mark" src="icons/icon-192.png" alt=""><span class="app-name">Kids Lab</span></div>
+    <button class="round small open-board" type="button" aria-label="Leaderboard">🏆</button>
+  </div>
+  <div class="hello">
+    <h1>Who's playing?</h1>
+    <p>Tap your picture</p>
+  </div>
+  <div class="players" id="players"></div>
+</section>
+
+<!-- LESSONS -->
+<section class="screen" id="home" hidden>
+  <div class="bar">
+    <button class="round small" id="switch" type="button" aria-label="Change player"></button>
+    <div class="brand"><span class="app-name">Kids Lab</span></div>
+    <div class="stars" aria-label="Stars"><span>⭐</span><span id="star-count">0</span></div>
+    <button class="round small open-board" type="button" aria-label="Leaderboard">🏆</button>
+    <button class="round small" id="gear" type="button" aria-label="Grown-ups: press and hold">
+      ⚙️
+      <svg class="hold-ring" viewBox="0 0 68 68" aria-hidden="true"><circle cx="34" cy="34" r="32" id="ring"></circle></svg>
+    </button>
+  </div>
+  <div class="hello">
+    <h1 id="greet">Hi!</h1>
+    <p>Pick a game</p>
+  </div>
+  <div class="lessons" id="lessons"></div>
+</section>
+
+<!-- LEADERBOARD -->
+<section class="screen" id="board" hidden>
+  <div class="bar">
+    <button class="round small" id="board-back" type="button" aria-label="Back">⬅️</button>
+    <div class="brand">Leaderboard</div>
+  </div>
+  <div class="seg" role="group" aria-label="Which scores">
+    <button type="button" id="seg-week" aria-pressed="true">This week</button>
+    <button type="button" id="seg-all" aria-pressed="false">All time</button>
+  </div>
+  <div class="podium" id="podium"></div>
+  <div class="ranks" id="ranks"></div>
+  <p class="board-note" id="board-note"></p>
+</section>
+
+<!-- PARENT CORNER -->
+<div class="sheet-wrap" id="parent" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="parent-title">
+    <h2 id="parent-title">Grown-ups</h2>
+    <p class="sub">Opened by holding the gear. Kids won't find this by tapping.</p>
+
+    <h3>Players</h3>
+    <div id="p-players"></div>
+
+    <h3>Lessons</h3>
+    <div id="p-lessons"></div>
+
+    <h3>Settings</h3>
+    <div class="row">
+      <label class="toggle grow" for="sound-toggle"><input type="checkbox" id="sound-toggle"> Read things out loud</label>
+    </div>
+
+    <div class="foot">
+      <span class="fine" id="version"></span>
+      <div style="display:flex;gap:10px">
+        <button class="btn" type="button" id="check-update">Check for updates</button>
+        <button class="btn primary" type="button" id="close-parent">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="kit.js"></script>
+<script>
+(function () {
+  var APP_VERSION = "1.0";
+  var K = window.KidsLab, C = K.config;
+  var $ = function (id) { return document.getElementById(id); };
+
+  document.querySelectorAll(".app-name").forEach(function (el) { el.textContent = C.appName || "Kids Lab"; });
+  document.title = C.appName || "Kids Lab";
+
+  function show(id) {
+    ["who", "home", "board"].forEach(function (s) { $(s).hidden = s !== id; });
+    window.scrollTo(0, 0);
+  }
+
+  function block(opts) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "block pop-in c-" + (opts.color || "grape") + (opts.locked ? " locked" : "");
+    b.innerHTML = '<span class="emoji" aria-hidden="true"></span><span class="label"></span>';
+    b.querySelector(".emoji").textContent = opts.emoji || "⭐";
+    b.querySelector(".label").textContent = opts.label;
+    if (opts.badge) {
+      var s = document.createElement("span"); s.className = "badge"; s.textContent = opts.badge; b.appendChild(s);
+    }
+    return b;
+  }
+
+  /* ---- Who's playing ---- */
+  function renderPlayers() {
+    var wrap = $("players"); wrap.innerHTML = "";
+    wrap.classList.toggle("many", C.players.length > 4);
+    C.players.forEach(function (p, i) {
+      var b = block({ emoji: p.emoji, label: p.name, color: p.color });
+      b.style.animationDelay = (i * 70) + "ms";
+      b.addEventListener("click", function () {
+        K.setPlayer(p.id);
+        K.say("Hi " + p.name + "!");
+        renderHome();
+        show("home");
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  /* ---- Lessons ---- */
+  function lessonsFor(pid) {
+    return C.lessons.filter(function (l) { return !l.players || l.players.indexOf(pid) !== -1; });
+  }
+
+  function renderHome() {
+    var p = K.player(); if (!p) { show("who"); return; }
+    $("greet").textContent = "Hi " + p.name + "!";
+    $("switch").textContent = p.emoji;
+    $("star-count").textContent = K.stars(p.id);
+
+    var wrap = $("lessons"); wrap.innerHTML = "";
+    var list = lessonsFor(p.id);
+    if (!list.length) {
+      wrap.innerHTML = '<p class="empty">No games yet. New ones will pop up here.</p>';
+      return;
+    }
+    list.forEach(function (l, i) {
+      var soon = l.status !== "ready";
+      var b = block({ emoji: l.emoji, label: l.title, color: l.color, locked: soon, badge: soon ? "Soon" : "" });
+      b.style.animationDelay = (i * 60) + "ms";
+      b.addEventListener("click", function () {
+        if (soon) {
+          b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
+          K.say(l.title + ". Coming soon!");
+          return;
+        }
+        K.say(l.say || l.title);
+        b.classList.add("pressed");
+        setTimeout(function () { location.href = l.href; }, 450);
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  $("switch").addEventListener("click", function () { K.say("Who's playing?"); show("who"); });
+
+  /* ---- Grown-ups corner: press and hold the gear ---- */
+  var holdTimer = null, ring = $("ring"), HOLD_MS = 1500;
+  function startHold(e) {
+    e.preventDefault();
+    ring.style.transition = "stroke-dashoffset " + HOLD_MS + "ms linear";
+    ring.style.strokeDashoffset = "0";
+    holdTimer = setTimeout(function () { cancelHold(); openParent(); }, HOLD_MS);
+  }
+  function cancelHold() {
+    clearTimeout(holdTimer); holdTimer = null;
+    ring.style.transition = "stroke-dashoffset .2s"; ring.style.strokeDashoffset = "201";
+  }
+  var gear = $("gear");
+  gear.addEventListener("pointerdown", startHold);
+  ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) { gear.addEventListener(ev, cancelHold); });
+  gear.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  gear.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.shiftKey) openParent(); });
+
+  function openParent() {
+    var pp = $("p-players"); pp.innerHTML = "";
+    C.players.forEach(function (p) {
+      var row = document.createElement("div"); row.className = "row";
+      row.innerHTML = '<span style="font-size:28px" aria-hidden="true"></span><div class="grow"><div class="nm"></div><div class="meta"></div></div><button class="btn danger" type="button">Reset stars</button>';
+      row.children[0].textContent = p.emoji;
+      row.querySelector(".nm").textContent = p.name;
+      row.querySelector(".meta").textContent = K.stars(p.id) + " stars";
+      var btn = row.querySelector("button"), armed = false;
+      btn.addEventListener("click", function () {
+        if (!armed) { armed = true; btn.textContent = "Tap again to reset"; setTimeout(function () { armed = false; btn.textContent = "Reset stars"; }, 3000); return; }
+        K.set("stars." + p.id, 0); row.querySelector(".meta").textContent = "0 stars";
+        btn.textContent = "Reset"; armed = false; renderHome();
+      });
+      pp.appendChild(row);
+    });
+
+    var pl = $("p-lessons"); pl.innerHTML = "";
+    if (!C.lessons.length) pl.innerHTML = '<p class="fine">No lessons yet. Add them in config.js.</p>';
+    C.lessons.forEach(function (l) {
+      var row = document.createElement("div"); row.className = "row";
+      row.innerHTML = '<span style="font-size:28px" aria-hidden="true"></span><div class="grow"><div class="nm"></div><div class="meta"></div></div><span class="pill"></span>';
+      row.children[0].textContent = l.emoji;
+      row.querySelector(".nm").textContent = l.title;
+      row.querySelector(".meta").textContent = l.players ? "For " + l.players.join(", ") : "Everyone";
+      var pill = row.querySelector(".pill");
+      pill.textContent = l.status === "ready" ? "Live" : "Coming soon";
+      if (l.status !== "ready") pill.classList.add("soon");
+      pl.appendChild(row);
+    });
+
+    $("sound-toggle").checked = K.get("sound", true);
+    $("version").textContent = "Kids Lab v" + APP_VERSION + " · " + C.lessons.filter(function (l) { return l.status === "ready"; }).length + " live lessons";
+    $("parent").hidden = false;
+  }
+  $("sound-toggle").addEventListener("change", function (e) { K.set("sound", e.target.checked); });
+  $("close-parent").addEventListener("click", function () { $("parent").hidden = true; });
+  $("parent").addEventListener("click", function (e) { if (e.target === $("parent")) $("parent").hidden = true; });
+  $("check-update").addEventListener("click", function () {
+    var b = this; b.textContent = "Checking…";
+    var done = function () { location.reload(); };
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+      navigator.serviceWorker.getRegistration().then(function (r) { return r ? r.update() : null; }).then(done, done);
+    } else done();
+  });
+
+  /* ---- Leaderboard ---- */
+  var boardFrom = "who", boardMode = K.connected ? "week" : "all", lastBoard = null;
+
+  function openBoard() {
+    boardFrom = $("home").hidden ? "who" : "home";
+    show("board");
+    $("seg-week").parentNode.hidden = !K.connected;
+    $("board-note").textContent = "Loading scores…";
+    if (lastBoard) drawBoard(lastBoard);
+    K.leaderboard().then(function (res) {
+      lastBoard = res; drawBoard(res);
+      var top = sortRows(res.rows)[0];
+      if (top && metric(top) > 0) K.say("Leaderboard! " + top.player.name + " is on top with " + metric(top) + " stars!");
+      else K.say("Leaderboard!");
+    });
+  }
+  function metric(r) { return boardMode === "week" && r.week != null ? r.week : r.stars; }
+  function sortRows(rows) {
+    return rows.slice().sort(function (a, b) { return metric(b) - metric(a) || a.player.name.localeCompare(b.player.name); });
+  }
+
+  function drawBoard(res) {
+    $("seg-week").setAttribute("aria-pressed", boardMode === "week");
+    $("seg-all").setAttribute("aria-pressed", boardMode === "all");
+    var rows = sortRows(res.rows), me = K.playerId();
+
+    // Podium order on screen: 2nd, 1st, 3rd
+    var pod = $("podium"); pod.innerHTML = "";
+    [1, 0, 2].forEach(function (i) {
+      var r = rows[i]; if (!r) return;
+      var d = document.createElement("div");
+      d.className = "step p" + (i + 1);
+      d.innerHTML = '<div class="face"></div><div class="nm"></div><div class="pillar"><span class="rk"></span><span class="sc"></span></div>';
+      d.querySelector(".face").textContent = r.player.emoji;
+      if (i === 0 && metric(r) > 0) { var c = document.createElement("span"); c.className = "crown"; c.textContent = "👑"; d.querySelector(".face").appendChild(c); }
+      d.querySelector(".nm").textContent = r.player.name;
+      d.querySelector(".pillar").style.setProperty("--c", "var(--" + (r.player.color || "grape") + ")");
+      d.querySelector(".rk").textContent = ["1st", "2nd", "3rd"][i];
+      d.querySelector(".sc").textContent = "⭐ " + metric(r) + (r.tests ? "  🏆 " + r.tests : "");
+      pod.appendChild(d);
+    });
+    if (rows.length < 3) pod.style.gridTemplateColumns = "repeat(" + rows.length + ", minmax(0, 1fr))";
+
+    var list = $("ranks"); list.innerHTML = "";
+    rows.slice(3).forEach(function (r, k) {
+      var row = document.createElement("div");
+      row.className = "rank-row" + (r.player.id === me ? " me" : "");
+      row.innerHTML = '<span class="n"></span><span class="f"></span><span class="nm"></span><span class="sc"></span>';
+      row.children[0].textContent = k + 4;
+      row.children[1].textContent = r.player.emoji;
+      row.children[2].textContent = r.player.name;
+      row.children[3].textContent = "⭐ " + metric(r) + (r.tests ? "  🏆 " + r.tests : "");
+      list.appendChild(row);
+    });
+
+    var note;
+    if (!res.connected) note = "Showing stars from this iPad only. Grown-ups: connect the family Google Sheet to include everyone.";
+    else if (!res.live) note = "Can't reach the scoreboard right now, so these are the last scores we saw. New stars will be sent when we're back online.";
+    else note = (boardMode === "week" ? "This week started on Monday. " : "") + "🏆 = prime tests passed.";
+    $("board-note").textContent = note;
+  }
+
+  document.querySelectorAll(".open-board").forEach(function (b) { b.addEventListener("click", openBoard); });
+  $("board-back").addEventListener("click", function () { if (boardFrom === "home") renderHome(); show(boardFrom); });
+  $("seg-week").addEventListener("click", function () { boardMode = "week"; if (lastBoard) drawBoard(lastBoard); K.say("This week"); });
+  $("seg-all").addEventListener("click", function () { boardMode = "all"; if (lastBoard) drawBoard(lastBoard); K.say("All time"); });
+
+  // Keep the star chip in step with the family scoreboard.
+  if (K.connected) K.leaderboard().then(function (res) { lastBoard = res; if (K.player()) $("star-count").textContent = K.stars(); });
+
+  /* ---- Start ---- */
+  renderPlayers();
+  if (K.player()) { renderHome(); show("home"); } else show("who");
+
+  // Refresh stars when coming back from a lesson (iOS restores pages from cache).
+  window.addEventListener("pageshow", function () { if (K.player()) renderHome(); });
+
+  // Offline support + automatic updates when installed on the home screen.
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    try { navigator.serviceWorker.register("sw.js").catch(function () {}); } catch (e) {}
+  }
+})();
+</script>
+</body>
+</html>

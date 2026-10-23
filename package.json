@@ -1,0 +1,9 @@
+{
+  "name": "kidslab",
+  "private": true,
+  "type": "module",
+  "description": "Kids Lab: home-screen learning games for the family iPads",
+  "dependencies": {
+    "@netlify/blobs": "11.1.4"
+  }
+}

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Lesson template</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@700;800&display=swap">
+<style>
+  /* Copy this file to start a new lesson. Keep it one self-contained file. */
+  :root { --bg:#EAF1FB; --ink:#1E2240; --accent:#6E44A8; }
+  @media (prefers-color-scheme: dark){ :root{ --bg:#141830; --ink:#EEF0FB; --accent:#8A5FCB; color-scheme:dark } }
+  html,body{height:100%;margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:"Nunito",system-ui,sans-serif;font-weight:700;
+       display:grid;place-items:center;text-align:center;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+  h1{font-family:"Baloo 2",system-ui,sans-serif;font-size:3rem;margin:0 0 24px}
+  .go{border:0;border-radius:28px;padding:24px 48px;font:800 2rem "Baloo 2",system-ui;color:#fff;background:var(--accent);
+      box-shadow:0 10px 0 rgba(0,0,0,.25);cursor:pointer}
+  .go:active{transform:translateY(8px);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+</style>
+</head>
+<body>
+  <main>
+    <h1 id="hi">Hello!</h1>
+    <button class="go" id="go" type="button">Tap me</button>
+  </main>
+
+<script src="../config.js"></script>
+<script src="../kit.js"></script>
+<script>
+  KidsLab.backButton();                         // big 🏠 button, top-left
+  var p = KidsLab.player();                     // { id, name, emoji, color } or null
+  document.getElementById("hi").textContent = "Hello " + (p ? p.name : "") + "!";
+
+  document.getElementById("go").addEventListener("click", function () {
+    KidsLab.say("Great job!");                  // reads aloud
+    KidsLab.addStars(1);                        // shows on the home screen
+    KidsLab.celebrate(this);                    // star burst
+    // KidsLab.progress("my-lesson", { level: 2 })  saves per-kid progress
+  });
+</script>
+</body>
+</html>
