@@ -19,7 +19,10 @@ window.KIDSLAB_CONFIG = {
   players: [
     { id: "jack",  name: "Jack",  emoji: "🦖", color: "leaf"  },
     { id: "alice", name: "Alice", emoji: "🦄", color: "berry" },
-    { id: "ella",  name: "Ella",  emoji: "🐬", color: "sky"   }
+    { id: "ella",  name: "Ella",  emoji: "🐬", color: "sky"   },
+    { id: "will",  name: "Will",  emoji: "🦁", color: "sun"   },
+    { id: "sophie",name: "Sophie",emoji: "🦊", color: "tang"  },
+    { id: "lucy",  name: "Lucy",  emoji: "🐧", color: "grape" }
   ],
 
   // Lessons appear on the home screen in this order.

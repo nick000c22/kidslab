@@ -92,9 +92,6 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 .level .lv-name { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.05; }
 .level .lv-sub { font-family: var(--body); font-size: 1rem; opacity: .9; text-shadow: none; }
 .level .done { position: absolute; top: 12px; right: 14px; background: var(--card); color: var(--leaf); border-radius: 999px; padding: 2px 12px; font-size: 1rem; text-shadow: none; }
-.items-pick { display: flex; gap: 10px; background: var(--card); padding: 6px; border-radius: 999px; box-shadow: 0 5px 0 var(--shadow); }
-.items-pick button { border: 0; background: transparent; border-radius: 999px; padding: 10px 20px; font-family: var(--display); font-size: 1.3rem; font-weight: 800; color: var(--muted); }
-.items-pick button[aria-pressed="true"] { background: var(--grape); color: #fff; }
 .link { border: 0; background: transparent; color: var(--muted); font-size: 1rem; text-decoration: underline; text-underline-offset: 4px; padding: 10px; }
 
 /* ---------- game ---------- */
@@ -230,10 +227,6 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     <h1>Prime Grapes</h1>
     <p>Can we share them fairly?</p>
   </div>
-  <div class="items-pick" role="group" aria-label="What to share">
-    <button type="button" id="pick-grape" aria-pressed="true">🍇 Grapes</button>
-    <button type="button" id="pick-checker" aria-pressed="false">🔴 Checkers</button>
-  </div>
   <div class="levels" id="levels"></div>
   <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px 18px">
     <button class="link" type="button" id="pick-number">Grown-ups: pick a number</button>
@@ -368,7 +361,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function isPrime(n) { if (n < 2) return false; for (var d = 2; d * d <= n; d++) if (n % d === 0) return false; return true; }
 
   /* ---------- tiny helpers ---------- */
-  var item = K.get("pg.item", "grape");
+  var item = "grape";
   function noun(k) {
     var w = item === "grape" ? "grape" : "checker";
     return k === 1 ? w : w + "s";
@@ -434,13 +427,8 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       b.addEventListener("click", function () { K.say(L.name); startLevel(L); });
       wrap.appendChild(b);
     });
-    $("pick-grape").setAttribute("aria-pressed", item === "grape");
-    $("pick-checker").setAttribute("aria-pressed", item !== "grape");
   }
 
-  function setItem(v) { item = v; K.set("pg.item", v); renderMenu(); K.say(v === "grape" ? "Grapes!" : "Checkers!"); }
-  $("pick-grape").addEventListener("click", function () { setItem("grape"); });
-  $("pick-checker").addEventListener("click", function () { setItem("checker"); });
 
   function showScreen(id) {
     $("menu").hidden = id !== "menu"; $("game").hidden = id !== "game";
