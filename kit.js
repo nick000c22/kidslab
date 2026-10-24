@@ -212,10 +212,18 @@
         if (res.roster && res.roster.length) { cfg.players = res.roster; set("roster", res.roster); }
         set("board", { players: res.scores || {}, at: res.at });
         set("srvpets", res.pets || {});
+        set("battles", res.battles || []);
         return res;
       }).catch(function () { return null; });
   }
   function serverPet(id) { return (get("srvpets", {}) || {})[id] || null; }
+
+  // Battles are fire-and-forget; if offline they're simply not shared.
+  function postBattle(b) {
+    var log = get("battles", []); log.push(b); set("battles", log.slice(-100));
+    if (!STATE_URL) return;
+    fetch(STATE_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "battle", battle: b }) }).catch(function () {});
+  }
 
   // Teddy saves wait here until the server has them.
   var petTimer = null;
@@ -350,7 +358,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress, gender: gender,
-    fetchState: fetchState, serverPet: serverPet, grapes: grapes, addGrapes: addGrapes, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, pushPet: pushPet, visiblePlayers: visiblePlayers,
+    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

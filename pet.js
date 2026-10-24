@@ -22,7 +22,7 @@
   function blank() {
     return { name: "", hatched: false, hatchedAt: null, fur: "brown", belly: "+", wear: {}, unlockAll: false,
       fedUpTo: null, grapes: null, grapesEarned: 0, grapesEaten: 0, weight: 0.5, tummy: 3, tummyAt: null, happy: 3, happyAt: null, dances: 0,
-      lastSeen: null, asleep: false, seen: [], stage: 0, owned: [], ownedFurs: [], done: [], updatedAt: "" };
+      lastSeen: null, asleep: false, seen: [], stage: 0, owned: [], ownedFurs: [], done: [], fit: { str: 0, end: 0, spd: 0, brn: 0 }, battleDay: null, lastBattleSeen: null, updatedAt: "" };
   }
   function load(id) {
     var local = K.get("pet." + id, null), srv = K.serverPet ? K.serverPet(id) : null;
@@ -33,6 +33,8 @@
     if (!s.wear || typeof s.wear !== "object") s.wear = {};
     if (!Array.isArray(s.owned)) s.owned = [];
     if (!Array.isArray(s.ownedFurs)) s.ownedFurs = [];
+    if (!s.fit || typeof s.fit !== "object") s.fit = { str: 0, end: 0, spd: 0, brn: 0 };
+    ["str", "end", "spd", "brn"].forEach(function (k) { s.fit[k] = Math.max(0, Number(s.fit[k]) || 0); });
     if (!FURS[s.fur]) s.fur = "brown";
     // Older teddies kept grapes as "stars since hatching"; carry up to 12 of those across once.
     if (s.grapes == null) s.grapes = s.hatched && s.fedUpTo != null ? Math.max(0, Math.min(12, K.stars(id) - s.fedUpTo)) : 0;
@@ -250,6 +252,7 @@
     R = { p: p, petEl: room.querySelector(".pr-pet"), bubble: room.querySelector(".lcd-bubble"), taps: 0, pats: 0, busy: false, dressed: false };
     R.petEl.addEventListener("click", tapPet);
     drawRoom(true);
+    if (window.KidsGym) setTimeout(function () { if (R) KidsGym.notices(R.p); }, 1600);
     // pick up any grown-up changes made since the app opened
     if (K.fetchState) K.fetchState().then(function (res) { if (res && R && room) drawRoom(false); });
   }
@@ -314,6 +317,7 @@
     var hasNew = unlocked(stars, s).some(function (o) { return s.seen.indexOf(o.id) === -1; });
     btn("🍇", "Feed", feed, grapesWaiting(R.p.id, s) || "");
     btn("💃", "Play", play);
+    if (window.KidsGym) btn("🏋️", "Gym", function () { KidsGym.open(R.p, function () { if (R && room) drawRoom(false); }); }, "", KidsGym.unseen(R.p.id));
     btn("🛍️", "Shop", openShop);
     btn("🚪", "Cupboard", openWardrobe, "", hasNew);
     btn("📋", "Stats", openStats);
@@ -643,7 +647,7 @@
 
   window.KidsPet = {
     renderCard: renderCard, openRoom: openRoom, arrive: arrive, teddySVG: teddySVG, eggSVG: eggSVG,
-    load: load, blank: blank, tummy: tummy, happy: happy, stageFor: stageFor, ageDays: ageDays, grapesWaiting: grapesWaiting,
+    load: load, save: save, spend: spend, setHearts: setHearts, blank: blank, tummy: tummy, happy: happy, stageFor: stageFor, ageDays: ageDays, grapesWaiting: grapesWaiting,
     STAGES: STAGES, ITEMS: ITEMS, SLOTS: T.SLOTS, FURS: FURS, BELLIES: BELLIES, HATCH: HATCH
   };
 })();

@@ -131,6 +131,7 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
             <th class="g-kid" colspan="5">Kid</th>
             <th class="g-score" colspan="3">Scores</th>
             <th class="g-teddy" colspan="21">Math Teddy</th>
+            <th class="g-score" colspan="5">Gym</th>
           </tr>
           <tr>
             <th class="sticky">Kid</th>
@@ -139,12 +140,13 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
             <th></th><th>Hatched</th><th>Teddy name</th><th>Fur</th><th>Badge</th>
             <th>Hat</th><th>Face</th><th>Neck</th><th>Outfit</th><th>Back</th><th>Paw</th><th>Feet</th><th>Everything free</th><th>Bought</th>
             <th>Grapes</th><th>Tummy</th><th>Happy</th><th>Weight kg</th><th>Eaten</th><th>Hatch date</th><th>Asleep</th>
+            <th>💪 Str</th><th>❤️ End</th><th>⚡ Spd</th><th>🧠 Brn</th><th>Battles</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
-    <p class="hint">"Girl / boy" sets the voice (female or male) and which shop items show first. Grapes are earned 5 at a time by finishing the prime test, and spent on feeding and the shop. Hover "Bought" to see what a kid owns. "Everything free" lets that teddy wear every item and fur without buying. Hidden kids (untick "Show" in the Kid column) disappear from the iPads but keep their scores and teddy. Untick "Hatched" to turn a teddy back into an egg. Tummy and Happy are hearts out of 4.</p>
+    <p class="hint">Gym stats go up to 10 for a baby teddy, 20 little, 30 big (you can set any value up to 30 here). "Girl / boy" sets the voice (female or male) and which shop items show first. Grapes are earned 5 at a time by finishing the prime test, and spent on feeding and the shop. Hover "Bought" to see what a kid owns. "Everything free" lets that teddy wear every item and fur without buying. Hidden kids (untick "Show" in the Kid column) disappear from the iPads but keep their scores and teddy. Untick "Hatched" to turn a teddy back into an egg. Tummy and Happy are hearts out of 4.</p>
 
     <div class="add">
       <strong>Add a kid:</strong>
@@ -190,7 +192,7 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
   var COLOR_NAMES = { grape: "Purple", leaf: "Green", sun: "Yellow", sky: "Blue", berry: "Pink", tang: "Orange" };
   var pin = "";
   try { pin = sessionStorage.getItem("kidslab.pin") || ""; } catch (e) {}
-  var rows = [];
+  var rows = [], battleLog = [];
 
   function post(body) {
     return fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) })
@@ -237,6 +239,7 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
   function load(keepStatus) {
     if (!keepStatus) setStatus("status", "Loading…");
     fetch(API + "?t=" + Date.now()).then(function (r) { return r.json(); }).then(function (res) {
+      battleLog = res.battles || [];
       var roster = (res.roster && res.roster.length) ? res.roster : (window.KIDSLAB_CONFIG.players || []);
       rows = roster.map(function (p) {
         var pet = P.blank(), sp = (res.pets || {})[p.id];
@@ -344,6 +347,14 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       d.addEventListener("change", petChange(function () { pet.hatchedAt = d.value ? new Date(d.value + "T09:00:00").toISOString() : null; }));
       tr.appendChild(td(d));
       tr.appendChild(td(chk(pet.asleep, petChange(function (v) { pet.asleep = v; if (!v) pet.lastSeen = new Date().toISOString(); }))));
+      pet.fit = pet.fit && typeof pet.fit === "object" ? pet.fit : { str: 0, end: 0, spd: 0, brn: 0 };
+      ["str", "end", "spd", "brn"].forEach(function (k) {
+        var n2 = num(pet.fit[k] || 0, petChange(function (v) { pet.fit[k] = Math.max(0, Math.min(30, v || 0)); }));
+        n2.max = 30; n2.style.width = "60px"; tr.appendChild(td(n2));
+      });
+      var bw = 0, bl = 0, seenB = {};
+      (battleLog || []).forEach(function (b) { if (seenB[b.id]) return; seenB[b.id] = 1; if (b.a === r.p.id || b.b === r.p.id) { if (b.winner === r.p.id) bw++; else bl++; } });
+      tr.appendChild(td(el("span", { text: bw + " won, " + bl + " lost" })));
 
       if (r.p.hidden) tr.classList.add("hidden-kid");
       if (r.dirty.kid || r.dirty.pet || r.dirty.sc) tr.classList.add("dirty");

@@ -30,7 +30,7 @@ function cleanPlayer(p) {
 
 // Keep teddy docs to known fields and sane sizes.
 const PET_FIELDS = ["name", "hatched", "hatchedAt", "fur", "belly", "wear", "unlockAll", "fedUpTo", "grapesEaten",
-  "weight", "tummy", "tummyAt", "happy", "happyAt", "dances", "lastSeen", "asleep", "seen", "stage", "updatedAt", "grapes", "grapesEarned", "owned", "ownedFurs", "done", "stats", "practice"];
+  "weight", "tummy", "tummyAt", "happy", "happyAt", "dances", "lastSeen", "asleep", "seen", "stage", "updatedAt", "grapes", "grapesEarned", "owned", "ownedFurs", "done", "stats", "practice", "fit", "battleDay", "lastBattleSeen"];
 function cleanPet(p) {
   const out = {};
   if (!p || typeof p !== "object") return out;
@@ -54,7 +54,8 @@ export async function handle(req, store) {
     const [petList, scoreList] = await Promise.all([store.list({ prefix: "pet/" }), store.list({ prefix: "player/" })]);
     await Promise.all(petList.blobs.map(async ({ key }) => { const d = await store.get(key, { type: "json" }); if (d) pets[key.slice(4)] = d; }));
     await Promise.all(scoreList.blobs.map(async ({ key }) => { const d = await store.get(key, { type: "json" }); if (d) scores[key.slice(7)] = publicView(d); }));
-    return json({ ok: true, roster: roster ? roster.players : null, pets, scores, hasPin: !!admin, at: new Date().toISOString() });
+    const battles = ((await store.get("battles", { type: "json" })) || []).slice(-100);
+    return json({ ok: true, roster: roster ? roster.players : null, pets, scores, battles, hasPin: !!admin, at: new Date().toISOString() });
   }
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
 
@@ -70,6 +71,17 @@ export async function handle(req, store) {
     if (current && (current.updatedAt || "") > (incoming.updatedAt || "")) return json({ ok: true, kept: "server", pet: current });
     await store.setJSON(key, incoming);
     return json({ ok: true, kept: "yours" });
+  }
+
+  // A teddy battle that already happened on one iPad: kept so the other kid can see it.
+  if (action === "battle") {
+    const b = body.battle || {};
+    if (!validId(b.a) || !validId(b.b) || (b.winner !== b.a && b.winner !== b.b)) return json({ ok: false, error: "Bad battle" }, 400);
+    const log = (await store.get("battles", { type: "json" })) || [];
+    log.push({ id: String(b.id || Date.now()).slice(0, 40), at: new Date().toISOString(), a: b.a, b: b.b, winner: b.winner,
+      aName: String(b.aName || "").slice(0, 16), bName: String(b.bName || "").slice(0, 16) });
+    await store.setJSON("battles", log.slice(-300));
+    return json({ ok: true });
   }
 
   if (action === "setPin") {
