@@ -264,6 +264,17 @@
     return d.grapes;
   }
 
+  // Gym tokens: 2 per completed quiz, spent in the teddy gym.
+  function addTokens(n) {
+    var id = playerId(); if (!id) return 0;
+    var d = JSON.parse(JSON.stringify(petDoc(id)));
+    d.tokens = Math.max(0, (Number(d.tokens) || 0) + n);
+    d.updatedAt = new Date().toISOString();
+    set("pet." + id, d);
+    if (URL_) pushPet(id, d);
+    return d.tokens;
+  }
+
   // Lesson ticks: a lesson is "done" once its quiz has been completed.
   function markDone(lessonId) {
     var id = playerId(); if (!id || !lessonId) return;
@@ -358,7 +369,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress, gender: gender,
-    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, pushPet: pushPet, visiblePlayers: visiblePlayers,
+    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, addTokens: addTokens, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

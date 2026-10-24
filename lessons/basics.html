@@ -214,7 +214,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   <div class="card">
     <div class="big">🏆</div>
     <h2 id="r-title">Quiz complete!</h2>
-    <div class="grape-gain">+ 🍇 5 grapes</div>
+    <div class="grape-gain">+ 🍇 5 grapes &nbsp; + 🎟️ 2 gym tokens</div>
     <p class="fine" id="r-text"></p>
     <div class="rowb"><button class="block c-sun" type="button" id="r-spin" hidden>🎡 Spin!</button><button class="block c-leaf" type="button" id="r-ok">Yay! ▶</button></div>
   </div>
@@ -809,13 +809,13 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 
   /* ---------- quiz complete: grapes, tick, fireworks, spin ---------- */
   function quizDone() {
-    K.addGrapes(5); K.markDone(LESSON_ID); K.addStars(3, LESSON_ID); K.record("quiz_done", LESSON_ID);
+    K.addGrapes(5); K.addTokens(2); K.markDone(LESSON_ID); K.addStars(3, LESSON_ID); K.record("quiz_done", LESSON_ID);
     refreshChips();
-    $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". Your teddy gets 5 grapes!" + (SPIN ? " And you get a spin!" : "");
+    $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". Your teddy gets 5 grapes and 2 gym tokens!" + (SPIN ? " And you get a spin!" : "");
     $("r-spin").hidden = !SPIN; $("r-ok").hidden = !!SPIN;
     $("reward").hidden = false;
     fireworks(4000);
-    K.say("Quiz complete! Well done " + me.name + "! Five grapes for your teddy!" + (SPIN ? " Now spin the wheel!" : ""));
+    K.say("Quiz complete! Well done " + me.name + "! Five grapes and two gym tokens for your teddy!" + (SPIN ? " Now spin the wheel!" : ""));
     if (SPIN) K.record("test_passed", LESSON_ID);
   }
   // Basics give grapes only. Concepts and Special lessons also get the prize wheel.

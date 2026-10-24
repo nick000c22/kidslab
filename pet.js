@@ -22,7 +22,7 @@
   function blank() {
     return { name: "", hatched: false, hatchedAt: null, fur: "brown", belly: "+", wear: {}, unlockAll: false,
       fedUpTo: null, grapes: null, grapesEarned: 0, grapesEaten: 0, weight: 0.5, tummy: 3, tummyAt: null, happy: 3, happyAt: null, dances: 0,
-      lastSeen: null, asleep: false, seen: [], stage: 0, owned: [], ownedFurs: [], done: [], fit: { str: 0, end: 0, spd: 0, brn: 0 }, battleDay: null, lastBattleSeen: null, updatedAt: "" };
+      lastSeen: null, asleep: false, seen: [], stage: 0, owned: [], ownedFurs: [], done: [], fit: { str: 0, end: 0, spd: 0, brn: 0 }, fitV: 2, tokens: 0, battleDay: null, lastBattleSeen: null, updatedAt: "" };
   }
   function load(id) {
     var local = K.get("pet." + id, null), srv = K.serverPet ? K.serverPet(id) : null;
@@ -35,6 +35,9 @@
     if (!Array.isArray(s.ownedFurs)) s.ownedFurs = [];
     if (!s.fit || typeof s.fit !== "object") s.fit = { str: 0, end: 0, spd: 0, brn: 0 };
     ["str", "end", "spd", "brn"].forEach(function (k) { s.fit[k] = Math.max(0, Number(s.fit[k]) || 0); });
+    // Stats used to go to 30; now they go to 1000. Old teddies get theirs multiplied by 10 once.
+    if (pick && pick.fit && pick.fitV !== 2) ["str", "end", "spd", "brn"].forEach(function (k) { s.fit[k] = Math.min(1000, s.fit[k] * 10); });
+    s.fitV = 2;
     if (!FURS[s.fur]) s.fur = "brown";
     // Older teddies kept grapes as "stars since hatching"; carry up to 12 of those across once.
     if (s.grapes == null) s.grapes = s.hatched && s.fedUpTo != null ? Math.max(0, Math.min(12, K.stars(id) - s.fedUpTo)) : 0;

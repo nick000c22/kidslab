@@ -1,13 +1,18 @@
 /* Teddy Gym and Battles.
-   Four stats: Strength, Endurance, Speed, Brains. Each gym session costs 2 grapes and adds +1 (or +2 for a great workout).
-   Stats are capped by size: Baby 10, Little 20, Big 30.
+   Four stats: Strength, Endurance, Speed, Brains. Each gym session costs 1 gym token (2 are earned per completed quiz)
+   and adds +10 (or +20 for a great workout). Stats are capped by size: Baby 250, Little 500, Big 1000.
    Battles are against another kid's saved teddy. The win chance comes from both teddies' total stats with a luck floor
    (an untrained bear still wins about 1 in 8), then a fight is animated that ends that way.
    Winner gets 3 grapes, loser 1; nothing is ever lost. Battle grapes are capped at 5 battles a day. */
 (function () {
   var K = window.KidsLab, P = window.KidsPet;
   if (!K || !P) return;
-  var COST = 2, CAPS = [0, 10, 20, 30], DAILY = 5, WIN_GRAPES = 3, LOSE_GRAPES = 1;
+  var COST = 1, CAPS = [0, 250, 500, 1000], GAIN = 10, DAILY = 5, WIN_GRAPES = 3, LOSE_GRAPES = 1;
+  // The battle maths was tuned on a 0-30 scale; stats are 0-1000, so they're shrunk for the maths
+  // and the health/damage numbers are shown 10x bigger.
+  var SCALE = 1000 / 30, SHOW = 10;
+  function small(f) { return { str: (f.str || 0) / SCALE, end: (f.end || 0) / SCALE, spd: (f.spd || 0) / SCALE, brn: (f.brn || 0) / SCALE }; }
+  function tokens(p) { return Math.max(0, Number(p.tokens) || 0); }
   var STATS = [
     { id: "str", name: "Strength", icon: "💪", color: "berry", game: "Lift the weights!", how: "Tap LIFT as fast as you can!" },
     { id: "end", name: "Endurance", icon: "❤️", color: "leaf", game: "Treadmill run", how: "Tap RUN when the dot is in the green!" },
@@ -67,16 +72,16 @@
     w.innerHTML =
       '<div class="gym">' +
       '<div class="g-top"><button class="round small g-back" type="button" aria-label="Back">⬅️</button><h2>🏋️ ' + esc(pet.name) + "'s Gym</h2>" +
-      '<div class="stars"><span>🍇</span><span class="g-grapes"></span></div></div>' +
+      '<div class="stars" title="Gym tokens"><span>🎟️</span><span class="g-grapes"></span></div></div>' +
       '<div class="g-hero"><div class="g-bear"></div><div class="g-side"><div class="g-stats"></div><div class="g-power"></div><p class="g-tip"></p></div></div>' +
-      '<h3 class="ward-h">Train (🍇 ' + COST + " grapes each)</h3>" +
+      '<h3 class="ward-h">Train (🎟️ 1 gym token each. Finish a quiz to win 2)</h3>' +
       '<div class="g-train"></div>' +
       '<button class="block c-berry g-battle" type="button"><span class="emoji">⚔️</span><span class="label">Battle!</span><span class="g-sub">Challenge a cousin\'s teddy</span></button>' +
       '<div class="g-record"></div>' +
       "</div>";
     function draw() {
       var p2 = P.load(player.id), c2 = capFor(player.id);
-      w.querySelector(".g-grapes").textContent = P.grapesWaiting(player.id, p2);
+      w.querySelector(".g-grapes").textContent = tokens(p2);
       w.querySelector(".g-bear").innerHTML = P.teddySVG(Math.max(1, P.stageFor(K.stars(player.id))), p2);
       w.querySelector(".g-stats").innerHTML = bars(p2.fit, c2);
       w.querySelector(".g-power").textContent = "Power " + total(p2.fit) + " / " + c2 * 4;
@@ -92,7 +97,7 @@
         b.addEventListener("click", function () {
           var p3 = P.load(player.id);
           if ((p3.fit[S.id] || 0) >= capFor(player.id)) { K.say(p3.name + " needs to grow bigger first. Earn stars in your lessons!"); return; }
-          if (P.grapesWaiting(player.id, p3) < COST) { K.say("You need " + COST + " grapes to train. Finish a quiz to earn 5!"); return; }
+          if (tokens(p3) < COST) { K.say("You need a gym token to train. Finish a quiz to win 2 tokens!"); return; }
           train(player, S, function () { draw(); });
         });
         tr.appendChild(b);
@@ -115,9 +120,9 @@
     arena.innerHTML = '<div class="g-mini-bear">' + P.teddySVG(Math.max(1, P.stageFor(K.stars(player.id))), pet) + "</div>";
     var bear = arena.querySelector(".g-mini-bear");
     function finish(great, detail) {
-      var p2 = P.load(player.id), cap = capFor(player.id), before = p2.fit[S.id] || 0, gain = great ? 2 : 1;
+      var p2 = P.load(player.id), cap = capFor(player.id), before = p2.fit[S.id] || 0, gain = great ? GAIN * 2 : GAIN;
       p2.fit[S.id] = Math.min(cap, before + gain);
-      P.spend(p2, COST);
+      p2.tokens = tokens(p2) - COST;
       P.setHearts(p2, "happy", P.happy(p2) + 1);
       P.save(player.id, p2);
       var added = p2.fit[S.id] - before;
@@ -268,8 +273,9 @@
   }
 
   // Decide the winner from total power with a luck floor, then build a fight that ends that way.
-  function winChance(A, B) { var a = total(A), b = total(B), c = 10; return Math.max(0.12, Math.min(0.88, (a + c) / (a + b + 2 * c))); }
+  function winChance(A, B) { A = small(A); B = small(B); var a = total(A), b = total(B), c = 10; return Math.max(0.12, Math.min(0.88, (a + c) / (a + b + 2 * c))); }
   function script(A, B, aWins) {
+    A = small(A); B = small(B);
     function hpOf(s) { return Math.round(30 * (1 + (s.end || 0) * 0.025)); }
     for (var tries = 0; tries < 300; tries++) {
       var a = { s: A, hp: hpOf(A) }, b = { s: B, hp: hpOf(B) }; a.max = a.hp; b.max = b.hp;
@@ -307,6 +313,8 @@
     var me = P.load(player.id), myStars = K.stars(player.id);
     var aWins = Math.random() < winChance(me.fit, opp.pet.fit);
     var sc = script(me.fit, opp.pet.fit, aWins);
+    sc.maxA *= SHOW; sc.maxB *= SHOW;
+    sc.ev.forEach(function (e) { if (e.dmg) e.dmg *= SHOW; if (e.hpA != null) e.hpA *= SHOW; if (e.hpB != null) e.hpB *= SHOW; });
     var w = overlay("g-battle-wrap");
     w.innerHTML =
       '<div class="arena">' +

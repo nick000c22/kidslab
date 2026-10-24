@@ -721,7 +721,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 
   function testDone() {
     var got = S.results.filter(Boolean).length;
-    K.addGrapes(5);
+    K.addGrapes(5); K.addTokens(2);
     if (got === ROUNDS) K.markDone(LESSON);
     var p = progress();
     p.levels[4] = (p.levels[4] || 0) + 1;
@@ -735,7 +735,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       award(5); K.record("test_passed");
       $("tr-emoji").textContent = "🏆";
       $("tr-title").textContent = "5 out of 5!";
-      $("tr-text").textContent = "You finished the prime test, " + me.name + "! You earned 5 grapes 🍇 for your teddy. Now spin the prize wheel!";
+      $("tr-text").textContent = "You finished the prime test, " + me.name + "! You earned 5 grapes 🍇 and 2 gym tokens 🎟️ for your teddy. Now spin the prize wheel!";
       btn("🎡 Spin!", "sun", function () { $("test-result").hidden = true; openWheel(); });
       fireworks(4500);
       K.say("Five out of five! You passed the test! You earned five grapes for your teddy. Spin for a prize!");
