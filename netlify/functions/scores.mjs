@@ -54,8 +54,9 @@ const json = (body, status = 200) =>
 
 const validId = (id) => typeof id === "string" && /^[a-z0-9_-]{1,40}$/.test(id);
 
-export default async (req) => {
-  const store = getStore({ name: "kidslab-scores", consistency: "strong" });
+export default async (req) => handle(req, getStore({ name: "kidslab-scores", consistency: "strong" }));
+
+export async function handle(req, store) {
 
   if (req.method === "GET") {
     const { blobs } = await store.list({ prefix: "player/" });
@@ -84,6 +85,6 @@ export default async (req) => {
   }
 
   return json({ ok: false, error: "Method not allowed" }, 405);
-};
+}
 
 export const config = { path: "/api/scores" };

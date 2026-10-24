@@ -145,7 +145,7 @@
   // Uses the Sheet when connected; otherwise this iPad's own stars.
   function leaderboard() {
     function rows(b) {
-      return (cfg.players || []).map(function (p) {
+      return visiblePlayers().map(function (p) {
         var s = b ? (b.players[p.id] || { stars: 0, week: 0, tests: 0 }) : { stars: localStars(p.id), week: null, tests: null };
         var pend = URL_ ? pendingFor(p.id) : 0;
         return {
@@ -166,9 +166,53 @@
     });
   }
 
+  /* ---------- family state: roster + teddies (edited on the grown-ups page) ---------- */
+  var STATE_URL = URL_ ? URL_.replace(/scores\/?$/, "state") : "";
+  var cachedRoster = get("roster", null);
+  if (cachedRoster && cachedRoster.length) cfg.players = cachedRoster;
+
+  function visiblePlayers() { return (cfg.players || []).filter(function (p) { return !p.hidden; }); }
+
+  // Pulls the roster, scores and teddies from the server. Resolves with the response, or null when offline.
+  function fetchState() {
+    if (!STATE_URL) return Promise.resolve(null);
+    return flush().then(function () { return fetch(STATE_URL + "?t=" + Date.now()); })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res || !res.ok) return null;
+        if (res.roster && res.roster.length) { cfg.players = res.roster; set("roster", res.roster); }
+        set("board", { players: res.scores || {}, at: res.at });
+        set("srvpets", res.pets || {});
+        return res;
+      }).catch(function () { return null; });
+  }
+  function serverPet(id) { return (get("srvpets", {}) || {})[id] || null; }
+
+  // Teddy saves wait here until the server has them.
+  var petTimer = null;
+  function pushPet(id, pet) {
+    var q = get("petq", {}); q[id] = pet; set("petq", q);
+    var sp = get("srvpets", {}); sp[id] = pet; set("srvpets", sp);
+    clearTimeout(petTimer); petTimer = setTimeout(flushPets, 800);
+  }
+  function flushPets() {
+    if (!STATE_URL || !navigator.onLine) return;
+    var q = get("petq", {});
+    Object.keys(q).forEach(function (id) {
+      fetch(STATE_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "pet", player: id, pet: q[id] }) })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (!res || !res.ok) return;
+          var now = get("petq", {});
+          if (now[id] && now[id].updatedAt === q[id].updatedAt) { delete now[id]; set("petq", now); }
+          if (res.kept === "server" && res.pet) { var sp = get("srvpets", {}); sp[id] = res.pet; set("srvpets", sp); }
+        }).catch(function () {});
+    });
+  }
+
   carryOver();
-  window.addEventListener("online", function () { flush(); });
-  setTimeout(flush, 1500);
+  window.addEventListener("online", function () { flush(); flushPets(); });
+  setTimeout(function () { flush(); flushPets(); }, 1500);
 
   // Per-lesson progress, e.g. KidsLab.progress("prime-grapes", {level: 3})
   function progress(lessonId, value) {
@@ -226,6 +270,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress,
+    fetchState: fetchState, serverPet: serverPet, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

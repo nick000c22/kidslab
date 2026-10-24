@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kids Lab Grown-ups</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: a working spreadsheet. Sticky kid column on the left, grouped columns to the right, one Save bar on top. */
+:root {
+  --bg: #F3F6FB; --card: #FFFFFF; --ink: #1E2240; --muted: #5B6188; --rim: #D5DDEE; --head: #E7EDF8;
+  --grape: #6E44A8; --leaf: #2F9358; --sun: #E9A21F; --berry: #D4466F; --sky: #2F7FC6; --tang: #E26A2C;
+  --kid: #E8F3EC; --score: #FDF3DD; --teddy: #F1EAFB; --dirty: #FFF4C2;
+  --display: "Baloo 2", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --body: "Nunito", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141830; --card: #1D2240; --ink: #EEF0FB; --muted: #A9AFD3; --rim: #353B6B; --head: #232850;
+    --kid: #1E3328; --score: #3A3020; --teddy: #2C2448; --dirty: #4A4320; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141830; --card: #1D2240; --ink: #EEF0FB; --muted: #A9AFD3; --rim: #353B6B; --head: #232850;
+  --kid: #1E3328; --score: #3A3020; --teddy: #2C2448; --dirty: #4A4320; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-weight: 600; }
+.wrap { max-width: 1600px; margin: 0 auto; padding-block: 18px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-family: var(--display); font-weight: 800; font-size: 2rem; margin: 0; line-height: 1.1; }
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-bottom: 14px; }
+.top .grow { flex: 1; min-width: 200px; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: .95rem; }
+.btn { border: 0; border-radius: 12px; padding: 11px 18px; cursor: pointer; font: 800 1rem var(--body); background: var(--head); color: var(--ink); }
+.btn.primary { background: var(--grape); color: #fff; }
+.btn.primary:disabled { opacity: .5; cursor: default; }
+.btn.small { padding: 6px 10px; font-size: .85rem; border-radius: 9px; }
+.btn.danger { color: var(--berry); }
+a.btn { text-decoration: none; display: inline-block; }
+.status { font-size: .95rem; color: var(--muted); min-width: 10ch; }
+.status.ok { color: var(--leaf); } .status.err { color: var(--berry); }
+
+/* gate */
+.gate { max-width: 380px; margin: 12vh auto 0; background: var(--card); border-radius: 22px; padding: 26px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.08); }
+.gate h1 { font-size: 1.7rem; }
+.gate input { font: 800 1.6rem var(--display); text-align: center; letter-spacing: .3em; padding: 10px; border-radius: 12px; border: 2px solid var(--rim); background: var(--bg); color: var(--ink); }
+
+/* sheet */
+.sheet-scroll { overflow-x: auto; background: var(--card); border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.06); }
+table { border-collapse: separate; border-spacing: 0; font-size: .92rem; min-width: 100%; }
+th, td { padding: 6px 8px; border-bottom: 1px solid var(--rim); white-space: nowrap; vertical-align: middle; text-align: left; }
+thead th { position: sticky; top: 0; background: var(--head); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); z-index: 2; }
+thead tr.groups th { font-size: .8rem; color: var(--ink); text-align: center; }
+th.g-kid { background: var(--kid); } th.g-score { background: var(--score); } th.g-teddy { background: var(--teddy); }
+.sticky { position: sticky; left: 0; z-index: 1; background: var(--card); box-shadow: 1px 0 0 var(--rim); }
+thead .sticky { z-index: 3; background: var(--head); }
+tr.dirty td { background: var(--dirty); }
+tr.dirty td.sticky { background: var(--dirty); }
+tr.hidden-kid td { opacity: .55; }
+td input[type=text], td input[type=number], td input[type=date], td select {
+  font: 700 .92rem var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--rim); border-radius: 8px; padding: 6px 7px;
+}
+td input[type=number] { width: 74px; font-variant-numeric: tabular-nums; }
+td input.w-name { width: 120px; } td input.w-emoji { width: 52px; text-align: center; font-size: 1.2rem; } td input.w-age { width: 56px; }
+td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape); }
+.kidcell { display: flex; align-items: center; gap: 8px; }
+.kidcell .em { font-size: 1.6rem; }
+.kidcell b { font-family: var(--display); font-size: 1.1rem; }
+.prev { width: 44px; height: 54px; display: block; }
+.prev svg { width: 100%; height: 100%; }
+.hint { color: var(--muted); font-size: .9rem; margin: 12px 2px 0; max-width: 90ch; }
+.add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; background: var(--card); border-radius: 14px; padding: 12px 14px; }
+.add input, .add select { font: 700 1rem var(--body); padding: 8px 10px; border-radius: 9px; border: 1px solid var(--rim); background: var(--bg); color: var(--ink); }
+.add input#new-emoji { width: 64px; text-align: center; }
+.pin-box { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); }
+.pin-box input { width: 120px; font: 700 1rem var(--body); padding: 8px; border-radius: 9px; border: 1px solid var(--rim); background: var(--bg); color: var(--ink); }
+</style>
+<link rel="stylesheet" href="pet.css">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- PIN gate -->
+  <div class="gate" id="gate" hidden>
+    <h1 id="gate-title">Grown-ups only</h1>
+    <p class="sub" id="gate-sub">Enter the PIN.</p>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="PIN">
+    <input id="pin2" type="password" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="Repeat PIN" placeholder="again" hidden>
+    <button class="btn primary" id="gate-go" type="button">Open</button>
+    <p class="status" id="gate-status"></p>
+    <a class="btn" href="index.html">Back to the app</a>
+  </div>
+
+  <!-- Spreadsheet -->
+  <div id="main" hidden>
+    <div class="top">
+      <div class="grow">
+        <h1>Grown-ups</h1>
+        <p class="sub">Edit any cell, then Save. Changed rows turn yellow. iPads pick up changes next time the app or teddy screen opens.</p>
+      </div>
+      <span class="status" id="status"></span>
+      <button class="btn" id="reload" type="button">Reload</button>
+      <button class="btn primary" id="save" type="button" disabled>Save changes</button>
+      <a class="btn" href="index.html">Back to the app</a>
+    </div>
+
+    <div class="sheet-scroll">
+      <table>
+        <thead>
+          <tr class="groups">
+            <th class="sticky g-kid"></th>
+            <th class="g-kid" colspan="4">Kid</th>
+            <th class="g-score" colspan="3">Scores</th>
+            <th class="g-teddy" colspan="17">Math Teddy</th>
+          </tr>
+          <tr>
+            <th class="sticky">Kid</th>
+            <th>Name</th><th>Picture</th><th>Colour</th><th>Age</th>
+            <th>Stars</th><th>This week</th><th>Tests</th>
+            <th></th><th>Hatched</th><th>Teddy name</th><th>Fur</th><th>Badge</th>
+            <th>Hat</th><th>Neck</th><th>Face</th><th>Back</th><th>All clothes</th>
+            <th>Grapes in bowl</th><th>Tummy</th><th>Happy</th><th>Weight kg</th><th>Eaten</th><th>Hatch date</th><th>Asleep</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="hint">Hidden kids (untick "Show" in the Kid column) disappear from the iPads but keep their scores and teddy. Untick "Hatched" to turn a teddy back into an egg. "All clothes" unlocks every outfit regardless of stars. Tummy and Happy are hearts out of 4.</p>
+
+    <div class="add">
+      <strong>Add a kid:</strong>
+      <input id="new-name" type="text" placeholder="Name" maxlength="24">
+      <input id="new-emoji" type="text" placeholder="🐼" maxlength="8">
+      <select id="new-color"></select>
+      <input id="new-age" type="number" min="0" max="99" placeholder="Age" style="width:80px">
+      <button class="btn" id="add" type="button">Add</button>
+    </div>
+
+    <div class="pin-box">
+      Change PIN: <input id="old-pin" type="password" inputmode="numeric" placeholder="old" maxlength="8">
+      <input id="new-pin" type="password" inputmode="numeric" placeholder="new" maxlength="8">
+      <button class="btn small" id="change-pin" type="button">Change</button>
+      <span class="status" id="pin-status"></span>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="kit.js"></script>
+<script src="pet.js"></script>
+<script>
+(function () {
+  var K = window.KidsLab, P = window.KidsPet;
+  var API = "/api/state";
+  var $ = function (id) { return document.getElementById(id); };
+  var COLORS = ["grape", "leaf", "sun", "sky", "berry", "tang"];
+  var COLOR_NAMES = { grape: "Purple", leaf: "Green", sun: "Yellow", sky: "Blue", berry: "Pink", tang: "Orange" };
+  var pin = "";
+  try { pin = sessionStorage.getItem("kidslab.pin") || ""; } catch (e) {}
+  var rows = [];
+
+  function post(body) {
+    return fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); });
+  }
+  function setStatus(id, text, cls) { var el = $(id); el.textContent = text; el.className = "status" + (cls ? " " + cls : ""); }
+
+  /* ---------- gate ---------- */
+  var creating = false;
+  function showGate(hasPin) {
+    creating = !hasPin;
+    $("main").hidden = true; $("gate").hidden = false;
+    $("gate-title").textContent = creating ? "Set a grown-ups PIN" : "Grown-ups only";
+    $("gate-sub").textContent = creating ? "Choose a 4 to 8 digit PIN. You'll need it to open this page." : "Enter the PIN.";
+    $("pin2").hidden = !creating;
+    $("gate-go").textContent = creating ? "Set PIN" : "Open";
+    $("pin").focus();
+  }
+  $("gate-go").addEventListener("click", function () {
+    var v = $("pin").value.trim();
+    if (creating) {
+      if (v !== $("pin2").value.trim()) return setStatus("gate-status", "The two PINs don't match.", "err");
+      post({ action: "setPin", pin: v }).then(function (r) {
+        if (!r.ok) return setStatus("gate-status", r.error || "Couldn't set the PIN.", "err");
+        unlock(v);
+      }).catch(function () { setStatus("gate-status", "Can't reach the server. Check the internet connection.", "err"); });
+    } else {
+      post({ action: "checkPin", pin: v }).then(function (r) {
+        if (!r.ok) return setStatus("gate-status", "That PIN isn't right.", "err");
+        unlock(v);
+      }).catch(function () { setStatus("gate-status", "Can't reach the server. Check the internet connection.", "err"); });
+    }
+  });
+  $("pin").addEventListener("keydown", function (e) { if (e.key === "Enter") $("gate-go").click(); });
+  $("pin2").addEventListener("keydown", function (e) { if (e.key === "Enter") $("gate-go").click(); });
+
+  function unlock(v) {
+    pin = v; try { sessionStorage.setItem("kidslab.pin", v); } catch (e) {}
+    $("gate").hidden = true; $("main").hidden = false;
+    load();
+  }
+
+  /* ---------- load ---------- */
+  function load(keepStatus) {
+    if (!keepStatus) setStatus("status", "Loading…");
+    fetch(API + "?t=" + Date.now()).then(function (r) { return r.json(); }).then(function (res) {
+      var roster = (res.roster && res.roster.length) ? res.roster : (window.KIDSLAB_CONFIG.players || []);
+      rows = roster.map(function (p) {
+        var pet = P.blank(), sp = (res.pets || {})[p.id];
+        if (sp) for (var k in sp) if (sp[k] != null) pet[k] = sp[k];
+        if (!pet.wear || typeof pet.wear !== "object") pet.wear = {};
+        var sc = (res.scores || {})[p.id] || { stars: 0, week: 0, tests: 0 };
+        return { p: { id: p.id, name: p.name, emoji: p.emoji, color: p.color, age: p.age == null ? "" : p.age, hidden: !!p.hidden },
+          pet: pet, sc: { stars: sc.stars, week: sc.week, tests: sc.tests },
+          dirty: { kid: !(res.roster && res.roster.length), pet: false, sc: false } };
+      });
+      render();
+      if (!res.roster) setStatus("status", "Showing the starting list. Save once to keep it here.");
+      else if (!keepStatus) setStatus("status", "");
+      updateSave();
+    }).catch(function () { setStatus("status", "Can't reach the server.", "err"); });
+  }
+
+  /* ---------- table ---------- */
+  function el(tag, attrs) { var e = document.createElement(tag); for (var k in attrs || {}) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); } return e; }
+  function sel(options, value, onChange) {
+    var s = el("select");
+    options.forEach(function (o) { var opt = el("option", { value: o[0], text: o[1] }); if (String(o[0]) === String(value)) opt.selected = true; s.appendChild(opt); });
+    s.addEventListener("change", function () { onChange(s.value); });
+    return s;
+  }
+  function num(value, onChange, opts) {
+    var i = el("input", { type: "number", min: (opts && opts.min) != null ? opts.min : 0, step: (opts && opts.step) || 1 });
+    i.value = value == null ? "" : value;
+    i.addEventListener("input", function () { onChange(i.value === "" ? null : Number(i.value)); });
+    return i;
+  }
+  function txt(value, cls, onChange, max) {
+    var i = el("input", { type: "text", class: cls, maxlength: max || 24 }); i.value = value || "";
+    i.addEventListener("input", function () { onChange(i.value); });
+    return i;
+  }
+  function chk(value, onChange) {
+    var i = el("input", { type: "checkbox" }); i.checked = !!value;
+    i.addEventListener("change", function () { onChange(i.checked); });
+    return i;
+  }
+  function td(child, cls) { var c = el("td", cls ? { class: cls } : null); if (child) c.appendChild(child); return c; }
+
+  function render() {
+    var body = $("rows"); body.innerHTML = "";
+    rows.forEach(function (r) {
+      var tr = el("tr"); r.tr = tr;
+      var stars = r.sc.stars || 0, pet = r.pet;
+      function mark(kind) { r.dirty[kind] = true; tr.classList.add("dirty"); updateSave(); }
+
+      var kc = el("div", { class: "kidcell" });
+      kc.appendChild(el("span", { class: "em", text: r.p.emoji }));
+      kc.appendChild(el("b", { text: r.p.name }));
+      var show = chk(!r.p.hidden, function (v) { r.p.hidden = !v; tr.classList.toggle("hidden-kid", !v); mark("kid"); });
+      show.title = "Show on the iPads";
+      kc.appendChild(show);
+      tr.appendChild(td(kc, "sticky"));
+
+      // Kid
+      tr.appendChild(td(txt(r.p.name, "w-name", function (v) { r.p.name = v; kc.querySelector("b").textContent = v; mark("kid"); })));
+      tr.appendChild(td(txt(r.p.emoji, "w-emoji", function (v) { r.p.emoji = v; kc.querySelector(".em").textContent = v; mark("kid"); }, 8)));
+      tr.appendChild(td(sel(COLORS.map(function (c) { return [c, COLOR_NAMES[c]]; }), r.p.color, function (v) { r.p.color = v; mark("kid"); })));
+      var age = num(r.p.age, function (v) { r.p.age = v; mark("kid"); }); age.className = "w-age"; tr.appendChild(td(age));
+
+      // Scores
+      tr.appendChild(td(num(r.sc.stars, function (v) { r.sc.stars = v; mark("sc"); })));
+      tr.appendChild(td(num(r.sc.week, function (v) { r.sc.week = v; mark("sc"); })));
+      tr.appendChild(td(num(r.sc.tests, function (v) { r.sc.tests = v; mark("sc"); })));
+
+      // Teddy
+      var prev = el("div", { class: "prev" });
+      function drawPrev() {
+        prev.innerHTML = pet.hatched ? P.teddySVG(Math.max(1, P.stageFor(r.sc.stars || 0)), pet) : P.eggSVG(0);
+      }
+      drawPrev();
+      tr.appendChild(td(prev));
+      function petChange(fn) { return function (v) { fn(v); drawPrev(); mark("pet"); }; }
+
+      tr.appendChild(td(chk(pet.hatched, petChange(function (v) {
+        if (v) { pet.hatched = true; pet.hatchedAt = pet.hatchedAt || new Date().toISOString(); if (pet.fedUpTo == null) pet.fedUpTo = Math.max(0, (r.sc.stars || 0) - 5); if (!pet.name) pet.name = "Teddy"; }
+        else { var fresh = P.blank(); for (var k in fresh) pet[k] = fresh[k]; }
+      }))));
+      tr.appendChild(td(txt(pet.name, "w-name", petChange(function (v) { pet.name = v; }), 16)));
+      tr.appendChild(td(sel(Object.keys(P.FURS).map(function (k) { return [k, P.FURS[k].name]; }), pet.fur, petChange(function (v) { pet.fur = v; }))));
+      tr.appendChild(td(sel(P.BELLIES.map(function (b) { return [b, b]; }), pet.belly, petChange(function (v) { pet.belly = v; }))));
+      function slotSel(slot, list) {
+        return sel([["", "None"]].concat(list.map(function (o) { return [o.id, o.name]; })), pet.wear[slot] || "", petChange(function (v) { if (v) pet.wear[slot] = v; else delete pet.wear[slot]; }));
+      }
+      ["hat", "neck", "face", "back"].forEach(function (slot) {
+        tr.appendChild(td(slotSel(slot, P.OUTFITS.filter(function (o) { return o.slot === slot; }))));
+      });
+      tr.appendChild(td(chk(pet.unlockAll, petChange(function (v) { pet.unlockAll = v; }))));
+      var inBowl = pet.hatched && pet.fedUpTo != null ? Math.max(0, stars - pet.fedUpTo) : 0;
+      tr.appendChild(td(num(inBowl, petChange(function (v) { pet._bowl = v == null ? 0 : v; }))));
+      var hearts = [[1, "♥♡♡♡"], [2, "♥♥♡♡"], [3, "♥♥♥♡"], [4, "♥♥♥♥"]];
+      tr.appendChild(td(sel(hearts, P.tummy(pet), petChange(function (v) { pet._tummy = Number(v); }))));
+      tr.appendChild(td(sel(hearts, P.happy(pet), petChange(function (v) { pet._happy = Number(v); }))));
+      tr.appendChild(td(num(pet.weight, petChange(function (v) { pet.weight = v == null ? 0.5 : v; }), { step: 0.05 })));
+      tr.appendChild(td(num(pet.grapesEaten, petChange(function (v) { pet.grapesEaten = v || 0; }))));
+      var d = el("input", { type: "date" }); d.value = pet.hatchedAt ? pet.hatchedAt.slice(0, 10) : "";
+      d.addEventListener("change", petChange(function () { pet.hatchedAt = d.value ? new Date(d.value + "T09:00:00").toISOString() : null; }));
+      tr.appendChild(td(d));
+      tr.appendChild(td(chk(pet.asleep, petChange(function (v) { pet.asleep = v; if (!v) pet.lastSeen = new Date().toISOString(); }))));
+
+      if (r.p.hidden) tr.classList.add("hidden-kid");
+      if (r.dirty.kid || r.dirty.pet || r.dirty.sc) tr.classList.add("dirty");
+      body.appendChild(tr);
+    });
+  }
+
+  function anyDirty() { return rows.some(function (r) { return r.dirty.kid || r.dirty.pet || r.dirty.sc; }); }
+  function updateSave() { $("save").disabled = !anyDirty(); if (anyDirty()) setStatus("status", "Unsaved changes"); }
+
+  /* ---------- save ---------- */
+  $("save").addEventListener("click", function () {
+    var now = new Date().toISOString();
+    var body = { action: "admin", pin: pin, pets: {}, scores: {} };
+    if (rows.some(function (r) { return r.dirty.kid; })) body.roster = rows.map(function (r) { return r.p; });
+    rows.forEach(function (r) {
+      if (r.dirty.sc) body.scores[r.p.id] = { stars: r.sc.stars || 0, week: r.sc.week || 0, tests: r.sc.tests || 0 };
+      if (r.dirty.pet || r.dirty.sc) {
+        var pet = JSON.parse(JSON.stringify(r.pet)), stars = r.sc.stars || 0;
+        if (pet._bowl != null && pet.hatched) pet.fedUpTo = stars - pet._bowl;
+        if (pet._tummy) { pet.tummy = pet._tummy; pet.tummyAt = now; }
+        if (pet._happy) { pet.happy = pet._happy; pet.happyAt = now; }
+        delete pet._bowl; delete pet._tummy; delete pet._happy;
+        if (r.dirty.pet) body.pets[r.p.id] = pet;
+      }
+    });
+    $("save").disabled = true; setStatus("status", "Saving…");
+    post(body).then(function (res) {
+      if (!res.ok) { setStatus("status", res.error === "Wrong PIN" ? "PIN no longer valid. Reload the page." : (res.error || "Save failed."), "err"); $("save").disabled = false; return; }
+      setStatus("status", "Saved ✓", "ok");
+      load(true);
+    }).catch(function () { setStatus("status", "Can't reach the server. Nothing was saved.", "err"); $("save").disabled = false; });
+  });
+  $("reload").addEventListener("click", function () {
+    if (anyDirty() && $("reload").dataset.armed !== "1") { $("reload").dataset.armed = "1"; $("reload").textContent = "Lose changes?"; setTimeout(function () { $("reload").dataset.armed = ""; $("reload").textContent = "Reload"; }, 3000); return; }
+    $("reload").dataset.armed = ""; $("reload").textContent = "Reload"; load();
+  });
+  window.addEventListener("beforeunload", function (e) { if (anyDirty()) { e.preventDefault(); e.returnValue = ""; } });
+
+  /* ---------- add a kid ---------- */
+  COLORS.forEach(function (c) { $("new-color").appendChild(el("option", { value: c, text: COLOR_NAMES[c] })); });
+  $("add").addEventListener("click", function () {
+    var name = $("new-name").value.trim(); if (!name) { $("new-name").focus(); return; }
+    var base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "kid", id = base, n = 2;
+    while (rows.some(function (r) { return r.p.id === id; })) id = base + "-" + (n++);
+    rows.push({ p: { id: id, name: name, emoji: $("new-emoji").value.trim() || "🙂", color: $("new-color").value, age: $("new-age").value === "" ? "" : Number($("new-age").value), hidden: false },
+      pet: P.blank(), sc: { stars: 0, week: 0, tests: 0 }, dirty: { kid: true, pet: false, sc: false } });
+    $("new-name").value = ""; $("new-emoji").value = ""; $("new-age").value = "";
+    render(); updateSave();
+  });
+
+  /* ---------- change PIN ---------- */
+  $("change-pin").addEventListener("click", function () {
+    post({ action: "setPin", oldPin: $("old-pin").value.trim(), pin: $("new-pin").value.trim() }).then(function (r) {
+      if (!r.ok) return setStatus("pin-status", r.error || "Couldn't change it.", "err");
+      pin = $("new-pin").value.trim(); try { sessionStorage.setItem("kidslab.pin", pin); } catch (e) {}
+      $("old-pin").value = ""; $("new-pin").value = ""; setStatus("pin-status", "PIN changed ✓", "ok");
+    });
+  });
+
+  /* ---------- start ---------- */
+  fetch(API + "?t=" + Date.now()).then(function (r) { return r.json(); }).then(function (res) {
+    if (!res.hasPin) return showGate(false);
+    if (pin) return post({ action: "checkPin", pin: pin }).then(function (r) { if (r.ok) unlock(pin); else showGate(true); });
+    showGate(true);
+  }).catch(function () { showGate(true); setStatus("gate-status", "Can't reach the server. This page only works on the live site.", "err"); });
+})();
+</script>
+</body>
+</html>

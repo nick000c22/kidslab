@@ -152,3 +152,78 @@
   .idle .rig, .egg-rig, .ready .egg-rig, .pc-new, .zzz span { animation: none; }
   .d-wiggle .rig, .d-jump .rig, .d-spin .rig, .d-groove .rig, .d-wave .arm-r, .d-groove .arm-r { animation-iteration-count: 1; }
 }
+
+/* ---------- v2: the tamagotchi device ---------- */
+.pr-title {
+  border: 0; background: transparent; cursor: pointer; margin-right: auto; padding: 4px 8px; border-radius: 12px;
+  font-family: var(--display); font-weight: 800; font-size: 1.7rem; color: var(--ink); text-align: left;
+}
+.tama {
+  --c: var(--grape);
+  position: relative; width: min(430px, 100%); margin-top: 18px;
+  padding: 44px 30px 34px; border-radius: 50% 50% 46% 46% / 56% 56% 44% 44%;
+  background: radial-gradient(circle at 30% 22%, color-mix(in srgb, var(--c) 55%, #fff) 0 18%, var(--c) 55%, color-mix(in srgb, var(--c) 70%, #000) 100%);
+  box-shadow: 0 14px 0 color-mix(in srgb, var(--c) 55%, #000), 0 24px 40px var(--shadow), inset 0 -10px 24px rgba(0,0,0,.18);
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+}
+.tama::before { /* keychain loop */
+  content: ""; position: absolute; top: -26px; left: 50%; width: 34px; height: 34px; transform: translateX(-50%);
+  border-radius: 50%; border: 7px solid color-mix(in srgb, var(--c) 70%, #000); background: transparent;
+}
+.tama-screen {
+  position: relative; width: 100%; aspect-ratio: 1 / 1; max-width: 100%;
+  border-radius: 26px; overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, rgba(36, 54, 28, .045) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(90deg, rgba(36, 54, 28, .045) 0 2px, transparent 2px 5px),
+    #CFDDAE;
+  box-shadow: inset 0 0 0 8px #2A3320, inset 0 6px 18px rgba(0,0,0,.35);
+  display: flex; flex-direction: column; align-items: center; padding: 16px 18px 10px;
+  color: #24361C; font-family: "Pixelify Sans", "Courier New", monospace;
+}
+.lcd-top { width: 100%; display: flex; justify-content: space-between; gap: 8px; font-size: clamp(.95rem, 2.6vw, 1.15rem); letter-spacing: .02em; }
+.lcd-bubble {
+  min-height: 2.6em; margin-top: 6px; text-align: center; text-wrap: balance;
+  font-size: clamp(1.1rem, 3.4vw, 1.45rem); line-height: 1.15; max-width: 92%;
+}
+.tama .pr-pet { width: 66%; flex: 1; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
+.tama .pr-pet svg { width: 100%; height: 100%; max-height: 100%; }
+.lcd-floor { width: 72%; height: 12px; border-radius: 50%; background: rgba(36, 54, 28, .18); margin-top: -6px; flex: none; }
+.tama-btns { display: flex; justify-content: center; gap: clamp(10px, 3vw, 18px); min-height: 10px; }
+.tama-btn {
+  position: relative; border: 0; background: transparent; cursor: pointer; padding: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.tb-face {
+  width: clamp(58px, 15vw, 70px); height: clamp(58px, 15vw, 70px); border-radius: 50%; display: grid; place-items: center;
+  font-size: clamp(26px, 7vw, 32px); background: #FFF6DE;
+  box-shadow: 0 6px 0 #C9B78C, inset 0 -4px 0 rgba(0,0,0,.08); transition: transform .08s, box-shadow .08s;
+}
+.tama-btn:active .tb-face { transform: translateY(5px); box-shadow: 0 1px 0 #C9B78C; }
+.tb-label { font-family: var(--display); font-weight: 800; color: #fff; font-size: 1rem; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.tb-count {
+  position: absolute; top: -6px; right: -6px; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 13px;
+  background: var(--berry); color: #fff; font-family: var(--display); font-size: .95rem; display: grid; place-items: center;
+}
+.tb-count.new { font-size: .7rem; letter-spacing: .05em; }
+.tama .zzz { color: #24361C; font-family: "Pixelify Sans", monospace; }
+
+/* stats screen */
+.lcd-sheet { background: #CFDDAE; box-shadow: inset 0 0 0 10px #2A3320, 0 20px 60px rgba(0,0,0,.35); color: #24361C; }
+.lcd-stats { width: 100%; display: flex; flex-direction: column; font-family: "Pixelify Sans", "Courier New", monospace; font-size: 1.35rem; }
+.lcd-row { display: flex; justify-content: space-between; gap: 16px; padding: 7px 4px; border-bottom: 2px dashed rgba(36, 54, 28, .25); }
+.lcd-row span:first-child { opacity: .75; }
+.lcd-row span:last-child { text-align: right; overflow-wrap: anywhere; }
+
+/* wardrobe extras */
+.ward-preview { width: 150px; max-width: 100%; }
+.ward-preview svg { width: 100%; height: auto; display: block; }
+.ward-h { margin: 6px 0 -4px; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.swatches, .bellies { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.swatch { width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--card); box-shadow: 0 0 0 2px var(--rim); cursor: pointer; }
+.swatch.on { box-shadow: 0 0 0 4px var(--grape); }
+.belly-btn {
+  width: 50px; height: 50px; border-radius: 14px; border: 0; background: var(--bg-2); cursor: pointer;
+  font-family: var(--display); font-weight: 800; font-size: 1.6rem; color: #6E44A8;
+}
+.belly-btn.on { background: var(--grape); color: #fff; }

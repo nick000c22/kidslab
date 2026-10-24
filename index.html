@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
 <style>
 /* Layout: a toy-box. Chunky "pressable block" tiles on a sky-wash ground; one screen at a time, no scrolling on iPad. */
 :root {
@@ -199,6 +199,22 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 
 .pick-title { font-family: var(--display); font-weight: 800; font-size: 1.5rem; color: var(--muted); margin: 0 0 14px; text-align: center; }
 
+/* rank under each name + mini leaderboard */
+.block .rank { font-family: var(--body); font-weight: 800; font-size: 1rem; text-shadow: none; background: rgba(0,0,0,.18); border-radius: 999px; padding: 2px 12px; min-height: 1.5em; }
+.block .rank:empty { visibility: hidden; }
+.mini-board {
+  width: min(720px, 100%); margin: -6px auto 22px; border: 0; cursor: pointer; text-align: left;
+  background: var(--card); border-radius: 22px; padding: 12px 16px; box-shadow: 0 6px 0 var(--shadow);
+  display: flex; flex-direction: column; gap: 8px; color: var(--ink);
+}
+.mb-head { font-family: var(--display); font-weight: 800; font-size: 1.15rem; color: var(--muted); }
+.mb-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.mb-item { flex: none; display: flex; align-items: center; gap: 6px; background: var(--bg-2); border-radius: 999px; padding: 6px 14px 6px 10px; font-weight: 800; }
+.mb-item.me { box-shadow: inset 0 0 0 3px var(--sun); }
+.mb-n { font-family: var(--display); color: var(--muted); min-width: 1.2em; text-align: center; }
+.mb-f { font-size: 1.4rem; line-height: 1; }
+.mb-s { font-variant-numeric: tabular-nums; color: var(--muted); }
+
 /* many cousins: smaller player tiles */
 .players.many { grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); margin: 0; }
 .players.many .block { min-height: 170px; }
@@ -249,7 +265,6 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 <section class="screen" id="who">
   <div class="bar">
     <div class="brand"><img class="brand-mark" src="icons/icon-192.png" alt=""><span class="app-name">Kids Lab</span></div>
-    <button class="round small open-board" type="button" aria-label="Leaderboard">🏆</button>
   </div>
   <div class="hello">
     <h1>Who's playing?</h1>
@@ -264,13 +279,13 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     <button class="round small" id="switch" type="button" aria-label="Change player"></button>
     <div class="brand"><span class="app-name">Kids Lab</span></div>
     <div class="stars" aria-label="Stars"><span>⭐</span><span id="star-count">0</span></div>
-    <button class="round small open-board" type="button" aria-label="Leaderboard">🏆</button>
     <button class="round small" id="gear" type="button" aria-label="Grown-ups: press and hold">
       ⚙️
       <svg class="hold-ring" viewBox="0 0 68 68" aria-hidden="true"><circle cx="34" cy="34" r="32" id="ring"></circle></svg>
     </button>
   </div>
   <div id="pet-card"></div>
+  <button class="mini-board" id="mini-board" type="button" aria-label="Leaderboard"></button>
   <h2 class="pick-title" id="greet">Pick a game</h2>
   <div class="lessons" id="lessons"></div>
 </section>
@@ -310,6 +325,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     <div class="foot">
       <span class="fine" id="version"></span>
       <div style="display:flex;gap:10px">
+        <a class="btn" href="admin.html" style="text-decoration:none">Open grown-ups page</a>
         <button class="btn" type="button" id="check-update">Check for updates</button>
         <button class="btn primary" type="button" id="close-parent">Done</button>
       </div>
@@ -350,9 +366,11 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   /* ---- Who's playing ---- */
   function renderPlayers() {
     var wrap = $("players"); wrap.innerHTML = "";
-    wrap.classList.toggle("many", C.players.length > 4);
-    C.players.forEach(function (p, i) {
+    var list = K.visiblePlayers();
+    wrap.classList.toggle("many", list.length > 4);
+    list.forEach(function (p, i) {
       var b = block({ emoji: p.emoji, label: p.name, color: p.color });
+      var rk = document.createElement("span"); rk.className = "rank"; rk.dataset.id = p.id; b.appendChild(rk);
       b.style.animationDelay = (i * 70) + "ms";
       b.addEventListener("click", function () {
         K.setPlayer(p.id);
@@ -373,6 +391,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function renderHome() {
     var p = K.player(); if (!p) { show("who"); return; }
     if (window.KidsPet) KidsPet.renderCard($("pet-card"));
+    drawMini();
     $("switch").textContent = p.emoji;
     $("star-count").textContent = K.stars(p.id);
 
@@ -528,20 +547,67 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     $("board-note").textContent = note;
   }
 
-  document.querySelectorAll(".open-board").forEach(function (b) { b.addEventListener("click", openBoard); });
+  $("mini-board").addEventListener("click", openBoard);
+
+  // This-week ranking under each name on "Who's playing?", and a mini board on the home screen.
+  function weekRows(res) {
+    return (res ? res.rows : []).slice().sort(function (a, b) { return (b.week == null ? b.stars : b.week) - (a.week == null ? a.stars : a.week) || a.player.name.localeCompare(b.player.name); });
+  }
+  function score(r) { return r.week == null ? r.stars : r.week; }
+  function drawRanks() {
+    var rows = weekRows(lastBoard), lead = rows[0] && score(rows[0]) > 0 ? rows[0].player.id : null;
+    var label = lastBoard && lastBoard.connected ? " this week" : "";
+    document.querySelectorAll("#players .rank").forEach(function (el) {
+      var i = -1; rows.forEach(function (r, k) { if (r.player.id === el.dataset.id) i = k; });
+      if (i < 0) { el.textContent = ""; return; }
+      el.textContent = (el.dataset.id === lead ? "👑 " : "") + "⭐ " + score(rows[i]) + label;
+    });
+  }
+  function drawMini() {
+    var mb = $("mini-board"), rows = weekRows(lastBoard), me = K.playerId();
+    if (!rows.length) { mb.hidden = true; return; }
+    mb.hidden = false; mb.innerHTML = "";
+    var h = document.createElement("div"); h.className = "mb-head";
+    h.textContent = (lastBoard && lastBoard.connected ? "This week" : "Stars") + " 🏆";
+    mb.appendChild(h);
+    var list = document.createElement("div"); list.className = "mb-list";
+    rows.forEach(function (r, i) {
+      var it = document.createElement("span"); it.className = "mb-item" + (r.player.id === me ? " me" : "");
+      it.innerHTML = '<span class="mb-n"></span><span class="mb-f"></span><span class="mb-nm"></span><span class="mb-s"></span>';
+      it.children[0].textContent = i === 0 && score(r) > 0 ? "👑" : (i + 1);
+      it.children[1].textContent = r.player.emoji;
+      it.children[2].textContent = r.player.name;
+      it.children[3].textContent = "⭐ " + score(r);
+      list.appendChild(it);
+    });
+    mb.appendChild(list);
+  }
+  function refreshBoard() {
+    return K.leaderboard().then(function (res) { lastBoard = res; drawRanks(); if (!$("home").hidden) drawMini(); if (K.player()) $("star-count").textContent = K.stars(); });
+  }
   $("board-back").addEventListener("click", function () { if (boardFrom === "home") renderHome(); show(boardFrom); });
   $("seg-week").addEventListener("click", function () { boardMode = "week"; if (lastBoard) drawBoard(lastBoard); K.say("This week"); });
   $("seg-all").addEventListener("click", function () { boardMode = "all"; if (lastBoard) drawBoard(lastBoard); K.say("All time"); });
 
   // Keep the star chip in step with the family scoreboard.
-  if (K.connected) K.leaderboard().then(function (res) { lastBoard = res; if (K.player()) $("star-count").textContent = K.stars(); });
+  // Pull roster, teddies and scores from the family server, then redraw.
+  function syncAll() {
+    var go = K.fetchState ? K.fetchState() : Promise.resolve(null);
+    return go.then(function () {
+      renderPlayers();
+      if (!$("home").hidden && K.player()) renderHome();
+      return refreshBoard();
+    });
+  }
 
   /* ---- Start ---- */
   renderPlayers();
   if (K.player()) { renderHome(); show("home"); } else show("who");
+  if (K.connected) syncAll(); else refreshBoard();
 
-  // Refresh stars when coming back from a lesson (iOS restores pages from cache).
-  window.addEventListener("pageshow", function () { if (K.player()) renderHome(); });
+  // Refresh when coming back from a lesson (iOS restores pages from cache) or reopening the app.
+  window.addEventListener("pageshow", function () { if (K.player()) renderHome(); if (K.connected) syncAll(); });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && K.connected) syncAll(); });
 
   // Offline support + automatic updates when installed on the home screen.
   if ("serviceWorker" in navigator && location.protocol === "https:") {
