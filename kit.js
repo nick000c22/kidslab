@@ -16,31 +16,60 @@
   }
 
   var cfg = window.KIDSLAB_CONFIG || { players: [], lessons: [] };
+  cfg._basePlayers = (cfg.players || []).slice();
 
   // Friendly voice for non-readers. Prefers NZ, then GB/AU English.
   var voice = null;
+  // Voices: girls get a warm female voice, boys a friendly male one. iPads name their voices,
+  // so we pick by name, preferring the higher-quality "Enhanced"/"Premium" versions when installed.
+  var FEMALE = ["Karen", "Kate", "Serena", "Martha", "Catherine", "Moira", "Tessa", "Fiona", "Samantha", "Allison", "Ava", "Susan", "Zoe", "Nicky", "Victoria", "Google UK English Female", "Female"];
+  var MALE = ["Daniel", "Arthur", "Lee", "Gordon", "Oliver", "Aaron", "Rishi", "Fred", "Tom", "Alex", "Google UK English Male", "Male"];
+  var voices = { female: null, male: null, any: null };
+  function rank(v, names) {
+    var nm = v.name || "", lang = (v.lang || "").replace("_", "-"), i = -1;
+    for (var k = 0; k < names.length; k++) if (nm.indexOf(names[k]) !== -1) { i = k; break; }
+    if (i === -1 || lang.indexOf("en") !== 0) return -1;
+    var score = 100 - i;
+    if (/Enhanced|Premium|Neural/i.test(nm)) score += 200;
+    if (lang === "en-NZ" || lang === "en-AU") score += 40; else if (lang === "en-GB") score += 30;
+    return score;
+  }
   function pickVoice() {
     if (!("speechSynthesis" in window)) return;
     var vs = speechSynthesis.getVoices();
+    ["female", "male"].forEach(function (g) {
+      var best = null, bs = -1, names = g === "female" ? FEMALE : MALE;
+      vs.forEach(function (v) { var r = rank(v, names); if (r > bs) { bs = r; best = v; } });
+      voices[g] = best;
+    });
     var order = ["en-NZ", "en-GB", "en-AU", "en-US"];
-    for (var i = 0; i < order.length && !voice; i++) {
-      for (var j = 0; j < vs.length; j++) {
-        if (vs[j].lang.replace("_", "-") === order[i]) { voice = vs[j]; break; }
-      }
-    }
+    for (var i = 0; i < order.length && !voices.any; i++)
+      for (var j = 0; j < vs.length; j++) if (vs[j].lang.replace("_", "-") === order[i]) { voices.any = vs[j]; break; }
   }
   if ("speechSynthesis" in window) {
     pickVoice();
     speechSynthesis.onvoiceschanged = pickVoice;
+  }
+  // Girl or boy for the current kid: grown-ups page setting first, then config.js.
+  function gender(p) {
+    p = p || player();
+    if (!p) return null;
+    if (p.gender) return p.gender;
+    var base = (window.KIDSLAB_CONFIG && KIDSLAB_CONFIG._basePlayers || []).filter(function (x) { return x.id === p.id; })[0];
+    return base && base.gender || null;
   }
 
   function say(text) {
     if (!get("sound", true) || !("speechSynthesis" in window) || !text) return;
     try {
       speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(text);
-      if (voice) u.voice = voice;
-      u.rate = 0.95; u.pitch = 1.15;
+      var u = new SpeechSynthesisUtterance(text), g = gender();
+      var v = g === "girl" ? voices.female : g === "boy" ? voices.male : null;
+      v = v || voices.any;
+      if (v) { u.voice = v; u.lang = v.lang; }
+      if (g === "girl") { u.rate = 0.95; u.pitch = 1.1; }
+      else if (g === "boy") { u.rate = 0.95; u.pitch = 1.05; }
+      else { u.rate = 0.95; u.pitch = 1.15; }
       speechSynthesis.speak(u);
     } catch (e) {}
   }
@@ -301,7 +330,7 @@
     config: cfg, get: get, set: set, say: say,
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
-    connected: !!URL_, progress: progress,
+    connected: !!URL_, progress: progress, gender: gender,
     fetchState: fetchState, serverPet: serverPet, grapes: grapes, addGrapes: addGrapes, markDone: markDone, isDone: isDone, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };

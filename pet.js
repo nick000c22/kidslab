@@ -117,7 +117,7 @@
       '<ellipse cx="100" cy="178" rx="52" ry="47" fill="' + fur + '"' + outline + '/>' +
       '<ellipse cx="100" cy="184" rx="32" ry="30" fill="' + F.light + '"/>' +
       '<text x="100" y="186" text-anchor="middle" dominant-baseline="central" font-family="Baloo 2, Arial Rounded MT Bold, sans-serif" font-weight="800" font-size="36" fill="#6E44A8">' + belly + "</text>" +
-      item("feet") + item("neck") +
+      item("body") + item("feet") + item("neck") +
       '<g class="arm-r"><ellipse cx="148" cy="168" rx="15" ry="28" fill="' + F.dark + '" transform="rotate(-22 148 168)"/>' + item("hand") + "</g>" +
       "<g" + head + ">" +
       '<circle cx="56" cy="50" r="22" fill="' + fur + '"' + outline + '/><circle cx="56" cy="50" r="11" fill="' + F.light + '"/>' +
@@ -579,14 +579,19 @@
         var h = document.createElement("h3"); h.className = "ward-h"; h.textContent = title; list.appendChild(h);
         var g = document.createElement("div"); g.className = "wardrobe"; tiles.forEach(function (t) { g.appendChild(t); }); list.appendChild(g);
       }
+      function tile(it) {
+        var mine = has(it, stars, st), t = { kind: "item", it: it };
+        var b = itemTile(it, mine ? "✓ Yours" : "🍇 " + it.price, (mine ? "mine" : have >= it.price ? "afford" : "dear") + (trying && trying.it === it ? " trying" : ""));
+        b.addEventListener("click", function () { tryOn(t); });
+        return b;
+      }
+      function byPrice(a, b) { return a.price - b.price; }
+      // This kid's style first (sparkle & princess for girls, action & adventure for boys), then everything by body part.
+      var g = K.gender ? K.gender(p) : null;
+      if (g) section(g === "girl" ? "✨ Picked for you: sparkle and princess" : "⚡ Picked for you: action and adventure",
+        SHOP.filter(function (it) { return it.style === g; }).sort(byPrice).map(tile));
       T.SLOTS.forEach(function (slot) {
-        var tiles = SHOP.filter(function (it) { return it.slot === slot.id; }).sort(function (a, b) { return a.price - b.price; }).map(function (it) {
-          var mine = has(it, stars, st), t = { kind: "item", it: it };
-          var b = itemTile(it, mine ? "✓ Yours" : "🍇 " + it.price, (mine ? "mine" : have >= it.price ? "afford" : "dear") + (trying && trying.it === it ? " trying" : ""));
-          b.addEventListener("click", function () { tryOn(t); });
-          return b;
-        });
-        section(slot.name, tiles);
+        section(slot.name, SHOP.filter(function (it) { return it.slot === slot.id && (!g || it.style !== g); }).sort(byPrice).map(tile));
       });
       section("Special fur", SHOP_FURS.map(function (k) {
         var mine = hasFur(k, st), t = { kind: "fur", key: k };

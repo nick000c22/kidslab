@@ -15,14 +15,15 @@ window.KIDSLAB_CONFIG = {
   //   id:    lowercase, no spaces, must be unique and NEVER change (stars are saved against it)
   //   emoji: any emoji as their picture
   //   color: grape | leaf | sun | sky | berry | tang
-  // Example: { id: "sam", name: "Sam", emoji: "🦁", color: "sun" },
+  //   gender: "girl" (female voice, sparkle items first) or "boy" (male voice, action items first)
+  // Example: { id: "sam", name: "Sam", emoji: "🦁", color: "sun", gender: "boy" },
   players: [
-    { id: "jack",  name: "Jack",  emoji: "🦖", color: "leaf"  },
-    { id: "alice", name: "Alice", emoji: "🦄", color: "berry" },
-    { id: "ella",  name: "Ella",  emoji: "🐬", color: "sky"   },
-    { id: "will",  name: "Will",  emoji: "🦁", color: "sun"   },
-    { id: "sophie",name: "Sophie",emoji: "🦊", color: "tang"  },
-    { id: "lucy",  name: "Lucy",  emoji: "🐧", color: "grape" }
+    { id: "jack",  name: "Jack",  emoji: "🦖", color: "leaf", gender: "boy" },
+    { id: "alice", name: "Alice", emoji: "🦄", color: "berry", gender: "girl" },
+    { id: "ella",  name: "Ella",  emoji: "🐬", color: "sky", gender: "girl" },
+    { id: "will",  name: "Will",  emoji: "🦁", color: "sun", gender: "boy" },
+    { id: "sophie",name: "Sophie",emoji: "🦊", color: "tang", gender: "girl" },
+    { id: "lucy",  name: "Lucy",  emoji: "🐧", color: "grape", gender: "girl" }
   ],
 
   // Lessons appear on the home screen in this order, grouped by section.

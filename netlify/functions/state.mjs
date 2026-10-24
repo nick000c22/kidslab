@@ -23,7 +23,8 @@ function cleanPlayer(p) {
     emoji: String(p.emoji || "🙂").slice(0, 8),
     color: COLORS.includes(p.color) ? p.color : "grape",
     age: p.age === "" || p.age == null ? null : Math.max(0, Math.min(99, Number(p.age) || 0)),
-    hidden: !!p.hidden
+    hidden: !!p.hidden,
+    gender: p.gender === "girl" || p.gender === "boy" ? p.gender : null
   };
 }
 

@@ -114,23 +114,23 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
         <thead>
           <tr class="groups">
             <th class="sticky g-kid"></th>
-            <th class="g-kid" colspan="4">Kid</th>
+            <th class="g-kid" colspan="5">Kid</th>
             <th class="g-score" colspan="3">Scores</th>
-            <th class="g-teddy" colspan="20">Math Teddy</th>
+            <th class="g-teddy" colspan="21">Math Teddy</th>
           </tr>
           <tr>
             <th class="sticky">Kid</th>
-            <th>Name</th><th>Picture</th><th>Colour</th><th>Age</th>
+            <th>Name</th><th>Picture</th><th>Colour</th><th>Age</th><th>Girl / boy</th>
             <th>Stars</th><th>This week</th><th>Tests</th>
             <th></th><th>Hatched</th><th>Teddy name</th><th>Fur</th><th>Badge</th>
-            <th>Hat</th><th>Face</th><th>Neck</th><th>Back</th><th>Paw</th><th>Feet</th><th>Everything free</th><th>Bought</th>
+            <th>Hat</th><th>Face</th><th>Neck</th><th>Outfit</th><th>Back</th><th>Paw</th><th>Feet</th><th>Everything free</th><th>Bought</th>
             <th>Grapes</th><th>Tummy</th><th>Happy</th><th>Weight kg</th><th>Eaten</th><th>Hatch date</th><th>Asleep</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
-    <p class="hint">Grapes are earned 5 at a time by finishing the prime test, and spent on feeding and the shop. Hover "Bought" to see what a kid owns. "Everything free" lets that teddy wear every item and fur without buying. Hidden kids (untick "Show" in the Kid column) disappear from the iPads but keep their scores and teddy. Untick "Hatched" to turn a teddy back into an egg. Tummy and Happy are hearts out of 4.</p>
+    <p class="hint">"Girl / boy" sets the voice (female or male) and which shop items show first. Grapes are earned 5 at a time by finishing the prime test, and spent on feeding and the shop. Hover "Bought" to see what a kid owns. "Everything free" lets that teddy wear every item and fur without buying. Hidden kids (untick "Show" in the Kid column) disappear from the iPads but keep their scores and teddy. Untick "Hatched" to turn a teddy back into an egg. Tummy and Happy are hearts out of 4.</p>
 
     <div class="add">
       <strong>Add a kid:</strong>
@@ -216,7 +216,8 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
         if (sp) for (var k in sp) if (sp[k] != null) pet[k] = sp[k];
         if (!pet.wear || typeof pet.wear !== "object") pet.wear = {};
         var sc = (res.scores || {})[p.id] || { stars: 0, week: 0, tests: 0 };
-        return { p: { id: p.id, name: p.name, emoji: p.emoji, color: p.color, age: p.age == null ? "" : p.age, hidden: !!p.hidden },
+        var base = (window.KIDSLAB_CONFIG._basePlayers || []).filter(function (x) { return x.id === p.id; })[0] || {};
+        return { p: { id: p.id, name: p.name, emoji: p.emoji, color: p.color, age: p.age == null ? "" : p.age, hidden: !!p.hidden, gender: p.gender || base.gender || null },
           pet: pet, sc: { stars: sc.stars, week: sc.week, tests: sc.tests },
           dirty: { kid: !(res.roster && res.roster.length), pet: false, sc: false } };
       });
@@ -273,6 +274,7 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       tr.appendChild(td(txt(r.p.emoji, "w-emoji", function (v) { r.p.emoji = v; kc.querySelector(".em").textContent = v; mark("kid"); }, 8)));
       tr.appendChild(td(sel(COLORS.map(function (c) { return [c, COLOR_NAMES[c]]; }), r.p.color, function (v) { r.p.color = v; mark("kid"); })));
       var age = num(r.p.age, function (v) { r.p.age = v; mark("kid"); }); age.className = "w-age"; tr.appendChild(td(age));
+      tr.appendChild(td(sel([["", "Not set"], ["girl", "Girl"], ["boy", "Boy"]], r.p.gender || "", function (v) { r.p.gender = v || null; mark("kid"); })));
 
       // Scores
       tr.appendChild(td(num(r.sc.stars, function (v) { r.sc.stars = v; mark("sc"); })));
