@@ -182,6 +182,27 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   font-family: var(--body); font-weight: 800; font-size: .85rem; border-radius: 999px; padding: 2px 10px; animation: tagpulse 1.4s ease-in-out infinite; }
 @keyframes tagpulse { 0%, 100% { transform: translateX(-50%); } 50% { transform: translateX(-50%) scale(1.08); } }
 @media (prefers-reduced-motion: reduce) { .practise-tag { animation: none; } }
+/* strongest bears */
+.bear-board { width: min(820px, 100%); margin: 6px auto 20px; background: var(--card); border-radius: 24px; padding: 14px 16px; box-shadow: 0 6px 0 var(--shadow); }
+.bear-board h2 { font-family: var(--display); font-weight: 800; font-size: 1.35rem; margin: 0 0 8px; }
+.bb-list { display: flex; flex-direction: column; gap: 6px; }
+.bb-row { display: grid; grid-template-columns: 34px 44px minmax(90px, 1.1fr) minmax(90px, 1fr) 240px 64px; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 16px; background: var(--bg); }
+.bb-row.champ { box-shadow: inset 0 0 0 3px var(--sun); }
+.bb-rank { font-family: var(--display); font-weight: 800; font-size: 1.4rem; text-align: center; color: var(--muted); }
+.bb-bear { width: 44px; height: 56px; } .bb-bear svg { width: 100%; height: 100%; overflow: visible; }
+.bb-who { display: flex; flex-direction: column; min-width: 0; }
+.bb-who b { font-family: var(--display); font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bb-who small { color: var(--muted); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bb-power { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.bb-power b { font-size: .9rem; font-variant-numeric: tabular-nums; }
+.bb-bar { height: 10px; border-radius: 5px; background: var(--bg-2); overflow: hidden; }
+.bb-bar span { display: block; height: 100%; border-radius: 0 5px 5px 0; background: var(--berry); }
+.bb-stats { display: flex; gap: 8px; font-size: .85rem; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bb-wl { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 640px) {
+  .bb-row { grid-template-columns: 30px 40px minmax(0, 1fr) auto; }
+  .bb-stats { grid-column: 3 / -1; } .bb-power { grid-column: 3 / -1; grid-row: 2; } .bb-stats { grid-row: 3; }
+}
 .lesson-num {
   position: absolute; top: 12px; left: 14px; font-family: var(--display); font-size: 1.1rem; opacity: .8; text-shadow: none;
 }
@@ -306,6 +327,10 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     <p>Tap your picture</p>
   </div>
   <div class="players" id="players"></div>
+  <section class="bear-board" id="bear-board" aria-label="Strongest bears" hidden>
+    <h2>💪 Strongest bears</h2>
+    <div class="bb-list" id="bb-list"></div>
+  </section>
 </section>
 
 <!-- LESSONS -->
@@ -406,7 +431,39 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   }
 
   /* ---- Who's playing ---- */
+  // Strongest bears: every hatched teddy ranked by gym Power, with quick stats and battle record.
+  function renderBearBoard() {
+    if (!window.KidsPet || !window.KidsGym) return;
+    var log = K.get("battles", []), seen = {}, rec = {};
+    log.forEach(function (b) { if (seen[b.id]) return; seen[b.id] = 1; [b.a, b.b].forEach(function (id) { rec[id] = rec[id] || { w: 0, l: 0 }; if (b.winner === id) rec[id].w++; else rec[id].l++; }); });
+    var bears = K.visiblePlayers().map(function (p) { var pet = KidsPet.load(p.id); return { p: p, pet: pet, power: KidsGym.total(pet.fit), stars: K.stars(p.id) }; })
+      .filter(function (x) { return x.pet.hatched; })
+      .sort(function (a, b) { return b.power - a.power || (rec[b.p.id] || { w: 0 }).w - (rec[a.p.id] || { w: 0 }).w; });
+    var box = $("bb-list"); box.innerHTML = "";
+    $("bear-board").hidden = !bears.length;
+    var medals = ["🥇", "🥈", "🥉"], top = bears.length ? bears[0].power || 1 : 1;
+    bears.forEach(function (x, i) {
+      var r = rec[x.p.id] || { w: 0, l: 0 }, f = x.pet.fit;
+      var row = document.createElement("div"); row.className = "bb-row" + (i === 0 && x.power > 0 ? " champ" : "");
+      row.innerHTML = '<span class="bb-rank"></span><span class="bb-bear"></span><span class="bb-who"><b></b><small></small></span>' +
+        '<span class="bb-power"><span class="bb-bar"><span></span></span><b></b></span>' +
+        '<span class="bb-stats"></span><span class="bb-wl"></span>';
+      row.querySelector(".bb-rank").textContent = i < 3 && x.power > 0 ? medals[i] : String(i + 1);
+      row.querySelector(".bb-bear").innerHTML = KidsPet.teddySVG(Math.max(1, KidsPet.stageFor(x.stars)), x.pet);
+      row.querySelector(".bb-who b").textContent = x.pet.name || "Teddy";
+      row.querySelector(".bb-who small").textContent = x.p.emoji + " " + x.p.name;
+      row.querySelector(".bb-bar span").style.width = Math.max(3, x.power / top * 100) + "%";
+      row.querySelector(".bb-power b").textContent = x.power + " power";
+      var st = row.querySelector(".bb-stats");
+      [["💪", f.str], ["❤️", f.end], ["⚡", f.spd], ["🧠", f.brn]].forEach(function (s2) { var c = document.createElement("span"); c.textContent = s2[0] + " " + (s2[1] || 0); st.appendChild(c); });
+      row.querySelector(".bb-wl").textContent = "🏆 " + r.w + "–" + r.l;
+      row.setAttribute("aria-label", (x.pet.name || "Teddy") + ", " + x.p.name + "'s bear: " + x.power + " power, " + r.w + " wins, " + r.l + " losses");
+      box.appendChild(row);
+    });
+  }
+
   function renderPlayers() {
+    setTimeout(renderBearBoard, 0);
     var wrap = $("players"); wrap.innerHTML = "";
     var list = K.visiblePlayers();
     wrap.classList.toggle("many", list.length > 4);
