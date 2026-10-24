@@ -151,6 +151,11 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 .subjects .emoji { font-size: clamp(80px, 13vw, 120px); }
 .subjects .label { font-size: clamp(1.8rem, 4vw, 2.6rem); }
 .subject-meta { font-family: var(--body); font-weight: 800; font-size: 1.05rem; text-shadow: none; background: rgba(0,0,0,.18); border-radius: 999px; padding: 3px 14px; }
+.folders { display: grid; gap: clamp(16px, 2.6vw, 26px); grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); margin-bottom: 20px; }
+.folders .block { min-height: clamp(190px, 26vw, 250px); }
+.folders .emoji { font-size: clamp(70px, 11vw, 100px); }
+.folders .label { font-size: clamp(1.7rem, 3.6vw, 2.3rem); }
+.folder-note { font-family: var(--body); font-weight: 700; font-size: .9rem; text-shadow: none; opacity: .92; }
 .subject-head { display: flex; align-items: center; gap: 14px; margin: 0 0 8px; }
 .subject-title { font-family: var(--display); font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0; }
 .lesson-grid {
@@ -409,7 +414,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       b.addEventListener("click", function () {
         K.setPlayer(p.id);
         try { sessionStorage.setItem("kidslab.visit", "1"); } catch (e) {}
-        subjectId = null; try { sessionStorage.removeItem("kidslab.subject"); } catch (e) {}
+        subjectId = null; folderId = null; try { sessionStorage.removeItem("kidslab.subject"); sessionStorage.removeItem("kidslab.folder"); } catch (e) {}
         if (window.KidsPet) KidsPet.arrive(p.id);
         K.say("Hi " + p.name + "!");
         renderHome();
@@ -425,7 +430,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   var subjectId = null;
   try { subjectId = sessionStorage.getItem("kidslab.subject"); } catch (e) {}
   function currentSubject() { return subjects().filter(function (s) { return s.id === subjectId; })[0] || null; }
-  function setSubject(id) { subjectId = id; try { if (id) sessionStorage.setItem("kidslab.subject", id); else sessionStorage.removeItem("kidslab.subject"); } catch (e) {} renderHome(); window.scrollTo(0, 0); }
+  function setSubject(id) { subjectId = id; folderId = null; try { sessionStorage.removeItem("kidslab.folder"); } catch (e) {} try { if (id) sessionStorage.setItem("kidslab.subject", id); else sessionStorage.removeItem("kidslab.subject"); } catch (e) {} renderHome(); window.scrollTo(0, 0); }
   function renderSubjects(p) {
     var wrap = $("subjects"); wrap.innerHTML = "";
     subjects().forEach(function (sub, i) {
@@ -441,7 +446,13 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       wrap.appendChild(b);
     });
   }
-  $("subject-back").addEventListener("click", function () { K.say("Pick a subject"); setSubject(null); });
+  var folderId = null;
+  try { folderId = sessionStorage.getItem("kidslab.folder"); } catch (e) {}
+  function setFolder(id) { folderId = id; try { if (id) sessionStorage.setItem("kidslab.folder", id); else sessionStorage.removeItem("kidslab.folder"); } catch (e) {} renderHome(); window.scrollTo(0, 0); }
+  $("subject-back").addEventListener("click", function () {
+    if (folderId) { K.say(currentSubject() ? currentSubject().title : "Back"); setFolder(null); }
+    else { K.say("Pick a subject"); setSubject(null); }
+  });
 
   function lessonsFor(pid) {
     return C.lessons.filter(function (l) { return !l.players || l.players.indexOf(pid) !== -1; });
@@ -457,33 +468,49 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     var subj = currentSubject();
     $("subjects").hidden = !!subj; $("subject-view").hidden = !subj;
     if (!subj) return;
-    $("subject-title").textContent = subj.emoji + " " + subj.title;
-
     var wrap = $("lessons"); wrap.innerHTML = "";
-    var list = lessonsFor(p.id).filter(function (l) { return (l.subject || "maths") === subj.id; });
-    if (!list.length) {
+    var all = lessonsFor(p.id).filter(function (l) { return (l.subject || "maths") === subj.id; });
+    if (!all.length) {
+      $("subject-title").textContent = subj.emoji + " " + subj.title;
       wrap.innerHTML = '<p class="empty">No ' + subj.title.toLowerCase() + ' lessons yet. New ones will pop up here soon!</p>';
       return;
     }
-    // Group into sections (Basics, Concepts…), each with its own heading and grid.
     var order = (subj.sections || []).slice();
-    list.forEach(function (l) { var sec = l.section || "Games"; if (order.indexOf(sec) === -1) order.push(sec); });
+    all.forEach(function (l) { var sec = l.section || "Games"; if (order.indexOf(sec) === -1) order.push(sec); });
+    order = order.filter(function (sec) { return all.some(function (l) { return (l.section || "Games") === sec; }); });
+
+    // Folder picker: one big tile per folder that has lessons for this kid.
+    var folder = folderId && order.indexOf(folderId) !== -1 ? folderId : null;
+    if (!folder) {
+      $("subject-title").textContent = subj.emoji + " " + subj.title;
+      var fg = document.createElement("div"); fg.className = "folders"; wrap.appendChild(fg);
+      order.forEach(function (sec, i) {
+        var F = (C.folders || {})[sec] || {}, inF = all.filter(function (l) { return (l.section || "Games") === sec && l.status === "ready"; });
+        var done = inF.filter(function (l) { return K.isDone && K.isDone(l.id, p.id); }).length;
+        var b = block({ emoji: F.emoji || "📁", label: sec, color: F.color || "grape" });
+        b.classList.add("folder"); b.style.animationDelay = (i * 70) + "ms";
+        var meta = document.createElement("span"); meta.className = "subject-meta"; meta.textContent = done + " of " + inF.length + " done"; b.appendChild(meta);
+        if (F.note) { var nt = document.createElement("span"); nt.className = "folder-note"; nt.textContent = F.note; b.appendChild(nt); }
+        b.addEventListener("click", function () { K.say(sec + "!"); setFolder(sec); });
+        fg.appendChild(b);
+      });
+      return;
+    }
+    var FF = (C.folders || {})[folder] || {};
+    $("subject-title").textContent = (FF.emoji || "📁") + " " + subj.title + ": " + folder;
+    var list = all.filter(function (l) { return (l.section || "Games") === folder; });
     var grids = {};
-    order.forEach(function (sec) {
-      if (!list.some(function (l) { return (l.section || "Games") === sec; })) return;
-      var h = document.createElement("h2"); h.className = "section-title"; h.textContent = sec; wrap.appendChild(h);
-      var g = document.createElement("div"); g.className = "lesson-grid"; wrap.appendChild(g); grids[sec] = g;
-    });
+    var g0 = document.createElement("div"); g0.className = "lesson-grid"; wrap.appendChild(g0); grids[folder] = g0;
     list.forEach(function (l, i) {
       var soon = l.status !== "ready";
       var b = block({ emoji: l.emoji, label: l.title, color: l.color, locked: soon, badge: soon ? "Soon" : "" });
       if (!soon && K.isDone && K.isDone(l.id, p.id)) {
         var tick = document.createElement("span"); tick.className = "tick"; tick.textContent = "✓"; tick.setAttribute("aria-label", "Quiz done"); b.appendChild(tick);
       }
-      if (l.section === "Basics" || !l.section) {
+      if (folder === "Basics") {
         var num = document.createElement("span"); num.className = "lesson-num"; num.textContent = list.filter(function (x) { return x.section === l.section; }).indexOf(l) + 1; b.appendChild(num);
       }
-      b.style.animationDelay = (i * 60) + "ms";
+      b.style.animationDelay = (Math.min(i, 8) * 50) + "ms";
       b.addEventListener("click", function () {
         if (soon) {
           b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");

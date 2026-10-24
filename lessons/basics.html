@@ -123,6 +123,43 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 .cmp { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .cmp .num { font-family: var(--display); font-weight: 800; font-size: 3rem; line-height: 1; }
 
+/* multi-part lessons */
+.parts { width: min(860px, 100%); display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); margin-top: 6px; }
+.parts .block { min-height: 130px; font-size: 1.35rem; text-wrap: balance; }
+.parts .p-emoji { font-size: 44px; line-height: 1; text-shadow: none; }
+.parts .p-sub { font-family: var(--body); font-size: .9rem; text-shadow: none; opacity: .92; }
+/* text answers */
+.choices.long { grid-template-columns: 1fr; width: min(640px, 100%); }
+.choices.long .block { font-size: clamp(1.25rem, 3.2vw, 1.7rem); min-height: 70px; padding: 12px 18px; text-wrap: balance; }
+.choices.wordy .block { font-size: clamp(1.4rem, 4vw, 2rem); }
+/* keypad for writing numbers */
+.choices.pad-mode { display: flex; justify-content: center; }
+.pad { width: min(420px, 100%); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.pad-show { width: 100%; min-height: 88px; border-radius: 22px; background: var(--card); box-shadow: inset 0 0 0 4px var(--sun);
+  font-family: var(--display); font-weight: 800; font-size: 3.4rem; display: grid; place-items: center; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.pad-show.empty { color: var(--muted); font-size: 1.4rem; letter-spacing: 0; }
+.pad-keys { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pad-keys button { border: 0; border-radius: 18px; min-height: 70px; background: var(--card); box-shadow: 0 6px 0 var(--shadow);
+  font-family: var(--display); font-weight: 800; font-size: 2.2rem; color: var(--ink); }
+.pad-keys button:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--shadow); }
+.pad-keys .k-del { color: var(--berry); font-size: 1.6rem; }
+.pad-keys .k-ok { background: var(--leaf); color: #fff; font-size: 1.6rem; }
+/* hundreds, tens and ones */
+.hun { display: grid; grid-template-columns: repeat(10, 7px); gap: 2px; padding: 5px; border-radius: 8px; background: var(--grape); }
+.hun span { width: 7px; height: 7px; border-radius: 2px; background: #fff; opacity: .85; }
+.blocks { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; justify-content: center; }
+.blocks .tens .ten { grid-template-rows: repeat(10, 9px); gap: 2px; padding: 4px; border-radius: 8px; }
+.blocks .tens .ten span { width: 9px; height: 9px; }
+.blocks .hgroup { display: flex; flex-wrap: wrap; gap: 6px; max-width: 300px; justify-content: center; }
+.strip { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.strip span { min-width: 110px; height: 90px; padding: 0 10px; border-radius: 20px; background: var(--bg-2); display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 2.6rem; font-variant-numeric: tabular-nums; }
+.strip span.gap { background: transparent; box-shadow: inset 0 0 0 5px var(--sun); color: var(--sun); }
+.strip span.me { background: var(--grape); color: #fff; }
+.strip .arrow { min-width: 0; background: none; font-size: 1.8rem; color: var(--muted); padding: 0; }
+.bignum { font-family: var(--display); font-weight: 800; font-size: clamp(4rem, 14vw, 7rem); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.words { font-family: var(--display); font-weight: 700; font-size: clamp(1.6rem, 4.6vw, 2.4rem); text-align: center; text-wrap: balance; max-width: 26ch; }
+
 /* overlays */
 .overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(10, 12, 30, .5);
   padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -154,9 +191,10 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     <p id="m-intro"></p>
     <span class="done-tag" id="m-done" hidden>✓ Quiz done</span>
   </div>
+  <div class="parts" id="parts" hidden></div>
   <div class="modes">
     <button class="block mode c-sky" type="button" id="go-practice"><span class="m-emoji">🎯</span><span>Practice</span><span class="m-sub">As many as you like. 1 ⭐ each</span></button>
-    <button class="block mode c-sun" type="button" id="go-quiz"><span class="m-emoji">📝🎡</span><span>Take the quiz</span><span class="m-sub">Get 5 right: 🍇 5 grapes for your teddy!</span></button>
+    <button class="block mode c-sun" type="button" id="go-quiz"><span class="m-emoji">📝🎡</span><span>Take the quiz</span><span class="m-sub" id="quiz-sub">Get 5 right: 🍇 5 grapes for your teddy!</span></button>
   </div>
 </section>
 
@@ -178,7 +216,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     <h2 id="r-title">Quiz complete!</h2>
     <div class="grape-gain">+ 🍇 5 grapes</div>
     <p class="fine" id="r-text"></p>
-    <div class="rowb"><button class="block c-leaf" type="button" id="r-ok">Yay! ▶</button></div>
+    <div class="rowb"><button class="block c-sun" type="button" id="r-spin" hidden>🎡 Spin!</button><button class="block c-leaf" type="button" id="r-ok">Yay! ▶</button></div>
   </div>
 </div>
 
@@ -358,7 +396,250 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
           after: function (v) { addShareButton(v, total, k); } };
       }
     }
+,
+    /* ===== Basics 11-20 ===== */
+    add20: {
+      title: "Adding to 20", emoji: "🔢", color: "sky", intro: "Bigger sums! Make 10 first, then add the rest.",
+      gen: function (quiz) {
+        var total = rnd(11, quiz ? 20 : 16), a = rnd(Math.max(1, total - 10), Math.min(10, total - 1)), b = total - a;
+        var vis = '<div class="group small" style="max-width:260px">' + grapes(a) + '</div><div class="op">+</div><div class="group small" style="max-width:260px">' + grapes(b, "green") + "</div>";
+        return { prompt: "How many altogether?", sum: a + " + " + b + " = ?", visual: vis, answer: total, choices: options(total, 4, 5, 20),
+          explain: a + " + " + (10 - a) + " makes 10, and " + (b - (10 - a)) + " more makes " + total + "." };
+      }
+    },
+    sub20: {
+      title: "Taking Away to 20", emoji: "🦖", color: "berry", intro: "Dino is hungry! How many grapes are left?",
+      gen: function (quiz) {
+        var a = rnd(11, quiz ? 20 : 15), b = rnd(quiz ? 3 : 1, quiz ? a - 1 : 9), left = a - b;
+        var vis = '<div class="row" style="max-width:600px">' + grapes(left, "small-g") + grapes(b, "eaten") + "</div>";
+        return { prompt: "Dino ate " + b + ". How many are left?", sum: a + " − " + b + " = ?", visual: vis, answer: left, choices: options(left, 4, 0, 20),
+          explain: a + " take away " + b + " leaves " + left + ". Check: " + left + " + " + b + " = " + a + "." };
+      }
+    },
+    oddeven: {
+      title: "Odd or Even", emoji: "🧦", color: "leaf", intro: "Pair them up like socks. If one is left on its own, the number is odd.",
+      gen: function (quiz) {
+        var n = rnd(1, quiz ? 30 : 16), even = n % 2 === 0, vis = '<div class="array" style="grid-template-columns:repeat(2, 32px)">';
+        for (var i = 0; i < n; i++) vis += '<span class="g' + (!even && i === n - 1 ? " green" : "") + '"></span>';
+        vis += '</div><div class="vlabel">' + n + "</div>";
+        return { prompt: "Is " + n + " odd or even?", visual: quiz && n > 16 ? '<div class="bignum">' + n + "</div>" : vis, answer: even ? "Even" : "Odd", choices: ["Odd", "Even"],
+          explain: even ? n + " makes " + n / 2 + " pairs with none left over. It's even!" : n + " makes " + (n - 1) / 2 + " pairs and 1 left over. It's odd!" + (quiz && n > 16 ? " Look at the last digit: " + (n % 10) + "." : "") };
+      }
+    },
+    beforeafter: {
+      title: "Before and After", emoji: "🚂", color: "tang", intro: "Which number comes just before, or just after?",
+      gen: function (quiz) {
+        var n = rnd(2, quiz ? 99 : 30), after = Math.random() < .5;
+        if (quiz && Math.random() < .4) n = pickOne([19, 20, 29, 30, 39, 40, 49, 50, 59, 60, 69, 70, 79, 80, 89, 90]);
+        var ans = after ? n + 1 : n - 1;
+        var vis = '<div class="strip">' + (after ? "<span class=\"me\">" + n + '</span><span class="arrow">➜</span><span class="gap">?</span>' : '<span class="gap">?</span><span class="arrow">➜</span><span class="me">' + n + "</span>") + "</div>";
+        return { prompt: "What comes just " + (after ? "after " : "before ") + n + "?", visual: vis, answer: ans,
+          choices: shuffle([ans, after ? n - 1 : n + 1, ans + (after ? 10 : -10) > 0 ? ans + (after ? 10 : -10) : ans + 2, n]).filter(function (v, i, a) { return a.indexOf(v) === i; }).sort(function (a, b) { return a - b; }),
+          explain: (after ? n + " then " + ans : ans + " then " + n) + ". " + (after ? "One more than " + n + " is " + ans + "." : "One less than " + n + " is " + ans + ".") };
+      }
+    },
+    addtens: {
+      title: "Adding Tens", emoji: "🚀", color: "grape", intro: "Adding tens is easy: only the tens change!",
+      gen: function (quiz) {
+        var t = rnd(1, 6), o = quiz ? rnd(0, 9) : 0, a = t * 10 + o, add = 10 * rnd(1, Math.min(3, 9 - t)), ans = a + add, vis = '<div class="tens">';
+        for (var i = 0; i < t; i++) { vis += '<div class="ten">'; for (var j = 0; j < 10; j++) vis += "<span></span>"; vis += "</div>"; }
+        for (var k = 0; k < add / 10; k++) { vis += '<div class="ten" style="background:var(--leaf)">'; for (var m = 0; m < 10; m++) vis += "<span></span>"; vis += "</div>"; }
+        vis += '</div><div class="ones">'; for (var q = 0; q < o; q++) vis += '<span class="one"></span>'; vis += "</div>";
+        return { prompt: "What is " + a + " + " + add + "?", sum: a + " + " + add + " = ?", visual: vis, answer: ans, choices: options(ans, 4, 10, 99, 10).concat([]).filter(function (v) { return v > 0; }),
+          explain: a + " has " + t + " tens. Add " + add / 10 + " more " + (add === 10 ? "ten" : "tens") + " and you get " + ans + "." };
+      }
+    },
+    clock: {
+      title: "Telling the Time", emoji: "⏰", color: "sky", intro: "The short hand shows the hour. The long hand shows the minutes.",
+      gen: function (quiz) {
+        var h = rnd(1, 12), kind = pickOne(quiz ? ["oclock", "half", "quarterpast", "quarterto"] : ["oclock", "oclock", "half"]);
+        var mins = { oclock: 0, half: 30, quarterpast: 15, quarterto: 45 }[kind];
+        var next = h % 12 + 1;
+        function label(k, hr) { var nx = hr % 12 + 1; return k === "oclock" ? hr + " o'clock" : k === "half" ? "half past " + hr : k === "quarterpast" ? "quarter past " + hr : "quarter to " + nx; }
+        var ans = label(kind, h);
+        var set = [ans, label(kind, next), label(kind === "half" ? "oclock" : "half", h), label(kind, h === 1 ? 12 : h - 1)];
+        if (kind === "quarterto") set[2] = "quarter past " + next;
+        set = set.filter(function (v, i, a) { return a.indexOf(v) === i; });
+        var hourAng = ((h % 12) + mins / 60) * 30, minAng = mins * 6, vis = '<svg viewBox="-110 -110 220 220" width="240" height="240" aria-hidden="true"><circle r="100" fill="#FFFFFF" stroke="#1E2240" stroke-width="6"/>';
+        for (var i = 1; i <= 12; i++) { var a = (i * 30 - 90) * Math.PI / 180; vis += '<text x="' + (78 * Math.cos(a)).toFixed(1) + '" y="' + (78 * Math.sin(a)).toFixed(1) + '" text-anchor="middle" dominant-baseline="central" font-family="Baloo 2, sans-serif" font-weight="800" font-size="20" fill="#1E2240">' + i + "</text>"; }
+        for (var t = 0; t < 60; t++) { var b = (t * 6 - 90) * Math.PI / 180, r1 = t % 5 ? 92 : 88; vis += '<line x1="' + (r1 * Math.cos(b)).toFixed(1) + '" y1="' + (r1 * Math.sin(b)).toFixed(1) + '" x2="' + (97 * Math.cos(b)).toFixed(1) + '" y2="' + (97 * Math.sin(b)).toFixed(1) + '" stroke="#1E2240" stroke-width="' + (t % 5 ? 1.5 : 3) + '"/>'; }
+        vis += '<line x1="0" y1="0" x2="0" y2="-48" stroke="#D4466F" stroke-width="10" stroke-linecap="round" transform="rotate(' + hourAng + ')"/>' +
+          '<line x1="0" y1="0" x2="0" y2="-80" stroke="#2F7FC6" stroke-width="6" stroke-linecap="round" transform="rotate(' + minAng + ')"/><circle r="7" fill="#1E2240"/></svg>';
+        return { prompt: "What time is it?", visual: vis, answer: ans, choices: shuffle(set),
+          explain: { oclock: "The long hand points to 12, so it's an o'clock time. The short hand points to " + h + ".", half: "The long hand points to 6, so it's half past. The short hand is just past " + h + ".", quarterpast: "The long hand points to 3, so it's quarter past " + h + ".", quarterto: "The long hand points to 9, so it's quarter to. The short hand is nearly at " + next + "." }[kind] };
+      }
+    },
+    money: {
+      title: "Counting Money", emoji: "💰", color: "sun", intro: "Add up the New Zealand coins. Start with the biggest!",
+      gen: function (quiz) {
+        var COINS = quiz ? [200, 100, 50, 20, 10] : [200, 100];
+        var n = rnd(2, quiz ? 5 : 4), coins = [];
+        for (var i = 0; i < n; i++) coins.push(pickOne(COINS));
+        coins.sort(function (a, b) { return b - a; });
+        var total = coins.reduce(function (s, c) { return s + c; }, 0);
+        function fmt(c) { return c % 100 ? "$" + (c / 100).toFixed(2) : "$" + c / 100; }
+        function coin(c) {
+          var gold = c >= 100, big = c === 200 || c === 50, size = big ? 74 : 62, label = c >= 100 ? "$" + c / 100 : c + "c";
+          var bg = gold ? "radial-gradient(circle at 35% 30%, #FFF0A8, #E2B23E 60%, #B58A1F)" : c === 10 ? "radial-gradient(circle at 35% 30%, #F6C9A0, #C9773C 60%, #8E4E22)" : "radial-gradient(circle at 35% 30%, #FFFFFF, #C9CED8 60%, #8E95A3)";
+          return '<span style="width:' + size + "px;height:" + size + "px;border-radius:50%;background:" + bg + ';display:grid;place-items:center;font-family:Baloo 2,sans-serif;font-weight:800;font-size:1.3rem;color:#3A2A10;box-shadow:0 4px 0 rgba(0,0,0,.25)">' + label + "</span>";
+        }
+        var vis = '<div class="row" style="gap:12px">' + coins.map(coin).join("") + "</div>";
+        var set = [total, total + (quiz ? 10 : 100), total - (quiz ? 10 : 100), total + (quiz ? 50 : 200)].filter(function (v) { return v > 0; });
+        set = set.filter(function (v, i, a) { return a.indexOf(v) === i; }).sort(function (a, b) { return a - b; });
+        return { prompt: "How much money is here?", visual: vis, answer: fmt(total), choices: set.map(fmt),
+          explain: "Count from the biggest coin: " + coins.map(function (c) { return c >= 100 ? "$" + c / 100 : c + "c"; }).join(" + ") + " = " + fmt(total) + "." };
+      }
+    },
+    shapes: {
+      title: "Shapes", emoji: "🔷", color: "leaf", intro: "Count the sides and corners. Shapes have names too!",
+      gen: function (quiz) {
+        var NAMES = { 3: "triangle", 4: pickOne(["square", "rectangle"]), 5: "pentagon", 6: "hexagon", 8: "octagon" };
+        var n = pickOne(quiz ? [3, 4, 5, 6, 8] : [3, 4, 5, 6]), name = NAMES[n], pts = [];
+        var rect = name === "rectangle";
+        if (rect) pts = [[-85, -50], [85, -50], [85, 50], [-85, 50]];
+        else for (var i = 0; i < n; i++) { var a = (i / n) * Math.PI * 2 - Math.PI / 2 + (n === 4 ? Math.PI / 4 : 0); pts.push([90 * Math.cos(a), 90 * Math.sin(a)]); }
+        var vis = '<svg viewBox="-110 -110 220 220" width="230" height="230" aria-hidden="true"><polygon points="' + pts.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ") +
+          '" fill="#8FD26A" stroke="#2F9358" stroke-width="6" stroke-linejoin="round"/>' + pts.map(function (p) { return '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="8" fill="#E9A21F"/>'; }).join("") + "</svg>";
+        var ask = pickOne(quiz ? ["sides", "corners", "name"] : ["sides", "corners"]);
+        if (ask === "name") {
+          var names = ["triangle", rect ? "rectangle" : "square", "pentagon", "hexagon", "octagon"];
+          var ch = shuffle([name].concat(shuffle(names.filter(function (x) { return x !== name; })).slice(0, 3)));
+          return { prompt: "What is this shape called?", visual: vis, answer: name, choices: ch, explain: "It has " + n + " sides, so it's a " + name + "." };
+        }
+        return { prompt: "How many " + ask + " does it have?", visual: vis, answer: n, choices: options(n, 4, 3, 10),
+          explain: "Count them around: " + n + " " + ask + ". It's a " + name + "!" };
+      }
+    },
+    fractions: {
+      title: "Halves and Quarters", emoji: "🍕", color: "tang", intro: "A fraction is part of a whole. Count the coloured slices out of all the slices.",
+      gen: function (quiz) {
+        var d = pickOne(quiz ? [2, 3, 4, 4] : [2, 4]), k = d === 4 ? pickOne([1, 3]) : d === 3 ? rnd(1, 2) : 1;
+        var vis = '<svg viewBox="-110 -110 220 220" width="230" height="230" aria-hidden="true">';
+        for (var i = 0; i < d; i++) {
+          var a0 = (i / d) * 2 * Math.PI - Math.PI / 2, a1 = ((i + 1) / d) * 2 * Math.PI - Math.PI / 2;
+          vis += '<path d="M0 0 L' + (100 * Math.cos(a0)).toFixed(1) + " " + (100 * Math.sin(a0)).toFixed(1) + " A100 100 0 0 1 " + (100 * Math.cos(a1)).toFixed(1) + " " + (100 * Math.sin(a1)).toFixed(1) + ' Z" fill="' + (i < k ? "#E9A21F" : "#FFF4DE") + '" stroke="#B57D45" stroke-width="5"/>';
+          if (i < k) vis += '<circle cx="' + (55 * Math.cos((a0 + a1) / 2)).toFixed(1) + '" cy="' + (55 * Math.sin((a0 + a1) / 2)).toFixed(1) + '" r="12" fill="#D4466F"/>';
+        }
+        vis += "</svg>";
+        var ans = k + "/" + d, pool = quiz ? ["1/2", "1/3", "2/3", "1/4", "3/4"] : ["1/2", "1/4", "3/4"];
+        var ch = shuffle([ans].concat(shuffle(pool.filter(function (x) { return x !== ans; })).slice(0, quiz ? 3 : 2)));
+        var word = { "1/2": "one half", "1/3": "one third", "2/3": "two thirds", "1/4": "one quarter", "3/4": "three quarters" }[ans];
+        return { prompt: "How much of the pizza is coloured?", visual: vis, answer: ans, choices: ch,
+          explain: k + " slice" + (k > 1 ? "s" : "") + " out of " + d + " is coloured. That's " + word + ", " + ans + "." };
+      }
+    },
+    story: {
+      title: "Story Sums", emoji: "📖", color: "grape", intro: "Listen to the story, then work out the answer.",
+      gen: function (quiz) {
+        var who = pickOne(["Teddy", "Dad", "Mum", "Grandma", "the farmer", "a pirate"]), thing = pickOne([["apples", "🍎"], ["eggs", "🥚"], ["shells", "🐚"], ["balloons", "🎈"], ["cookies", "🍪"]]);
+        var kind = pickOne(quiz ? ["add", "sub", "times", "share"] : ["add", "sub"]), a, b, ans, text, sum;
+        if (kind === "add") { a = rnd(2, quiz ? 12 : 8); b = rnd(2, quiz ? 8 : 6); ans = a + b; text = who + " has " + a + " " + thing[0] + " and finds " + b + " more. How many now?"; sum = a + " + " + b; }
+        if (kind === "sub") { a = rnd(6, quiz ? 18 : 12); b = rnd(1, a - 2); ans = a - b; text = who + " has " + a + " " + thing[0] + " and gives away " + b + ". How many are left?"; sum = a + " − " + b; }
+        if (kind === "times") { a = rnd(2, 5); b = rnd(2, 5); ans = a * b; text = who + " has " + a + " bags with " + b + " " + thing[0] + " in each bag. How many altogether?"; sum = a + " × " + b; }
+        if (kind === "share") { b = rnd(2, 4); ans = rnd(2, 5); a = b * ans; text = who + " shares " + a + " " + thing[0] + " between " + b + " friends. How many does each friend get?"; sum = a + " ÷ " + b; }
+        var vis = '<div class="row" style="font-size:2rem;max-width:560px;gap:4px">' + new Array((kind === "sub" || kind === "share" ? a : kind === "add" ? a : 0) + 1).join(thing[1]) + (kind === "add" ? '<span style="width:20px"></span>' + new Array(b + 1).join(thing[1]) : "") + "</div>";
+        if (kind === "times") { vis = ""; for (var i = 0; i < a; i++) vis += '<div class="group" style="font-size:1.6rem;padding:10px">🛍️ ' + new Array(b + 1).join(thing[1]) + "</div>"; }
+        return { prompt: text, visual: vis, answer: ans, choices: options(ans, 4, 0, 40), speak: text,
+          explain: "The sum is " + sum + " = " + ans + "." };
+      }
+    }
+,
+    /* ===== Special: Numbers to 1000 (read, write, sequence, before and after) ===== */
+    n1000: {
+      title: "Numbers to 1000", emoji: "🏰", color: "grape", quizN: 8,
+      intro: "Big numbers! Build them, read them, write them, and count forwards and backwards all the way to 1000.",
+      parts: [
+        { name: "Build it", emoji: "🧱", gen: function (quiz) {
+          var n = big(quiz), h = Math.floor(n / 100), t = Math.floor(n / 10) % 10, o = n % 10;
+          var ch = uniqueNums([n, o * 100 + t * 10 + h, h * 100 + o * 10 + t, t * 100 + h * 10 + o, h * 10 + t, n + 100, n - 10]).filter(function (v) { return v >= 1 && v <= 1000; });
+          ch = [n].concat(shuffle(ch.filter(function (v) { return v !== n; })).slice(0, 3)).sort(function (a, b) { return a - b; });
+          return { prompt: "What number have we built?", visual: blocksVis(n), answer: n, choices: ch,
+            explain: h + " hundreds, " + t + " tens and " + o + " ones makes " + n + ": " + words(n) + "." };
+        } },
+        { name: "Read it", emoji: "📖", gen: function (quiz) {
+          var n = big(quiz), h = Math.floor(n / 100), t = Math.floor(n / 10) % 10, o = n % 10;
+          var others = uniqueNums([h * 100 + o * 10 + t, o * 100 + t * 10 + h, t * 100 + h * 10 + o, n + 10, n - 100, n + 1]).filter(function (v) { return v >= 1 && v <= 1000 && v !== n; });
+          var ch = shuffle([words(n)].concat(shuffle(others).slice(0, 2).map(words)));
+          return { prompt: "How do we say this number?", visual: '<div class="bignum">' + n + "</div>", answer: words(n), choices: ch, speak: "How do we say this number?",
+            explain: n + " is " + words(n) + "." };
+        } },
+        { name: "Write it", emoji: "✏️", gen: function (quiz) {
+          var n = big(quiz), w = words(n);
+          return { prompt: "Write this number:", visual: '<div class="words">' + w + "</div>", answer: n, input: true, speak: "Write the number " + w,
+            hint: "Listen again: " + w + ". How many hundreds?", explain: w + " is written " + n + "." + (n < 1000 && n >= 100 && Math.floor(n / 10) % 10 === 0 ? " The 0 in the middle shows there are no tens." : n < 1000 && n % 10 === 0 ? " The 0 at the end shows there are no ones." : "") };
+        } },
+        { name: "Before and after", emoji: "↔️", gen: function (quiz) {
+          var n = edgy(quiz), after = Math.random() < .5, ans = after ? n + 1 : n - 1;
+          if (ans < 1 || ans > 1000) { after = !after; ans = after ? n + 1 : n - 1; }
+          var vis = '<div class="strip">' + (after ? '<span class="me">' + n + '</span><span class="arrow">➜</span><span class="gap">?</span>' : '<span class="gap">?</span><span class="arrow">➜</span><span class="me">' + n + "</span>") + "</div>";
+          var wrong = after ? [n - 1, n + 10, n + 100, roll(n, after)] : [n + 1, n - 10, n - 100, roll(n, after)];
+          var ch = [ans].concat(shuffle(uniqueNums(wrong).filter(function (v) { return v >= 0 && v <= 1000 && v !== ans; })).slice(0, 3)).sort(function (a, b) { return a - b; });
+          return { prompt: "What number comes just " + (after ? "after " : "before ") + n + "?", visual: vis, answer: ans, choices: ch,
+            explain: (after ? "One more than " + n + " is " + ans : "One less than " + n + " is " + ans) + "." + (String(n).slice(-2) === "99" || String(n).slice(-2) === "00" || String(n).slice(-1) === "9" || String(n).slice(-1) === "0" ? " Watch out when the tens or hundreds change!" : "") };
+        } },
+        { name: "Count forwards", emoji: "➡️", gen: function (quiz) { return seqQ(quiz, 1); } },
+        { name: "Count backwards", emoji: "⬅️", gen: function (quiz) { return seqQ(quiz, -1); } }
+      ]
+    }
   };
+
+  window.__lessons = LESSONS; // lets the automated checks run every question generator
+
+  /* ---------- helpers for big numbers ---------- */
+  var ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+  var TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+  function words(n) {
+    if (n === 1000) return "one thousand";
+    var h = Math.floor(n / 100), r = n % 100, out = [];
+    if (h) out.push(ONES[h] + " hundred");
+    if (r) {
+      var rw = r < 20 ? ONES[r] : TENS[Math.floor(r / 10)] + (r % 10 ? "-" + ONES[r % 10] : "");
+      out.push(h ? "and " + rw : rw);
+    }
+    return out.join(" ") || "zero";
+  }
+  function uniqueNums(a) { return a.filter(function (v, i) { return a.indexOf(v) === i; }); }
+  // Mostly 3-digit numbers, often with a zero in them (the tricky ones).
+  function big(quiz) {
+    var r = Math.random();
+    if (r < .3) return rnd(1, 9) * 100 + (Math.random() < .5 ? rnd(1, 9) : rnd(1, 9) * 10);
+    if (r < .38 && quiz) return 1000;
+    return rnd(quiz ? 100 : 100, quiz ? 999 : 599);
+  }
+  // Numbers near a change of tens or hundreds (x99, x00, x09, x10) half the time.
+  function edgy(quiz) {
+    if (Math.random() < .5) { var h = rnd(1, 9) * 100; return pickOne([h - 1, h, h + 9, h + 10, h + 90, quiz ? 999 : h + 1]); }
+    return rnd(10, quiz ? 999 : 600);
+  }
+  // A common slip: rolling the wrong digit (e.g. 399 -> 3910 or 390).
+  function roll(n, after) { return after ? (n % 10 === 9 ? n - 9 : n + 2) : (n % 10 === 0 ? n + 9 : n - 2); }
+  function blocksVis(n) {
+    var h = Math.floor(n / 100), t = Math.floor(n / 10) % 10, o = n % 10, v = '<div class="blocks"><div class="hgroup">';
+    for (var i = 0; i < h; i++) { v += '<div class="hun">'; for (var j = 0; j < 100; j++) v += "<span></span>"; v += "</div>"; }
+    v += '</div><div class="tens">';
+    for (var k = 0; k < t; k++) { v += '<div class="ten">'; for (var m = 0; m < 10; m++) v += "<span></span>"; v += "</div>"; }
+    v += '</div><div class="ones">';
+    for (var q = 0; q < o; q++) v += '<span class="one"></span>';
+    return v + '</div></div><div class="vlabel">' + h + (h === 1 ? " hundred, " : " hundreds, ") + t + (t === 1 ? " ten" : " tens") + " and " + o + (o === 1 ? " one" : " ones") + "</div>";
+  }
+  // Counting sequences of 5 with one gap, often crossing a hundred.
+  function seqQ(quiz, dir) {
+    var start;
+    if (Math.random() < .55) { var hh = rnd(1, 9) * 100; start = dir > 0 ? hh - rnd(1, 3) : hh + rnd(0, 2); }
+    else start = rnd(dir > 0 ? 10 : 15, dir > 0 ? 990 : 999);
+    if (dir > 0 && start + 4 > 1000) start = 996;
+    if (dir < 0 && start - 4 < 1) start = 5;
+    var seq = []; for (var i = 0; i < 5; i++) seq.push(start + i * dir);
+    var gapAt = rnd(1, 4), ans = seq[gapAt], vis = '<div class="seq">';
+    seq.forEach(function (v, i) { vis += (i ? '<span class="hop" aria-hidden="true">' + (dir > 0 ? "›" : "‹") + "</span>" : "") + (i === gapAt ? '<span class="gap">?</span>' : "<span>" + v + "</span>"); });
+    vis += "</div>";
+    var wrong = uniqueNums([ans + 10 * dir, ans - dir * 2 + (dir > 0 ? 0 : 0), ans + 100 * dir, roll(seq[gapAt - 1], dir > 0)]).filter(function (v) { return v >= 0 && v <= 1000 && v !== ans; });
+    var ch = [ans].concat(shuffle(wrong).slice(0, 3)).sort(function (a, b) { return a - b; });
+    if (quiz && Math.random() < .35) return { prompt: "Counting " + (dir > 0 ? "forwards" : "backwards") + ". Write the missing number:", visual: vis, answer: ans, input: true,
+      speak: "Counting " + (dir > 0 ? "forwards" : "backwards") + ". Write the missing number.", hint: "What comes " + (dir > 0 ? "after " : "before ") + seq[gapAt - 1] + "?", explain: seq.join(", ") + "." };
+    return { prompt: "Counting " + (dir > 0 ? "forwards" : "backwards") + ". What's missing?", visual: vis, answer: ans, choices: ch,
+      explain: seq.join(", ") + ". " + (dir > 0 ? "Each number is one more." : "Each number is one less.") };
+  }
 
   /* ---------- interactive bits ---------- */
   function countTaps(v) {
@@ -403,8 +684,24 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   var id = (location.search.match(/[?&]l=([a-z0-9-]+)/) || [])[1] || "counting";
   var L = LESSONS[id] || LESSONS.counting;
   var LESSON_ID = id;
+  var CFG = ((window.KIDSLAB_CONFIG || {}).lessons || []).filter(function (x) { return x.id === id; })[0] || {};
+  var SPIN = CFG.section && CFG.section !== "Basics";   // Basics give grapes; Concepts and Special also get a spin
+  var QUIZ_N = L.quizN || 5;
   document.title = L.title;
   $("m-emoji").textContent = L.emoji; $("m-title").textContent = L.title; $("m-intro").textContent = L.intro;
+  $("quiz-sub").textContent = "Get " + QUIZ_N + " right: 🍇 5 grapes" + (SPIN ? " + a spin!" : " for your teddy!");
+  if (L.parts) {
+    // Big lessons: one practice button per part; the quiz mixes them all.
+    $("go-practice").hidden = true; $("parts").hidden = false;
+    var pc = ["sky", "grape", "tang", "leaf", "berry", "sun"];
+    L.parts.forEach(function (P, i) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "block c-" + pc[i % pc.length];
+      b.innerHTML = '<span class="p-emoji" aria-hidden="true"></span><span class="p-name"></span><span class="p-sub">Practice</span>';
+      b.querySelector(".p-emoji").textContent = P.emoji; b.querySelector(".p-name").textContent = P.name;
+      b.addEventListener("click", function () { start("practice", i); });
+      $("parts").appendChild(b);
+    });
+  }
 
   function refreshChips() {
     document.querySelectorAll(".star-count").forEach(function (e) { e.textContent = K.stars(); });
@@ -415,13 +712,18 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function say(text, cls) { $("say").textContent = text; $("say").className = "say" + (cls ? " " + cls : ""); K.say(text); }
 
   /* ---------- playing ---------- */
-  var mode = "practice", right = 0, Q = null, locked = false, QUIZ_N = 5;
+  var mode = "practice", right = 0, Q = null, locked = false, part = null;
 
-  function start(m) {
-    mode = m; right = 0; show("game");
+  function start(m, p) {
+    mode = m; right = 0; part = p == null ? null : p; show("game");
     $("dots").hidden = mode !== "quiz";
-    $("tag").textContent = L.title + (mode === "quiz" ? "  ·  Quiz" : "  ·  Practice");
+    $("tag").textContent = L.title + "  ·  " + (mode === "quiz" ? "Quiz" : part != null ? L.parts[part].name : "Practice");
     next();
+  }
+  function generate() {
+    if (!L.parts) return L.gen(mode === "quiz");
+    var P = part != null ? L.parts[part] : pickOne(L.parts);
+    return P.gen(mode === "quiz");
   }
   function renderDots() {
     var d = $("dots"); d.innerHTML = "";
@@ -429,7 +731,8 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   }
   function next() {
     locked = false;
-    Q = L.gen(mode === "quiz");
+    Q = generate();
+    window.__lessonQ = Q; // lets the automated checks read the current question
     $("prompt").textContent = Q.prompt;
     $("sum").hidden = !Q.sum; $("sum").textContent = Q.sum || "";
     $("visual").innerHTML = Q.visual;
@@ -438,17 +741,45 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     if (mode === "quiz") renderDots();
     var c = $("choices"); c.innerHTML = "";
     var colors = ["grape", "sky", "tang", "leaf"];
-    Q.choices.forEach(function (v, i) {
+    var longest = Q.choices ? Math.max.apply(null, Q.choices.map(function (v) { return String(v).length; })) : 0;
+    c.className = "choices" + (Q.input ? " pad-mode" : longest > 14 ? " long" : longest > 5 ? " wordy" : "");
+    if (Q.input) { keypad(c); }
+    else Q.choices.forEach(function (v, i) {
       var b = document.createElement("button"); b.type = "button"; b.className = "block c-" + colors[i % 4]; b.textContent = v;
       b.addEventListener("click", function () { choose(v, b); });
       c.appendChild(b);
     });
-    K.say(Q.prompt + (Q.sum ? " " + Q.sum.replace("?", "what").replace("−", "minus").replace("×", "times").replace("÷", "divided by") : ""));
+    K.say(Q.speak || (Q.prompt + (Q.sum ? " " + Q.sum.replace("?", "what").replace("−", "minus").replace("×", "times").replace("÷", "divided by") : "")));
+  }
+
+  // Writing a number: tap digits, then the tick.
+  function keypad(c) {
+    var typed = "";
+    var pad = document.createElement("div"); pad.className = "pad";
+    pad.innerHTML = '<div class="pad-show empty">Tap the numbers</div><div class="pad-keys"></div>';
+    var showEl = pad.querySelector(".pad-show"), keys = pad.querySelector(".pad-keys");
+    function draw() { showEl.textContent = typed || "Tap the numbers"; showEl.classList.toggle("empty", !typed); }
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "✓"].forEach(function (k) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = k;
+      if (k === "⌫") { b.className = "k-del"; b.setAttribute("aria-label", "Rub out"); }
+      if (k === "✓") { b.className = "k-ok"; b.setAttribute("aria-label", "Check"); }
+      b.addEventListener("click", function () {
+        if (locked) return;
+        if (k === "⌫") typed = typed.slice(0, -1);
+        else if (k === "✓") { if (typed) choose(Number(typed), showEl); return; }
+        else if (typed.length < 4) { typed = typed === "0" ? k : typed + k; blip(Number(k)); }
+        draw();
+      });
+      keys.appendChild(b);
+    });
+    c.appendChild(pad);
+    pad._clear = function () { typed = ""; draw(); };
+    c._pad = pad;
   }
   function choose(v, btn) {
     if (locked) return;
     if (v === Q.answer) {
-      locked = true; btn.classList.add("right");
+      locked = true; if (!Q.input) btn.classList.add("right");
       right++; K.addStars(1, LESSON_ID); refreshChips(); K.celebrate(btn); blip(7);
       if (mode === "quiz") renderDots();
       var praise = pickOne(["That's right!", "Brilliant!", "Yes! Well done!", "Super!", "You got it!"]);
@@ -457,12 +788,13 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       setAction(mode === "quiz" ? "Next question ▶" : "Another one ▶", "leaf", next);
       if (mode === "practice") addAction("Back to menu", "sky", backToMenu);
     } else if (mode === "practice") {
+      if (Q.input) { $("choices")._pad._clear(); say("Not quite. " + (Q.hint || "Have another go!"), "bad"); return; }
       btn.classList.add("wrong"); btn.disabled = true;
       say("Not quite. Have another go!", "bad");
     } else {
-      locked = true; btn.classList.add("wrong");
-      $("choices").querySelectorAll("button").forEach(function (b) { if (Number(b.textContent) === Q.answer) b.classList.add("right"); });
-      say("Oops! The answer is " + Q.answer + ". " + Q.explain, "bad");
+      locked = true; if (!Q.input) btn.classList.add("wrong");
+      $("choices").querySelectorAll(".block").forEach(function (b) { if (b.textContent === String(Q.answer)) b.classList.add("right"); });
+      say("Oops! The answer is " + (Q.answerText || Q.answer) + ". " + Q.explain, "bad");
       setAction("Try another one ▶", "leaf", next);
     }
   }
@@ -477,13 +809,16 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function quizDone() {
     K.addGrapes(5); K.markDone(LESSON_ID); K.addStars(3, LESSON_ID); K.record("quiz_done", LESSON_ID);
     refreshChips();
-    $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". Your teddy gets 5 grapes!";
+    $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". Your teddy gets 5 grapes!" + (SPIN ? " And you get a spin!" : "");
+    $("r-spin").hidden = !SPIN; $("r-ok").hidden = !!SPIN;
     $("reward").hidden = false;
     fireworks(4000);
-    K.say("Quiz complete! Well done " + me.name + "! Five grapes for your teddy!");
+    K.say("Quiz complete! Well done " + me.name + "! Five grapes for your teddy!" + (SPIN ? " Now spin the wheel!" : ""));
+    if (SPIN) K.record("test_passed", LESSON_ID);
   }
-  // Basics give grapes only. The prize wheel is for Concepts lessons.
+  // Basics give grapes only. Concepts and Special lessons also get the prize wheel.
   $("r-ok").addEventListener("click", function () { $("reward").hidden = true; backToMenu(); });
+  $("r-spin").addEventListener("click", function () { $("reward").hidden = true; openWheel(); });
 
   function fireworks(ms) {
     var c = $("fw"); c.hidden = false;
