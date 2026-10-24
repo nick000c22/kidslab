@@ -408,6 +408,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       b.style.animationDelay = (i * 70) + "ms";
       b.addEventListener("click", function () {
         K.setPlayer(p.id);
+        try { sessionStorage.setItem("kidslab.visit", "1"); } catch (e) {}
         subjectId = null; try { sessionStorage.removeItem("kidslab.subject"); } catch (e) {}
         if (window.KidsPet) KidsPet.arrive(p.id);
         K.say("Hi " + p.name + "!");
@@ -679,7 +680,10 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 
   /* ---- Start ---- */
   renderPlayers();
-  if (K.player()) { renderHome(); show("home"); } else show("who");
+  // Opening the app always starts at "Who's playing?". Coming back from a lesson (same visit) returns to that kid's page.
+  var inVisit = false;
+  try { inVisit = sessionStorage.getItem("kidslab.visit") === "1"; } catch (e) {}
+  if (inVisit && K.player()) { renderHome(); show("home"); } else show("who");
   if (K.connected) syncAll(); else refreshBoard();
 
   // Refresh when coming back from a lesson (iOS restores pages from cache) or reopening the app.
