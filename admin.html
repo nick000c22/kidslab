@@ -116,21 +116,21 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
             <th class="sticky g-kid"></th>
             <th class="g-kid" colspan="4">Kid</th>
             <th class="g-score" colspan="3">Scores</th>
-            <th class="g-teddy" colspan="17">Math Teddy</th>
+            <th class="g-teddy" colspan="20">Math Teddy</th>
           </tr>
           <tr>
             <th class="sticky">Kid</th>
             <th>Name</th><th>Picture</th><th>Colour</th><th>Age</th>
             <th>Stars</th><th>This week</th><th>Tests</th>
             <th></th><th>Hatched</th><th>Teddy name</th><th>Fur</th><th>Badge</th>
-            <th>Hat</th><th>Neck</th><th>Face</th><th>Back</th><th>All clothes</th>
-            <th>Grapes in bowl</th><th>Tummy</th><th>Happy</th><th>Weight kg</th><th>Eaten</th><th>Hatch date</th><th>Asleep</th>
+            <th>Hat</th><th>Face</th><th>Neck</th><th>Back</th><th>Paw</th><th>Feet</th><th>Everything free</th><th>Bought</th>
+            <th>Grapes</th><th>Tummy</th><th>Happy</th><th>Weight kg</th><th>Eaten</th><th>Hatch date</th><th>Asleep</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
-    <p class="hint">Hidden kids (untick "Show" in the Kid column) disappear from the iPads but keep their scores and teddy. Untick "Hatched" to turn a teddy back into an egg. "All clothes" unlocks every outfit regardless of stars. Tummy and Happy are hearts out of 4.</p>
+    <p class="hint">Grapes are earned 5 at a time by finishing the prime test, and spent on feeding and the shop. Hover "Bought" to see what a kid owns. "Everything free" lets that teddy wear every item and fur without buying. Hidden kids (untick "Show" in the Kid column) disappear from the iPads but keep their scores and teddy. Untick "Hatched" to turn a teddy back into an egg. Tummy and Happy are hearts out of 4.</p>
 
     <div class="add">
       <strong>Add a kid:</strong>
@@ -152,6 +152,7 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
 
 <script src="config.js"></script>
 <script src="kit.js"></script>
+<script src="items.js"></script>
 <script src="pet.js"></script>
 <script>
 (function () {
@@ -297,12 +298,14 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       function slotSel(slot, list) {
         return sel([["", "None"]].concat(list.map(function (o) { return [o.id, o.name]; })), pet.wear[slot] || "", petChange(function (v) { if (v) pet.wear[slot] = v; else delete pet.wear[slot]; }));
       }
-      ["hat", "neck", "face", "back"].forEach(function (slot) {
-        tr.appendChild(td(slotSel(slot, P.OUTFITS.filter(function (o) { return o.slot === slot; }))));
+      P.SLOTS.forEach(function (slot) {
+        tr.appendChild(td(slotSel(slot.id, P.ITEMS.filter(function (o) { return o.slot === slot.id; }))));
       });
       tr.appendChild(td(chk(pet.unlockAll, petChange(function (v) { pet.unlockAll = v; }))));
-      var inBowl = pet.hatched && pet.fedUpTo != null ? Math.max(0, stars - pet.fedUpTo) : 0;
-      tr.appendChild(td(num(inBowl, petChange(function (v) { pet._bowl = v == null ? 0 : v; }))));
+      var bought = el("span", { text: (pet.owned || []).length + (pet.ownedFurs && pet.ownedFurs.length ? " + " + pet.ownedFurs.length + " fur" : "") });
+      bought.title = (pet.owned || []).map(function (id) { return (window.TeddyItems.BY_ID[id] || { name: id }).name; }).concat(pet.ownedFurs || []).join(", ") || "Nothing yet";
+      tr.appendChild(td(bought));
+      tr.appendChild(td(num(P.grapesWaiting(r.p.id, pet), petChange(function (v) { pet.grapes = v == null ? 0 : v; }))));
       var hearts = [[1, "♥♡♡♡"], [2, "♥♥♡♡"], [3, "♥♥♥♡"], [4, "♥♥♥♥"]];
       tr.appendChild(td(sel(hearts, P.tummy(pet), petChange(function (v) { pet._tummy = Number(v); }))));
       tr.appendChild(td(sel(hearts, P.happy(pet), petChange(function (v) { pet._happy = Number(v); }))));
@@ -331,7 +334,6 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       if (r.dirty.sc) body.scores[r.p.id] = { stars: r.sc.stars || 0, week: r.sc.week || 0, tests: r.sc.tests || 0 };
       if (r.dirty.pet || r.dirty.sc) {
         var pet = JSON.parse(JSON.stringify(r.pet)), stars = r.sc.stars || 0;
-        if (pet._bowl != null && pet.hatched) pet.fedUpTo = stars - pet._bowl;
         if (pet._tummy) { pet.tummy = pet._tummy; pet.tummyAt = now; }
         if (pet._happy) { pet.happy = pet._happy; pet.happyAt = now; }
         delete pet._bowl; delete pet._tummy; delete pet._happy;

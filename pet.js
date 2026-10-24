@@ -10,25 +10,10 @@
     { id: 2, name: "Little teddy", at: 60, scale: 0.8 },
     { id: 3, name: "Big teddy", at: 150, scale: 1 }
   ];
-  var OUTFITS = [
-    { id: "glasses", slot: "face", name: "Glasses", icon: "👓", at: 20 },
-    { id: "bowtie", slot: "neck", name: "Bow tie", icon: "🎀", at: 40 },
-    { id: "scarf", slot: "neck", name: "Scarf", icon: "🧣", at: 80 },
-    { id: "cape", slot: "back", name: "Super cape", icon: "🦸", at: 110 },
-    { id: "grapehat", slot: "hat", name: "Grape hat", icon: "🍇", at: 180 },
-    { id: "crown", slot: "hat", name: "Crown", icon: "👑", at: 250 }
-  ];
-  var FURS = {
-    brown: { name: "Brown", fur: "#A86B3C", dark: "#8E5830", light: "#E7B98A" },
-    honey: { name: "Honey", fur: "#D9963B", dark: "#B87A28", light: "#F6D7A0" },
-    cocoa: { name: "Cocoa", fur: "#6E4429", dark: "#573420", light: "#C99A72" },
-    grey: { name: "Grey", fur: "#9097A3", dark: "#737A86", light: "#DCDFE5" },
-    polar: { name: "Polar", fur: "#F1EEE6", dark: "#D3CEC2", light: "#FFFFFF" },
-    pink: { name: "Pink", fur: "#EE9BB5", dark: "#D97C9B", light: "#FBD9E4" },
-    lilac: { name: "Lilac", fur: "#B596E0", dark: "#9878C8", light: "#E7DBF7" },
-    mint: { name: "Mint", fur: "#7FC9A8", dark: "#5FAE8C", light: "#D3F0E2" },
-    sky: { name: "Sky", fur: "#7DB6E8", dark: "#5E99CF", light: "#D6EAFA" }
-  };
+  var T = window.TeddyItems, FURS = T.FURS, ITEMS = T.ITEMS;
+  var PRIZES = ITEMS.filter(function (i) { return i.stars; });          // free, unlock with stars
+  var SHOP = ITEMS.filter(function (i) { return i.price; });            // bought with grapes
+  var SHOP_FURS = Object.keys(FURS).filter(function (k) { return FURS[k].price; });
   var BELLIES = ["+", "−", "×", "÷", "★", "♥", "7", "π"];
   var NAMES = ["Teddy", "Biscuit", "Grapey", "Honey", "Mr Bear", "Bubbles", "Cuddles", "Professor"];
   var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -36,8 +21,8 @@
   /* ---------- state (local copy + server copy; newest wins) ---------- */
   function blank() {
     return { name: "", hatched: false, hatchedAt: null, fur: "brown", belly: "+", wear: {}, unlockAll: false,
-      fedUpTo: null, grapesEaten: 0, weight: 0.5, tummy: 3, tummyAt: null, happy: 3, happyAt: null, dances: 0,
-      lastSeen: null, asleep: false, seen: [], stage: 0, updatedAt: "" };
+      fedUpTo: null, grapes: null, grapesEarned: 0, grapesEaten: 0, weight: 0.5, tummy: 3, tummyAt: null, happy: 3, happyAt: null, dances: 0,
+      lastSeen: null, asleep: false, seen: [], stage: 0, owned: [], ownedFurs: [], updatedAt: "" };
   }
   function load(id) {
     var local = K.get("pet." + id, null), srv = K.serverPet ? K.serverPet(id) : null;
@@ -46,7 +31,11 @@
     var s = blank();
     if (pick) for (var k in pick) if (pick[k] !== undefined && pick[k] !== null) s[k] = pick[k];
     if (!s.wear || typeof s.wear !== "object") s.wear = {};
+    if (!Array.isArray(s.owned)) s.owned = [];
+    if (!Array.isArray(s.ownedFurs)) s.ownedFurs = [];
     if (!FURS[s.fur]) s.fur = "brown";
+    // Older teddies kept grapes as "stars since hatching"; carry up to 12 of those across once.
+    if (s.grapes == null) s.grapes = s.hatched && s.fedUpTo != null ? Math.max(0, Math.min(12, K.stars(id) - s.fedUpTo)) : 0;
     return s;
   }
   function save(id, s) {
@@ -66,21 +55,22 @@
   function heartRow(n) { var o = ""; for (var i = 0; i < 4; i++) o += i < n ? "♥" : "♡"; return o; }
 
   function stageFor(stars) { var st = 0; STAGES.forEach(function (S) { if (stars >= S.at) st = S.id; }); return st; }
-  function isUnlocked(o, stars, s) { return s.unlockAll || stars >= o.at; }
-  function unlocked(stars, s) { return OUTFITS.filter(function (o) { return isUnlocked(o, stars, s); }); }
+  // Can he wear it? Star prizes unlock by stars; shop items must be bought. "unlockAll" (grown-ups) frees everything.
+  function has(o, stars, s) { return !!(s.unlockAll || (o.stars ? stars >= o.stars : s.owned.indexOf(o.id) !== -1)); }
+  function hasFur(k, s) { return !FURS[k].price || s.unlockAll || s.ownedFurs.indexOf(k) !== -1; }
+  function unlocked(stars, s) { return PRIZES.filter(function (o) { return has(o, stars, s); }); }
   function nextGoal(stars, s) {
     if (!s.hatched) return { at: HATCH, from: 0, text: stars >= HATCH ? "Ready to hatch!" : "Hatch at " + HATCH + " ⭐" };
     var goals = STAGES.filter(function (S) { return S.at > HATCH; }).map(function (S) { return { at: S.at, text: "Grows into a " + S.name.toLowerCase() }; })
-      .concat(OUTFITS.filter(function (o) { return !s.unlockAll; }).map(function (o) { return { at: o.at, text: "Unlocks the " + o.name.toLowerCase() + " " + o.icon }; }))
+      .concat(PRIZES.filter(function (o) { return !s.unlockAll; }).map(function (o) { return { at: o.stars, text: "Unlocks the " + o.name.toLowerCase() + " " + o.icon }; }))
       .sort(function (a, b) { return a.at - b.at; });
     var prev = HATCH;
     for (var i = 0; i < goals.length; i++) { if (goals[i].at > stars) { goals[i].from = prev; return goals[i]; } prev = goals[i].at; }
     return null;
   }
-  function grapesWaiting(id, s) {
-    if (!s.hatched || s.fedUpTo == null) return 0;
-    return Math.max(0, Math.min(12, K.stars(id) - s.fedUpTo));
-  }
+  // Grapes are earned only by finishing the prime test (5 each time) and spent on food and the shop.
+  function grapesWaiting(id, s) { return Math.max(0, Number(s.grapes) || 0); }
+  function spend(s, n) { s.grapes = Math.max(0, (Number(s.grapes) || 0) - n); }
   function ageDays(s) { return s.hatchedAt ? Math.max(0, Math.floor((Date.now() - new Date(s.hatchedAt).getTime()) / 864e5)) : 0; }
 
   /* ---------- sound ---------- */
@@ -101,38 +91,38 @@
   function munchSound() { tone(220, 0, 0.07); tone(180, 0.12, 0.07); tone(240, 0.24, 0.07); }
 
   /* ---------- drawings ---------- */
-  var INK = "#2B1A10";
+  var INK = "#2B1A10", svgUid = 0;
   function teddySVG(stage, s) {
     s = s || {};
     var S = STAGES[(stage || 1) - 1] || STAGES[0], wear = s.wear || {}, F = FURS[s.fur] || FURS.brown;
     var belly = BELLIES.indexOf(s.belly) >= 0 ? s.belly : "+";
     var eye = s.fur === "cocoa" ? "#120A05" : INK;
     var head = stage === 1 ? ' transform="translate(100 132) scale(1.14) translate(-100 -132)"' : "";
-    var cape = wear.back === "cape" ? '<path d="M64 128 Q100 120 136 128 L166 222 Q100 236 34 222 Z" fill="#D4466F"/><path d="M64 128 Q100 120 136 128 L140 140 Q100 132 60 140 Z" fill="#B2345A"/>' : "";
-    var neck = "";
-    if (wear.neck === "bowtie") neck = '<path d="M100 136 L78 124 L78 148 Z M100 136 L122 124 L122 148 Z" fill="#6E44A8"/><circle cx="100" cy="136" r="7" fill="#8A5FCB"/>';
-    if (wear.neck === "scarf") neck = '<path d="M60 128 Q100 146 140 128 L142 142 Q100 160 58 142 Z" fill="#2F9358"/><path d="M118 140 L132 186 L116 188 L108 146 Z" fill="#2F9358"/><path d="M60 133 Q100 151 140 133" stroke="#E9A21F" stroke-width="4" fill="none"/>';
-    var glasses = wear.face === "glasses" ? '<g fill="rgba(255,255,255,.25)" stroke="' + INK + '" stroke-width="4"><circle cx="82" cy="78" r="14"/><circle cx="118" cy="78" r="14"/></g><path d="M96 78 H104 M68 74 L54 68 M132 74 L146 68" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"/>' : "";
-    var hat = "";
-    if (wear.hat === "crown") hat = '<path d="M68 42 L74 12 L88 30 L100 4 L112 30 L126 12 L132 42 Z" fill="#F2C230" stroke="#C99A12" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="30" r="5" fill="#D4466F"/><circle cx="82" cy="34" r="4" fill="#2F7FC6"/><circle cx="118" cy="34" r="4" fill="#2F9358"/>';
-    if (wear.hat === "grapehat") hat = '<g fill="#8A5FCB" stroke="#5B2E95" stroke-width="2"><circle cx="82" cy="34" r="11"/><circle cx="100" cy="30" r="12"/><circle cx="118" cy="34" r="11"/><circle cx="91" cy="18" r="11"/><circle cx="109" cy="18" r="11"/><circle cx="100" cy="6" r="10"/></g><path d="M100 -4 Q114 -14 126 -6 Q114 4 100 -4 Z" fill="#3AAA69"/>';
-    var outline = s.fur === "polar" ? ' stroke="#CFC9BC" stroke-width="2"' : "";
+    function item(slot) { var it = wear[slot] && T.BY_ID[wear[slot]]; return it && it.slot === slot ? it.svg : ""; }
+    var defs = "", fur = F.fur;
+    if (F.fur === "rainbow") {
+      var gid = "rb" + (++svgUid);
+      defs = '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8A8A"/><stop offset=".2" stop-color="#FFC56B"/><stop offset=".4" stop-color="#FFF07A"/><stop offset=".6" stop-color="#8FE3A8"/><stop offset=".8" stop-color="#8CC8FF"/><stop offset="1" stop-color="#C9A2FF"/></linearGradient></defs>';
+      fur = "url(#" + gid + ")";
+    }
+    var outline = F.outline ? ' stroke="' + F.outline + '" stroke-width="2"' : "";
+    var sparkle = F.sparkle ? '<g class="sparkle" fill="#FFFFFF"><path d="M30 60 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 Z"/><path d="M170 150 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5 Z"/><path d="M36 196 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z"/></g>' : "";
 
-    return '<svg class="teddy-svg" viewBox="0 -20 200 260" aria-hidden="true">' +
+    return '<svg class="teddy-svg" viewBox="0 -20 200 260" aria-hidden="true">' + defs +
       '<g transform="translate(100 236) scale(' + S.scale + ') translate(-100 -236)"><g class="rig">' +
-      cape +
+      item("back") +
       '<ellipse cx="72" cy="222" rx="24" ry="15" fill="' + F.dark + '"/><ellipse cx="128" cy="222" rx="24" ry="15" fill="' + F.dark + '"/>' +
       '<ellipse cx="72" cy="224" rx="12" ry="7" fill="' + F.light + '"/><ellipse cx="128" cy="224" rx="12" ry="7" fill="' + F.light + '"/>' +
       '<ellipse cx="52" cy="168" rx="15" ry="28" fill="' + F.dark + '" transform="rotate(22 52 168)"/>' +
-      '<g class="arm-r"><ellipse cx="148" cy="168" rx="15" ry="28" fill="' + F.dark + '" transform="rotate(-22 148 168)"/></g>' +
-      '<ellipse cx="100" cy="178" rx="52" ry="47" fill="' + F.fur + '"' + outline + '/>' +
+      '<ellipse cx="100" cy="178" rx="52" ry="47" fill="' + fur + '"' + outline + '/>' +
       '<ellipse cx="100" cy="184" rx="32" ry="30" fill="' + F.light + '"/>' +
       '<text x="100" y="186" text-anchor="middle" dominant-baseline="central" font-family="Baloo 2, Arial Rounded MT Bold, sans-serif" font-weight="800" font-size="36" fill="#6E44A8">' + belly + "</text>" +
-      neck +
+      item("feet") + item("neck") +
+      '<g class="arm-r"><ellipse cx="148" cy="168" rx="15" ry="28" fill="' + F.dark + '" transform="rotate(-22 148 168)"/>' + item("hand") + "</g>" +
       "<g" + head + ">" +
-      '<circle cx="56" cy="50" r="22" fill="' + F.fur + '"' + outline + '/><circle cx="56" cy="50" r="11" fill="' + F.light + '"/>' +
-      '<circle cx="144" cy="50" r="22" fill="' + F.fur + '"' + outline + '/><circle cx="144" cy="50" r="11" fill="' + F.light + '"/>' +
-      '<circle cx="100" cy="84" r="51" fill="' + F.fur + '"' + outline + '/>' +
+      '<circle cx="56" cy="50" r="22" fill="' + fur + '"' + outline + '/><circle cx="56" cy="50" r="11" fill="' + F.light + '"/>' +
+      '<circle cx="144" cy="50" r="22" fill="' + fur + '"' + outline + '/><circle cx="144" cy="50" r="11" fill="' + F.light + '"/>' +
+      '<circle cx="100" cy="84" r="51" fill="' + fur + '"' + outline + '/>' +
       '<ellipse cx="100" cy="104" rx="26" ry="20" fill="' + F.light + '"/>' +
       '<ellipse cx="100" cy="95" rx="10" ry="7" fill="' + INK + '"/>' +
       '<path class="mouth-smile" d="M88 108 Q100 119 112 108" stroke="' + INK + '" stroke-width="4" fill="none" stroke-linecap="round"/>' +
@@ -141,8 +131,8 @@
       '<g class="eye-shut" stroke="' + INK + '" stroke-width="4" fill="none" stroke-linecap="round"><path d="M74 79 Q82 85 90 79"/><path d="M110 79 Q118 85 126 79"/></g>' +
       '<g class="eye-happy" stroke="' + INK + '" stroke-width="4.5" fill="none" stroke-linecap="round"><path d="M74 82 Q82 70 90 82"/><path d="M110 82 Q118 70 126 82"/></g>' +
       '<circle cx="66" cy="102" r="8" fill="#E89BA8" opacity=".75"/><circle cx="134" cy="102" r="8" fill="#E89BA8" opacity=".75"/>' +
-      glasses + hat +
-      "</g></g></g></svg>";
+      item("face") + item("hat") +
+      "</g>" + sparkle + "</g></g></svg>";
   }
 
   var eggUid = 0;
@@ -209,7 +199,7 @@
       sub = "Mystery egg";
     } else {
       sub = s.name + " · " + STAGES[stageFor(stars) - 1].name + "  ·  Tummy " + heartRow(tummy(s)) + "  Happy " + heartRow(happy(s));
-      bubble = s.asleep ? "Zzz… " + s.name + " is asleep. Tap to wake him!" : (waiting && tummy(s) < 4 ? "Hi " + p.name + "! I'm hungry for grapes!" : "Hi " + p.name + "!");
+      bubble = s.asleep ? "Zzz… " + s.name + " is asleep. Tap to wake him!" : (waiting && tummy(s) <= 2 ? "Hi " + p.name + "! I'm hungry for grapes!" : "Hi " + p.name + "! 🍇 " + waiting + " grapes");
     }
     el.innerHTML = "";
     var b = document.createElement("button");
@@ -324,8 +314,9 @@
     var hasNew = unlocked(stars, s).some(function (o) { return s.seen.indexOf(o.id) === -1; });
     btn("🍇", "Feed", feed, grapesWaiting(R.p.id, s) || "");
     btn("💃", "Play", play);
+    btn("🛍️", "Shop", openShop);
+    btn("🚪", "Cupboard", openWardrobe, "", hasNew);
     btn("📋", "Stats", openStats);
-    btn("👕", "Dress", openWardrobe, "", hasNew);
   }
 
   // Returns false if the tap was used to wake him up.
@@ -373,7 +364,7 @@
     say("Here it comes…");
     setTimeout(function () {
       var s = load(R.p.id), stars = K.stars(R.p.id), now = new Date().toISOString();
-      s.hatched = true; s.hatchedAt = now; s.fedUpTo = stars - 5; s.stage = stageFor(stars); s.lastSeen = now;
+      s.hatched = true; s.hatchedAt = now; s.stage = stageFor(stars); s.lastSeen = now;
       setHearts(s, "tummy", 2); setHearts(s, "happy", 4);
       save(R.p.id, s);
       R.petEl.className = "pr-pet idle";
@@ -390,7 +381,7 @@
   function feed(btnEl) {
     if (!wake()) return;
     var s = load(R.p.id);
-    if (!grapesWaiting(R.p.id, s)) { say("No grapes left! Earn stars in a game to get more."); return; }
+    if (!grapesWaiting(R.p.id, s)) { say("No grapes! Finish the prime test to earn 5 grapes."); return; }
     if (tummy(s) >= 4) { say(pick(["I'm full! Maybe later.", "My tummy is full! Let's play instead!", "No thank you, I'm stuffed!"])); dance(R.petEl, "d-wiggle"); return; }
     var mouth = R.petEl.querySelector(".mouth-smile") || R.petEl;
     var a = btnEl.getBoundingClientRect(), b = mouth.getBoundingClientRect();
@@ -405,7 +396,7 @@
     setTimeout(function () {
       ghost.remove();
       var st = load(R.p.id);
-      st.fedUpTo += 1; st.grapesEaten = (st.grapesEaten || 0) + 1;
+      spend(st, 1); st.grapesEaten = (st.grapesEaten || 0) + 1;
       st.weight = Math.round(((st.weight || 0.5) + 0.05) * 100) / 100;
       setHearts(st, "tummy", tummy(st) + 1);
       save(R.p.id, st);
@@ -426,7 +417,7 @@
     var rows = [
       ["NAME", s.name], ["OWNER", p.name], ["AGE", ageDays(s) === 1 ? "1 day" : ageDays(s) + " days"],
       ["WEIGHT", (s.weight || 0.5).toFixed(2) + " kg"], ["SIZE", STAGES[stageFor(stars) - 1].name.replace(" teddy", "")],
-      ["TUMMY", heartRow(tummy(s))], ["HAPPY", heartRow(happy(s))], ["GRAPES", (s.grapesEaten || 0) + " eaten"],
+      ["TUMMY", heartRow(tummy(s))], ["HAPPY", heartRow(happy(s))], ["GRAPES", grapesWaiting(p.id, s) + " spare"], ["EATEN", String(s.grapesEaten || 0)], ["THINGS", s.owned.length + " bought"],
       ["DANCES", String(s.dances || 0)], ["STARS", String(stars)]
     ];
     var wrap = document.createElement("div"); wrap.className = "pet-sheet-wrap";
@@ -443,16 +434,28 @@
     K.say(s.name + " is " + (ageDays(s) === 1 ? "1 day" : ageDays(s) + " days") + " old and weighs " + (s.weight || 0.5).toFixed(1) + " kilos!");
   }
 
-  /* ---------- wardrobe: clothes, fur colour, tummy badge ---------- */
+  /* ---------- cupboard: everything he owns (bought things + star prizes), fur, tummy badge ---------- */
+  function sheet(html) {
+    var wrap = document.createElement("div"); wrap.className = "pet-sheet-wrap";
+    wrap.innerHTML = '<div class="pet-sheet wide" role="dialog" aria-modal="true">' + html + "</div>";
+    document.body.appendChild(wrap);
+    return wrap;
+  }
+  function itemTile(it, sub, cls) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "w-item " + (cls || "");
+    b.innerHTML = '<span class="wi" aria-hidden="true"></span><span class="wn"></span><span class="wl"></span>';
+    b.querySelector(".wi").textContent = it.icon; b.querySelector(".wn").textContent = it.name; b.querySelector(".wl").textContent = sub;
+    return b;
+  }
+  function slotName(slot) { for (var i = 0; i < T.SLOTS.length; i++) if (T.SLOTS[i].id === slot) return T.SLOTS[i].name; return slot; }
+
   function openWardrobe() {
     if (!R) return;
-    var p = R.p, s = load(p.id), stars = K.stars(p.id);
-    var wrap = document.createElement("div"); wrap.className = "pet-sheet-wrap";
-    wrap.innerHTML = '<div class="pet-sheet" role="dialog" aria-modal="true"><div class="ward-preview"></div><h2>Dress up</h2>' +
-      '<h3 class="ward-h">Clothes</h3><div class="wardrobe"></div>' +
+    var p = R.p, stars = K.stars(p.id), s0 = load(p.id);
+    var wrap = sheet('<div class="ward-preview"></div><h2>Cupboard</h2><div class="cupboard"></div>' +
       '<h3 class="ward-h">Fur colour</h3><div class="swatches"></div>' +
       '<h3 class="ward-h">Tummy badge</h3><div class="bellies"></div>' +
-      '<button class="block c-leaf" type="button">Done</button></div>';
+      '<div class="sheet-btns"><button class="block c-sky shop-link" type="button">🛍️ Shop</button><button class="block c-leaf done" type="button">Done</button></div>');
     function refresh() { wrap.querySelector(".ward-preview").innerHTML = teddySVG(stageFor(stars), load(p.id)); }
     function change(fn, line) {
       var st = load(p.id); fn(st);
@@ -461,27 +464,39 @@
       if (line) K.say(line);
     }
     function build() {
-      var st = load(p.id);
-      var grid = wrap.querySelector(".wardrobe"); grid.innerHTML = "";
-      OUTFITS.forEach(function (o) {
-        var open = isUnlocked(o, stars, st), on = st.wear[o.slot] === o.id;
-        var b = document.createElement("button"); b.type = "button";
-        b.className = "w-item" + (open ? "" : " locked") + (on ? " on" : "");
-        b.innerHTML = '<span class="wi" aria-hidden="true"></span><span class="wn"></span><span class="wl"></span>';
-        b.querySelector(".wi").textContent = o.icon; b.querySelector(".wn").textContent = o.name;
-        b.querySelector(".wl").textContent = open ? (on ? "Wearing" : "Tap to wear") : "🔒 " + o.at + " ⭐";
-        if (open && s.seen.indexOf(o.id) === -1) { var n = document.createElement("span"); n.className = "badge-new"; n.textContent = "NEW"; b.appendChild(n); }
-        b.addEventListener("click", function () {
-          if (!open) { K.say("Earn " + (o.at - stars) + " more stars to unlock the " + o.name); return; }
-          change(function (x) { if (x.wear[o.slot] === o.id) delete x.wear[o.slot]; else x.wear[o.slot] = o.id; },
-            on ? "Okay, off it comes." : pick(["Ooh, I love my " + o.name.toLowerCase() + "!", "Do I look fancy?", "So stylish!"]));
+      var st = load(p.id), box = wrap.querySelector(".cupboard"); box.innerHTML = "";
+      T.SLOTS.forEach(function (slot) {
+        var mine = ITEMS.filter(function (it) { return it.slot === slot.id && has(it, stars, st); });
+        var lockedPrizes = PRIZES.filter(function (it) { return it.slot === slot.id && !has(it, stars, st); });
+        if (!mine.length && !lockedPrizes.length) return;
+        var h = document.createElement("h3"); h.className = "ward-h"; h.textContent = slot.name; box.appendChild(h);
+        var grid = document.createElement("div"); grid.className = "wardrobe"; box.appendChild(grid);
+        mine.forEach(function (it) {
+          var on = st.wear[slot.id] === it.id;
+          var b = itemTile(it, on ? "Wearing" : "Tap to wear", on ? "on" : "");
+          if (it.stars && st.seen.indexOf(it.id) === -1) { var n = document.createElement("span"); n.className = "badge-new"; n.textContent = "NEW"; b.appendChild(n); }
+          b.addEventListener("click", function () {
+            change(function (x) { if (x.wear[slot.id] === it.id) delete x.wear[slot.id]; else x.wear[slot.id] = it.id; },
+              on ? "Okay, off it comes." : pick(["Ooh, I love my " + it.name.toLowerCase() + "!", "Do I look fancy?", "So stylish!"]));
+          });
+          grid.appendChild(b);
         });
-        grid.appendChild(b);
+        lockedPrizes.forEach(function (it) {
+          var b = itemTile(it, "🔒 " + it.stars + " ⭐", "locked");
+          b.addEventListener("click", function () { K.say("Earn " + (it.stars - stars) + " more stars to unlock the " + it.name); });
+          grid.appendChild(b);
+        });
       });
+      if (!st.owned.length) {
+        var tip = document.createElement("p"); tip.className = "fine-tip"; tip.textContent = "Things you buy in the shop go in here.";
+        box.appendChild(tip);
+      }
       var sw = wrap.querySelector(".swatches"); sw.innerHTML = "";
       Object.keys(FURS).forEach(function (k) {
-        var b = document.createElement("button"); b.type = "button"; b.className = "swatch" + (st.fur === k ? " on" : "");
-        b.style.background = FURS[k].fur; b.setAttribute("aria-label", FURS[k].name); b.title = FURS[k].name;
+        if (!hasFur(k, st)) return;
+        var b = document.createElement("button"); b.type = "button"; b.className = "swatch" + (st.fur === k ? " on" : "") + (FURS[k].fur === "rainbow" ? " rainbow" : "");
+        if (FURS[k].fur !== "rainbow") b.style.background = FURS[k].fur;
+        b.setAttribute("aria-label", FURS[k].name); b.title = FURS[k].name;
         b.addEventListener("click", function () { change(function (x) { x.fur = k; }, FURS[k].name + "!"); });
         sw.appendChild(b);
       });
@@ -494,12 +509,100 @@
       });
     }
     refresh(); build();
-    s.seen = unlocked(stars, s).map(function (o) { return o.id; }); save(p.id, s);
+    s0.seen = unlocked(stars, s0).map(function (o) { return o.id; }); save(p.id, s0);
     function done() { wrap.remove(); drawRoom(false); dance(R.petEl, "d-spin"); say(pick(["How do I look?", "I feel fancy!", "Thank you!"])); }
-    wrap.querySelector(".block").addEventListener("click", done);
+    wrap.querySelector(".done").addEventListener("click", done);
+    wrap.querySelector(".shop-link").addEventListener("click", function () { wrap.remove(); drawRoom(false); openShop(); });
     wrap.addEventListener("click", function (e) { if (e.target === wrap) done(); });
-    document.body.appendChild(wrap);
-    K.say("Dress up!");
+    K.say("Cupboard!");
+  }
+
+  /* ---------- shop: spend spare grapes. Tap anything to try it on first. ---------- */
+  function openShop() {
+    if (!R) return;
+    var p = R.p, stars = K.stars(p.id);
+    var trying = null; // { kind: "item"|"fur", it }
+    var wrap = sheet('<div class="shop-top"><div class="ward-preview"></div><div class="shop-side">' +
+      '<h2>Teddy Shop</h2><div class="wallet">🍇 <span class="w-n"></span> grapes</div>' +
+      '<p class="shop-msg" aria-live="polite">Tap something to try it on!</p>' +
+      '<button class="block c-sun buy" type="button" hidden>Buy</button></div></div>' +
+      '<div class="shop-list"></div>' +
+      '<div class="sheet-btns"><button class="block c-sky cup-link" type="button">🚪 Cupboard</button><button class="block c-leaf done" type="button">Done</button></div>');
+    var msg = wrap.querySelector(".shop-msg"), buyBtn = wrap.querySelector(".buy");
+
+    function preview() {
+      var st = JSON.parse(JSON.stringify(load(p.id)));
+      if (trying && trying.kind === "item") st.wear[trying.it.slot] = trying.it.id;
+      if (trying && trying.kind === "fur") st.fur = trying.key;
+      wrap.querySelector(".ward-preview").innerHTML = teddySVG(stageFor(stars) || 1, st);
+      wrap.querySelector(".w-n").textContent = grapesWaiting(p.id, load(p.id));
+    }
+    function priceOf(t) { return t.kind === "fur" ? FURS[t.key].price : t.it.price; }
+    function nameOf(t) { return t.kind === "fur" ? FURS[t.key].name + " fur" : t.it.name; }
+    function owned(t, st) { return t.kind === "fur" ? hasFur(t.key, st) : has(t.it, stars, st); }
+
+    function tryOn(t) {
+      trying = t; preview(); build();
+      var st = load(p.id), have = grapesWaiting(p.id, st), price = priceOf(t);
+      if (owned(t, st)) { msg.textContent = "You already have the " + nameOf(t).toLowerCase() + "! It's in your cupboard."; buyBtn.hidden = true; K.say(msg.textContent); return; }
+      buyBtn.hidden = false;
+      if (have >= price) {
+        buyBtn.disabled = false; buyBtn.textContent = "Buy for 🍇 " + price;
+        msg.textContent = nameOf(t) + "! Want to buy it?";
+      } else {
+        buyBtn.disabled = true; buyBtn.textContent = "Need 🍇 " + price;
+        msg.textContent = "You need " + (price - have) + " more grapes. Finish the prime test to earn 5!";
+      }
+      K.say(msg.textContent);
+      dance(wrap.querySelector(".ward-preview"), "d-wiggle");
+    }
+
+    buyBtn.addEventListener("click", function () {
+      if (!trying) return;
+      var st = load(p.id), price = priceOf(trying);
+      if (owned(trying, st) || grapesWaiting(p.id, st) < price) return;
+      spend(st, price);
+      if (trying.kind === "fur") { st.ownedFurs.push(trying.key); st.fur = trying.key; }
+      else { st.owned.push(trying.it.id); st.wear[trying.it.slot] = trying.it.id; }
+      setHearts(st, "happy", happy(st) + 1);
+      save(p.id, st);
+      jingle(); K.celebrate(wrap.querySelector(".ward-preview"), ["🍇", "⭐", "🎉", "✨"]);
+      msg.textContent = "Yay! " + nameOf(trying) + " is mine! I'm wearing it now."; K.say(msg.textContent);
+      buyBtn.hidden = true; trying = null; preview(); build();
+      dance(wrap.querySelector(".ward-preview"), "d-jump");
+    });
+
+    function build() {
+      var st = load(p.id), have = grapesWaiting(p.id, st), list = wrap.querySelector(".shop-list"); list.innerHTML = "";
+      function section(title, tiles) {
+        if (!tiles.length) return;
+        var h = document.createElement("h3"); h.className = "ward-h"; h.textContent = title; list.appendChild(h);
+        var g = document.createElement("div"); g.className = "wardrobe"; tiles.forEach(function (t) { g.appendChild(t); }); list.appendChild(g);
+      }
+      T.SLOTS.forEach(function (slot) {
+        var tiles = SHOP.filter(function (it) { return it.slot === slot.id; }).sort(function (a, b) { return a.price - b.price; }).map(function (it) {
+          var mine = has(it, stars, st), t = { kind: "item", it: it };
+          var b = itemTile(it, mine ? "✓ Yours" : "🍇 " + it.price, (mine ? "mine" : have >= it.price ? "afford" : "dear") + (trying && trying.it === it ? " trying" : ""));
+          b.addEventListener("click", function () { tryOn(t); });
+          return b;
+        });
+        section(slot.name, tiles);
+      });
+      section("Special fur", SHOP_FURS.map(function (k) {
+        var mine = hasFur(k, st), t = { kind: "fur", key: k };
+        var b = itemTile({ icon: k === "gold" ? "✨" : "🌈", name: FURS[k].name + " fur" }, mine ? "✓ Yours" : "🍇 " + FURS[k].price,
+          (mine ? "mine" : have >= FURS[k].price ? "afford" : "dear") + (trying && trying.key === k ? " trying" : ""));
+        b.addEventListener("click", function () { tryOn(t); });
+        return b;
+      }));
+    }
+
+    preview(); build();
+    function done() { wrap.remove(); drawRoom(false); }
+    wrap.querySelector(".done").addEventListener("click", done);
+    wrap.querySelector(".cup-link").addEventListener("click", function () { wrap.remove(); drawRoom(false); openWardrobe(); });
+    wrap.addEventListener("click", function (e) { if (e.target === wrap) done(); });
+    K.say("Welcome to the Teddy Shop! You have " + grapesWaiting(p.id, load(p.id)) + " grapes.");
   }
 
   /* ---------- naming ---------- */
@@ -536,6 +639,6 @@
   window.KidsPet = {
     renderCard: renderCard, openRoom: openRoom, arrive: arrive, teddySVG: teddySVG, eggSVG: eggSVG,
     load: load, blank: blank, tummy: tummy, happy: happy, stageFor: stageFor, ageDays: ageDays, grapesWaiting: grapesWaiting,
-    STAGES: STAGES, OUTFITS: OUTFITS, FURS: FURS, BELLIES: BELLIES, HATCH: HATCH
+    STAGES: STAGES, ITEMS: ITEMS, SLOTS: T.SLOTS, FURS: FURS, BELLIES: BELLIES, HATCH: HATCH
   };
 })();

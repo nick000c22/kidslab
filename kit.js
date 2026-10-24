@@ -210,6 +210,23 @@
     });
   }
 
+  // Grapes: earned only by finishing the prime test, kept on the kid's teddy, spent on food and the shop.
+  function petDoc(id) {
+    var local = get("pet." + id, null), srv = serverPet(id);
+    return srv && (!local || (srv.updatedAt || "") > (local.updatedAt || "")) ? srv : (local || {});
+  }
+  function grapes(id) { var d = petDoc(id || playerId()); return Math.max(0, Number(d.grapes) || 0); }
+  function addGrapes(n) {
+    var id = playerId(); if (!id) return 0;
+    var d = JSON.parse(JSON.stringify(petDoc(id)));
+    d.grapes = Math.max(0, (Number(d.grapes) || 0) + n);
+    d.grapesEarned = (Number(d.grapesEarned) || 0) + n;
+    d.updatedAt = new Date().toISOString();
+    set("pet." + id, d);
+    if (URL_) pushPet(id, d);
+    return d.grapes;
+  }
+
   carryOver();
   window.addEventListener("online", function () { flush(); flushPets(); });
   setTimeout(function () { flush(); flushPets(); }, 1500);
@@ -270,7 +287,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress,
-    fetchState: fetchState, serverPet: serverPet, pushPet: pushPet, visiblePlayers: visiblePlayers,
+    fetchState: fetchState, serverPet: serverPet, grapes: grapes, addGrapes: addGrapes, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

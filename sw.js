@@ -1,9 +1,9 @@
 /* Kids Lab service worker.
    Network-first: when online, the iPad always gets your latest upload.
    When offline, it falls back to the last copy it saw. No version bumping needed. */
-const CACHE = "kidslab-v3";
+const CACHE = "kidslab-v4";
 const CORE = [
-  "./", "./index.html", "./config.js", "./kit.js", "./pet.js", "./pet.css", "./manifest.webmanifest",
+  "./", "./index.html", "./config.js", "./kit.js", "./items.js", "./pet.js", "./pet.css", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"
 ];
 

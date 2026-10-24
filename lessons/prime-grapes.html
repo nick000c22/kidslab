@@ -707,6 +707,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 
   function testDone() {
     var got = S.results.filter(Boolean).length;
+    K.addGrapes(5);
     var p = progress();
     p.levels[4] = (p.levels[4] || 0) + 1;
     K.progress(LESSON, p);
@@ -719,17 +720,17 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       award(5); K.record("test_passed");
       $("tr-emoji").textContent = "🏆";
       $("tr-title").textContent = "5 out of 5!";
-      $("tr-text").textContent = "You passed the prime test, " + me.name + "! Time to spin the prize wheel.";
+      $("tr-text").textContent = "You passed the prime test, " + me.name + "! You earned 5 grapes 🍇 for your teddy. Now spin the prize wheel!";
       btn("🎡 Spin!", "sun", function () { $("test-result").hidden = true; openWheel(); });
       fireworks(4500);
-      K.say("Five out of five! You passed the test! Spin for a prize!");
+      K.say("Five out of five! You passed the test! You earned five grapes for your teddy. Spin for a prize!");
     } else {
       $("tr-emoji").textContent = got >= 3 ? "💪" : "🍇";
       $("tr-title").textContent = got + " out of 5";
-      $("tr-text").textContent = "So close! Get all 5 right to spin the prize wheel.";
+      $("tr-text").textContent = "You earned 5 grapes 🍇 for your teddy! Get all 5 right to spin the prize wheel.";
       btn("Try again", "leaf", function () { $("test-result").hidden = true; startLevel(LEVELS[3]); });
       btn("Levels", "sky", function () { $("test-result").hidden = true; showScreen("menu"); renderMenu(); });
-      K.say(got + " out of 5. So close! Get all five right to spin the prize wheel.");
+      K.say(got + " out of 5. You earned five grapes for your teddy! Get all five right to spin the prize wheel.");
     }
     $("test-result").hidden = false;
   }

@@ -285,7 +285,6 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     </button>
   </div>
   <div id="pet-card"></div>
-  <button class="mini-board" id="mini-board" type="button" aria-label="Leaderboard"></button>
   <h2 class="pick-title" id="greet">Pick a game</h2>
   <div class="lessons" id="lessons"></div>
 </section>
@@ -335,6 +334,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 
 <script src="config.js"></script>
 <script src="kit.js"></script>
+<script src="items.js"></script>
 <script src="pet.js"></script>
 <script>
 (function () {
@@ -370,6 +370,15 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     wrap.classList.toggle("many", list.length > 4);
     list.forEach(function (p, i) {
       var b = block({ emoji: p.emoji, label: p.name, color: p.color });
+      if (window.KidsPet) {
+        var pet = KidsPet.load(p.id), stars = K.stars(p.id);
+        var em = b.querySelector(".emoji");
+        var box = document.createElement("span"); box.className = "tile-pet";
+        box.innerHTML = pet.hatched ? KidsPet.teddySVG(Math.max(1, KidsPet.stageFor(stars)), pet) : KidsPet.eggSVG(Math.min(3, Math.floor(stars / 4)));
+        em.replaceWith(box);
+        var kid = document.createElement("span"); kid.className = "tile-kid"; kid.setAttribute("aria-hidden", "true"); kid.textContent = p.emoji; b.appendChild(kid);
+        var tn = document.createElement("span"); tn.className = "tile-teddy"; tn.textContent = pet.hatched ? "& " + (pet.name || "Teddy") : "Egg 🥚"; b.appendChild(tn);
+      }
       var rk = document.createElement("span"); rk.className = "rank"; rk.dataset.id = p.id; b.appendChild(rk);
       b.style.animationDelay = (i * 70) + "ms";
       b.addEventListener("click", function () {
@@ -391,7 +400,6 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function renderHome() {
     var p = K.player(); if (!p) { show("who"); return; }
     if (window.KidsPet) KidsPet.renderCard($("pet-card"));
-    drawMini();
     $("switch").textContent = p.emoji;
     $("star-count").textContent = K.stars(p.id);
 
@@ -547,7 +555,6 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     $("board-note").textContent = note;
   }
 
-  $("mini-board").addEventListener("click", openBoard);
 
   // This-week ranking under each name on "Who's playing?", and a mini board on the home screen.
   function weekRows(res) {
@@ -583,7 +590,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     mb.appendChild(list);
   }
   function refreshBoard() {
-    return K.leaderboard().then(function (res) { lastBoard = res; drawRanks(); if (!$("home").hidden) drawMini(); if (K.player()) $("star-count").textContent = K.stars(); });
+    return K.leaderboard().then(function (res) { lastBoard = res; drawRanks(); if (K.player()) $("star-count").textContent = K.stars(); });
   }
   $("board-back").addEventListener("click", function () { if (boardFrom === "home") renderHome(); show(boardFrom); });
   $("seg-week").addEventListener("click", function () { boardMode = "week"; if (lastBoard) drawBoard(lastBoard); K.say("This week"); });

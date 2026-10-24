@@ -227,3 +227,45 @@
   font-family: var(--display); font-weight: 800; font-size: 1.6rem; color: #6E44A8;
 }
 .belly-btn.on { background: var(--grape); color: #fff; }
+
+/* ---------- v3: shop + cupboard ---------- */
+.pet-sheet.wide { width: min(760px, 100%); }
+.sheet-btns { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+.cupboard, .shop-list { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.wardrobe { grid-template-columns: repeat(auto-fill, minmax(min(100%, 120px), 1fr)); }
+.w-item.mine .wl { color: var(--leaf); }
+.w-item.dear { opacity: .72; }
+.w-item.afford { box-shadow: 0 4px 0 var(--shadow), inset 0 0 0 3px color-mix(in srgb, var(--sun) 70%, transparent); }
+.w-item.trying { box-shadow: 0 4px 0 var(--shadow), inset 0 0 0 4px var(--grape); opacity: 1; }
+.fine-tip { color: var(--muted); margin: 4px 0 0; }
+.shop-top { width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 24px; }
+.shop-top .ward-preview { width: 170px; }
+.shop-side { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 220px; }
+.wallet {
+  font-family: var(--display); font-weight: 800; font-size: 1.5rem; background: var(--bg-2); border-radius: 999px; padding: 4px 18px;
+  font-variant-numeric: tabular-nums;
+}
+.shop-msg { margin: 0; min-height: 2.6em; font-family: var(--display); font-weight: 700; font-size: 1.2rem; text-wrap: balance; }
+.shop-side .block { font-size: 1.3rem; padding: 10px 22px; }
+.shop-side .block:disabled { opacity: .55; cursor: default; }
+.swatch.rainbow { background: conic-gradient(#FF8A8A, #FFC56B, #FFF07A, #8FE3A8, #8CC8FF, #C9A2FF, #FF8A8A); }
+.tama-btns { flex-wrap: wrap; gap: 8px clamp(8px, 2.4vw, 14px); }
+.tb-face { width: clamp(52px, 12.5vw, 62px); height: clamp(52px, 12.5vw, 62px); font-size: clamp(24px, 6vw, 28px); }
+.tb-label { font-size: .9rem; }
+.sparkle { animation: twinkle 1.6s ease-in-out infinite; }
+@keyframes twinkle { 50% { opacity: .2; } }
+.flame { transform-box: fill-box; transform-origin: 50% 0; animation: flame .25s ease-in-out infinite alternate; }
+@keyframes flame { to { transform: scaleY(1.25); } }
+
+/* ---------- everyone's teddy on "Who's playing?" ---------- */
+.tile-pet { width: min(62%, 150px); max-width: 100%; aspect-ratio: 200 / 260; position: relative; }
+.tile-pet svg { width: 100%; height: 100%; display: block; }
+.players.many .tile-pet { width: min(66%, 110px); }
+.tile-kid { position: absolute; top: 12px; left: 14px; font-size: 30px; line-height: 1; text-shadow: none; }
+.tile-teddy { font-family: var(--body); font-size: .95rem; font-weight: 800; opacity: .92; text-shadow: none; margin-top: -2px; }
+@media (prefers-reduced-motion: reduce) { .sparkle, .flame { animation: none; } }
+/* keep all five device buttons on one row; keep the shop preview in view while scrolling */
+.tama-btns { flex-wrap: nowrap; gap: clamp(6px, 2vw, 12px); }
+.tb-face { width: clamp(48px, 11vw, 58px); height: clamp(48px, 11vw, 58px); font-size: clamp(22px, 5.4vw, 26px); }
+.shop-top { position: sticky; top: -24px; z-index: 2; background: var(--card); padding: 10px 0 12px; margin-top: -10px; box-shadow: 0 10px 12px -12px rgba(0,0,0,.35); }
+.shop-top .ward-preview { width: 130px; }
