@@ -156,7 +156,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   </div>
   <div class="modes">
     <button class="block mode c-sky" type="button" id="go-practice"><span class="m-emoji">🎯</span><span>Practice</span><span class="m-sub">As many as you like. 1 ⭐ each</span></button>
-    <button class="block mode c-sun" type="button" id="go-quiz"><span class="m-emoji">📝🎡</span><span>Take the quiz</span><span class="m-sub">Get 5 right: 🍇 5 grapes + a spin!</span></button>
+    <button class="block mode c-sun" type="button" id="go-quiz"><span class="m-emoji">📝🎡</span><span>Take the quiz</span><span class="m-sub">Get 5 right: 🍇 5 grapes for your teddy!</span></button>
   </div>
 </section>
 
@@ -178,7 +178,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     <h2 id="r-title">Quiz complete!</h2>
     <div class="grape-gain">+ 🍇 5 grapes</div>
     <p class="fine" id="r-text"></p>
-    <div class="rowb"><button class="block c-sun" type="button" id="r-spin">🎡 Spin!</button></div>
+    <div class="rowb"><button class="block c-leaf" type="button" id="r-ok">Yay! ▶</button></div>
   </div>
 </div>
 
@@ -477,12 +477,13 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function quizDone() {
     K.addGrapes(5); K.markDone(LESSON_ID); K.addStars(3, LESSON_ID); K.record("quiz_done", LESSON_ID);
     refreshChips();
-    $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". Your teddy gets 5 grapes, and you get a spin!";
+    $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". Your teddy gets 5 grapes!";
     $("reward").hidden = false;
     fireworks(4000);
-    K.say("Quiz complete! Well done " + me.name + "! Five grapes for your teddy. Now spin the wheel!");
+    K.say("Quiz complete! Well done " + me.name + "! Five grapes for your teddy!");
   }
-  $("r-spin").addEventListener("click", function () { $("reward").hidden = true; openWheel(); });
+  // Basics give grapes only. The prize wheel is for Concepts lessons.
+  $("r-ok").addEventListener("click", function () { $("reward").hidden = true; backToMenu(); });
 
   function fireworks(ms) {
     var c = $("fw"); c.hidden = false;
