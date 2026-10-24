@@ -271,6 +271,25 @@
     return Array.isArray(d.done) && d.done.indexOf(lessonId) !== -1;
   }
 
+  // Right/wrong tally per lesson, for the grown-ups' lesson report. Also notes the last time it was played.
+  function recordAnswer(lessonId, right) {
+    var id = playerId(); if (!id || !lessonId) return;
+    var d = JSON.parse(JSON.stringify(petDoc(id)));
+    d.stats = d.stats && typeof d.stats === "object" ? d.stats : {};
+    var st = d.stats[lessonId] || { r: 0, w: 0 };
+    if (right) st.r++; else st.w++;
+    st.at = new Date().toISOString();
+    d.stats[lessonId] = st;
+    d.updatedAt = st.at;
+    set("pet." + id, d);
+    if (URL_) pushPet(id, d);
+  }
+  // Lessons a grown-up has flagged for this kid to practise.
+  function isPractice(lessonId, id) {
+    var d = petDoc(id || playerId());
+    return Array.isArray(d.practice) && d.practice.indexOf(lessonId) !== -1;
+  }
+
   carryOver();
   window.addEventListener("online", function () { flush(); flushPets(); });
   setTimeout(function () { flush(); flushPets(); }, 1500);
@@ -331,7 +350,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress, gender: gender,
-    fetchState: fetchState, serverPet: serverPet, grapes: grapes, addGrapes: addGrapes, markDone: markDone, isDone: isDone, pushPet: pushPet, visiblePlayers: visiblePlayers,
+    fetchState: fetchState, serverPet: serverPet, grapes: grapes, addGrapes: addGrapes, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

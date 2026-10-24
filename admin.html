@@ -41,9 +41,23 @@ h1 { font-family: var(--display); font-weight: 800; font-size: 2rem; margin: 0; 
 .btn.primary:disabled { opacity: .5; cursor: default; }
 .btn.small { padding: 6px 10px; font-size: .85rem; border-radius: 9px; }
 .btn.danger { color: var(--berry); }
+.btn:disabled { opacity: .35; cursor: default; }
 a.btn { text-decoration: none; display: inline-block; }
 .status { font-size: .95rem; color: var(--muted); min-width: 10ch; }
 .status.ok { color: var(--leaf); } .status.err { color: var(--berry); }
+
+/* lesson report */
+.report { margin-top: 26px; }
+.report-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
+.report-head h2 { font-family: var(--display); font-weight: 800; font-size: 1.5rem; margin: 0 8px 0 0; }
+.report-head select { font: 700 1rem var(--body); padding: 7px 10px; border-radius: 9px; border: 1px solid var(--rim); background: var(--bg); color: var(--ink); }
+.rep-table td { font-variant-numeric: tabular-nums; }
+.acc { display: inline-flex; align-items: center; gap: 8px; }
+.acc-bar { width: 90px; height: 10px; border-radius: 5px; background: var(--head); overflow: hidden; }
+.acc-bar span { display: block; height: 100%; }
+.weak td { background: color-mix(in srgb, var(--berry) 10%, transparent); }
+.pr-btn { border: 0; border-radius: 10px; padding: 6px 12px; cursor: pointer; font: 800 .9rem var(--body); background: var(--head); color: var(--ink); }
+.pr-btn.on { background: var(--sun); color: #2a1a00; }
 
 /* gate */
 .gate { max-width: 380px; margin: 12vh auto 0; background: var(--card); border-radius: 22px; padding: 26px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.08); }
@@ -140,6 +154,19 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       <input id="new-age" type="number" min="0" max="99" placeholder="Age" style="width:80px">
       <button class="btn" id="add" type="button">Add</button>
     </div>
+
+    <section class="report">
+      <div class="report-head">
+        <h2>Lesson report</h2>
+        <label for="rep-kid">Kid</label>
+        <select id="rep-kid"></select>
+        <span class="sub">Tap 🎯 to flag a lesson for practice. It glows on that kid's home screen. Remember to Save.</span>
+      </div>
+      <div class="sheet-scroll"><table class="rep-table">
+        <thead><tr><th>#</th><th>Lesson</th><th>Folder</th><th>Quiz done</th><th>Right</th><th>Wrong</th><th>Accuracy</th><th>Last played</th><th>Practise</th><th></th></tr></thead>
+        <tbody id="rep-rows"></tbody>
+      </table></div>
+    </section>
 
     <div class="pin-box">
       Change PIN: <input id="old-pin" type="password" inputmode="numeric" placeholder="old" maxlength="8">
@@ -322,7 +349,59 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       if (r.dirty.kid || r.dirty.pet || r.dirty.sc) tr.classList.add("dirty");
       body.appendChild(tr);
     });
+    renderReport();
   }
+
+  /* ---------- lesson report ---------- */
+  var repKid = null;
+  function renderReport() {
+    var selEl = $("rep-kid"), prev = repKid || selEl.value;
+    selEl.innerHTML = "";
+    rows.forEach(function (r) { selEl.appendChild(el("option", { value: r.p.id, text: r.p.emoji + " " + r.p.name })); });
+    if (prev && rows.some(function (r) { return r.p.id === prev; })) selEl.value = prev;
+    repKid = selEl.value;
+    var r = rows.filter(function (x) { return x.p.id === repKid; })[0], body = $("rep-rows"); body.innerHTML = "";
+    if (!r) return;
+    var pet = r.pet; pet.stats = pet.stats || {}; pet.practice = Array.isArray(pet.practice) ? pet.practice : []; pet.done = Array.isArray(pet.done) ? pet.done : [];
+    var lessons = (window.KIDSLAB_CONFIG.lessons || []).filter(function (l) { return l.status === "ready" && (!l.players || l.players.indexOf(r.p.id) !== -1); });
+    var n = 0;
+    lessons.forEach(function (l) {
+      var st = pet.stats[l.id] || { r: 0, w: 0 }, tot = st.r + st.w, acc = tot ? Math.round(st.r / tot * 100) : null;
+      var tr = el("tr"); if (acc !== null && tot >= 4 && acc < 70) tr.className = "weak";
+      tr.appendChild(td(el("span", { text: l.section === "Basics" ? String(++n) : "" })));
+      tr.appendChild(td(el("span", { text: l.emoji + " " + l.title })));
+      tr.appendChild(td(el("span", { text: l.section || "" })));
+      tr.appendChild(td(el("span", { text: pet.done.indexOf(l.id) !== -1 ? "✓" : "" })));
+      tr.appendChild(td(el("span", { text: String(st.r) })));
+      tr.appendChild(td(el("span", { text: String(st.w) })));
+      var a = el("span", { class: "acc" });
+      if (acc === null) a.textContent = "Not tried";
+      else {
+        var bar = el("span", { class: "acc-bar" }), fill = el("span");
+        fill.style.width = acc + "%"; fill.style.background = acc >= 85 ? "var(--leaf)" : acc >= 70 ? "var(--sun)" : "var(--berry)";
+        bar.appendChild(fill); a.appendChild(bar); a.appendChild(el("span", { text: acc + "%" }));
+      }
+      tr.appendChild(td(a));
+      tr.appendChild(td(el("span", { text: st.at ? new Date(st.at).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "" })));
+      var on = pet.practice.indexOf(l.id) !== -1;
+      var pb = el("button", { type: "button", class: "pr-btn" + (on ? " on" : ""), text: on ? "🎯 Practise" : "🎯" });
+      pb.addEventListener("click", function () {
+        var i = pet.practice.indexOf(l.id);
+        if (i === -1) pet.practice.push(l.id); else pet.practice.splice(i, 1);
+        r.dirty.pet = true; if (r.tr) r.tr.classList.add("dirty"); updateSave(); renderReport();
+      });
+      tr.appendChild(td(pb));
+      var reset = el("button", { type: "button", class: "btn small", text: "Clear tick" });
+      reset.disabled = pet.done.indexOf(l.id) === -1;
+      reset.addEventListener("click", function () {
+        pet.done = pet.done.filter(function (x) { return x !== l.id; });
+        r.dirty.pet = true; if (r.tr) r.tr.classList.add("dirty"); updateSave(); renderReport();
+      });
+      tr.appendChild(td(reset));
+      body.appendChild(tr);
+    });
+  }
+  $("rep-kid").addEventListener("change", function () { repKid = $("rep-kid").value; renderReport(); });
 
   function anyDirty() { return rows.some(function (r) { return r.dirty.kid || r.dirty.pet || r.dirty.sc; }); }
   function updateSave() { $("save").disabled = !anyDirty(); if (anyDirty()) setStatus("status", "Unsaved changes"); }

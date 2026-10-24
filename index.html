@@ -171,6 +171,12 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   background: #fff; color: var(--leaf); display: grid; place-items: center; font-size: 1.6rem; font-weight: 800;
   box-shadow: 0 3px 0 rgba(0,0,0,.2); text-shadow: none;
 }
+.again { font-family: var(--body); font-size: .8rem; font-weight: 800; text-shadow: none; background: rgba(255,255,255,.25); border-radius: 999px; padding: 1px 10px; }
+.block.practise { box-shadow: 0 10px 0 color-mix(in srgb, var(--c) 62%, #000), 0 0 0 5px var(--sun), 0 16px 24px var(--shadow); }
+.practise-tag { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: var(--sun); color: #2a1a00; text-shadow: none;
+  font-family: var(--body); font-weight: 800; font-size: .85rem; border-radius: 999px; padding: 2px 10px; animation: tagpulse 1.4s ease-in-out infinite; }
+@keyframes tagpulse { 0%, 100% { transform: translateX(-50%); } 50% { transform: translateX(-50%) scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .practise-tag { animation: none; } }
 .lesson-num {
   position: absolute; top: 12px; left: 14px; font-family: var(--display); font-size: 1.1rem; opacity: .8; text-shadow: none;
 }
@@ -491,6 +497,8 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         b.classList.add("folder"); b.style.animationDelay = (i * 70) + "ms";
         var meta = document.createElement("span"); meta.className = "subject-meta"; meta.textContent = done + " of " + inF.length + " done"; b.appendChild(meta);
         if (F.note) { var nt = document.createElement("span"); nt.className = "folder-note"; nt.textContent = F.note; b.appendChild(nt); }
+        var toPractise = inF.filter(function (l) { return K.isPractice && K.isPractice(l.id, p.id); }).length;
+        if (toPractise) { b.classList.add("practise"); var pt = document.createElement("span"); pt.className = "practise-tag"; pt.style.top = "10px"; pt.style.bottom = "auto"; pt.textContent = "🎯 " + toPractise + " to practise"; b.appendChild(pt); }
         b.addEventListener("click", function () { K.say(sec + "!"); setFolder(sec); });
         fg.appendChild(b);
       });
@@ -506,6 +514,11 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       var b = block({ emoji: l.emoji, label: l.title, color: l.color, locked: soon, badge: soon ? "Soon" : "" });
       if (!soon && K.isDone && K.isDone(l.id, p.id)) {
         var tick = document.createElement("span"); tick.className = "tick"; tick.textContent = "✓"; tick.setAttribute("aria-label", "Quiz done"); b.appendChild(tick);
+        var again = document.createElement("span"); again.className = "again"; again.textContent = "Do it again"; b.appendChild(again);
+      }
+      if (!soon && K.isPractice && K.isPractice(l.id, p.id)) {
+        b.classList.add("practise");
+        var pr = document.createElement("span"); pr.className = "practise-tag"; pr.textContent = "🎯 Practise!"; b.appendChild(pr);
       }
       if (folder === "Basics") {
         var num = document.createElement("span"); num.className = "lesson-num"; num.textContent = list.filter(function (x) { return x.section === l.section; }).indexOf(l) + 1; b.appendChild(num);

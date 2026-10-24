@@ -189,7 +189,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     <div class="big-emoji" id="m-emoji"></div>
     <h1 id="m-title"></h1>
     <p id="m-intro"></p>
-    <span class="done-tag" id="m-done" hidden>✓ Quiz done</span>
+    <span class="done-tag" id="m-done" hidden>✓ Quiz done. Practise or take it again any time!</span>
   </div>
   <div class="parts" id="parts" hidden></div>
   <div class="modes">
@@ -780,7 +780,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     if (locked) return;
     if (v === Q.answer) {
       locked = true; if (!Q.input) btn.classList.add("right");
-      right++; K.addStars(1, LESSON_ID); refreshChips(); K.celebrate(btn); blip(7);
+      right++; K.addStars(1, LESSON_ID); K.recordAnswer(LESSON_ID, true); refreshChips(); K.celebrate(btn); blip(7);
       if (mode === "quiz") renderDots();
       var praise = pickOne(["That's right!", "Brilliant!", "Yes! Well done!", "Super!", "You got it!"]);
       if (mode === "quiz" && right >= QUIZ_N) { say(praise + " " + Q.explain, "good"); setTimeout(quizDone, 1400); return; }
@@ -788,10 +788,12 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       setAction(mode === "quiz" ? "Next question ▶" : "Another one ▶", "leaf", next);
       if (mode === "practice") addAction("Back to menu", "sky", backToMenu);
     } else if (mode === "practice") {
+      K.recordAnswer(LESSON_ID, false);
       if (Q.input) { $("choices")._pad._clear(); say("Not quite. " + (Q.hint || "Have another go!"), "bad"); return; }
       btn.classList.add("wrong"); btn.disabled = true;
       say("Not quite. Have another go!", "bad");
     } else {
+      K.recordAnswer(LESSON_ID, false);
       locked = true; if (!Q.input) btn.classList.add("wrong");
       $("choices").querySelectorAll(".block").forEach(function (b) { if (b.textContent === String(Q.answer)) b.classList.add("right"); });
       say("Oops! The answer is " + (Q.answerText || Q.answer) + ". " + Q.explain, "bad");

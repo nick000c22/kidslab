@@ -198,7 +198,7 @@
       bubble = stars >= HATCH ? "Your egg is hatching! Tap it!" : "Hi " + p.name + "! Your egg needs " + (HATCH - stars) + " more ⭐";
       sub = "Mystery egg";
     } else {
-      sub = s.name + " · " + STAGES[stageFor(stars) - 1].name + "  ·  Tummy " + heartRow(tummy(s)) + "  Happy " + heartRow(happy(s));
+      sub = s.name + " · " + STAGES[Math.max(1, stageFor(stars)) - 1].name + "  ·  Tummy " + heartRow(tummy(s)) + "  Happy " + heartRow(happy(s));
       bubble = s.asleep ? "Zzz… " + s.name + " is asleep. Tap to wake him!" : (waiting && tummy(s) <= 2 ? "Hi " + p.name + "! I'm hungry for grapes!" : "Hi " + p.name + "! 🍇 " + waiting + " grapes");
     }
     el.innerHTML = "";
@@ -416,7 +416,7 @@
     var p = R.p, s = load(p.id), stars = K.stars(p.id);
     var rows = [
       ["NAME", s.name], ["OWNER", p.name], ["AGE", ageDays(s) === 1 ? "1 day" : ageDays(s) + " days"],
-      ["WEIGHT", (s.weight || 0.5).toFixed(2) + " kg"], ["SIZE", STAGES[stageFor(stars) - 1].name.replace(" teddy", "")],
+      ["WEIGHT", (s.weight || 0.5).toFixed(2) + " kg"], ["SIZE", STAGES[Math.max(1, stageFor(stars)) - 1].name.replace(" teddy", "")],
       ["TUMMY", heartRow(tummy(s))], ["HAPPY", heartRow(happy(s))], ["GRAPES", grapesWaiting(p.id, s) + " spare"], ["EATEN", String(s.grapesEaten || 0)], ["THINGS", s.owned.length + " bought"],
       ["DANCES", String(s.dances || 0)], ["STARS", String(stars)]
     ];
