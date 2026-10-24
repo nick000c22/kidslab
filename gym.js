@@ -7,7 +7,12 @@
 (function () {
   var K = window.KidsLab, P = window.KidsPet;
   if (!K || !P) return;
-  var COST = 1, CAPS = [0, 250, 500, 1000], GAIN = 10, DAILY = 5, WIN_GRAPES = 3, LOSE_GRAPES = 1;
+  var CAPS = [0, 250, 500, 1000], GAIN = 10, DAILY = 5, WIN_GRAPES = 3, LOSE_GRAPES = 1;
+  // Training gets dearer as a stat climbs: 1 token below 200, 2 from 200, 3 from 400, 4 from 600, 5 from 800.
+  // Maxing one stat takes about 150 tokens (75 quizzes) with great workouts, so it's a long-term goal.
+  var TIER = 200;
+  function costFor(v) { return 1 + Math.floor(Math.min(999, v || 0) / TIER); }
+  function nextTierAt(v) { var c = costFor(v); return c >= 5 ? null : c * TIER; }
   // The battle maths was tuned on a 0-30 scale; stats are 0-1000, so they're shrunk for the maths
   // and the health/damage numbers are shown 10x bigger.
   var SCALE = 1000 / 30, SHOW = 10;
@@ -74,7 +79,7 @@
       '<div class="g-top"><button class="round small g-back" type="button" aria-label="Back">⬅️</button><h2>🏋️ ' + esc(pet.name) + "'s Gym</h2>" +
       '<div class="stars" title="Gym tokens"><span>🎟️</span><span class="g-grapes"></span></div></div>' +
       '<div class="g-hero"><div class="g-bear"></div><div class="g-side"><div class="g-stats"></div><div class="g-power"></div><p class="g-tip"></p></div></div>' +
-      '<h3 class="ward-h">Train (🎟️ 1 gym token each. Finish a quiz to win 2)</h3>' +
+      '<h3 class="ward-h">Train (finish a quiz to win 🎟️ 2. The stronger a stat gets, the more tokens it costs)</h3>' +
       '<div class="g-train"></div>' +
       '<button class="block c-berry g-battle" type="button"><span class="emoji">⚔️</span><span class="label">Battle!</span><span class="g-sub">Challenge a cousin\'s teddy</span></button>' +
       '<div class="g-record"></div>' +
@@ -92,12 +97,20 @@
       STATS.forEach(function (S) {
         var full = (p2.fit[S.id] || 0) >= c2;
         var b = el('<button type="button" class="block c-' + S.color + ' g-tile"><span class="emoji"></span><span class="label"></span><span class="g-sub"></span></button>');
-        txt(b, ".emoji", S.icon); txt(b, ".label", S.name); txt(b, ".g-sub", full ? "Full! Grow bigger" : S.game);
+        var v = p2.fit[S.id] || 0, cost = costFor(v), nt = nextTierAt(v);
+        txt(b, ".emoji", S.icon); txt(b, ".label", S.name);
+        txt(b, ".g-sub", full ? "Full! Grow bigger" : S.game);
+        if (!full) {
+          var cs = document.createElement("span"); cs.className = "g-cost"; cs.textContent = new Array(cost + 1).join("🎟️"); cs.setAttribute("aria-label", "Costs " + cost + (cost === 1 ? " token" : " tokens"));
+          b.appendChild(cs);
+          if (nt && nt <= c2) { var nx = document.createElement("span"); nx.className = "g-next"; nx.textContent = "Costs " + (cost + 1) + " from " + nt; b.appendChild(nx); }
+        }
         if (full) b.classList.add("locked");
         b.addEventListener("click", function () {
           var p3 = P.load(player.id);
           if ((p3.fit[S.id] || 0) >= capFor(player.id)) { K.say(p3.name + " needs to grow bigger first. Earn stars in your lessons!"); return; }
-          if (tokens(p3) < COST) { K.say("You need a gym token to train. Finish a quiz to win 2 tokens!"); return; }
+          var need = costFor(p3.fit[S.id] || 0);
+          if (tokens(p3) < need) { K.say(S.name + " training costs " + need + " tokens now. You have " + tokens(p3) + ". Finish a quiz to win 2 more!"); return; }
           train(player, S, function () { draw(); });
         });
         tr.appendChild(b);
@@ -122,7 +135,7 @@
     function finish(great, detail) {
       var p2 = P.load(player.id), cap = capFor(player.id), before = p2.fit[S.id] || 0, gain = great ? GAIN * 2 : GAIN;
       p2.fit[S.id] = Math.min(cap, before + gain);
-      p2.tokens = tokens(p2) - COST;
+      p2.tokens = tokens(p2) - costFor(before);
       P.setHearts(p2, "happy", P.happy(p2) + 1);
       P.save(player.id, p2);
       var added = p2.fit[S.id] - before;

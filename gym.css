@@ -13,7 +13,7 @@
 .g-bear { width: 150px; flex: none; }
 .g-bear svg, .g-mini-bear svg, .g-opp-bear svg, .fighter svg { width: 100%; height: auto; display: block; overflow: visible; }
 .g-side { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
-.g-stat { display: grid; grid-template-columns: 28px 100px minmax(0, 1fr) 64px; align-items: center; gap: 8px; font-weight: 800; }
+.g-stat { display: grid; grid-template-columns: 28px 100px minmax(0, 1fr) 96px; align-items: center; gap: 8px; font-weight: 800; }
 .g-ic { font-size: 1.4rem; }
 .g-bar { height: 16px; border-radius: 8px; background: var(--bg-2); overflow: hidden; }
 .g-bar span { display: block; height: 100%; background: var(--c); border-radius: 8px; transition: width .6s cubic-bezier(.3,1.4,.5,1); }
@@ -147,3 +147,5 @@
 }
 .gym-wrap .g-news .block { width: 100%; }
 .ar-floor { background: radial-gradient(ellipse 70% 14% at 50% 94%, rgba(255,255,255,.2) 0 60%, transparent 61%); }
+.g-cost { font-size: 1.1rem; letter-spacing: -1px; text-shadow: none; }
+.g-next { font-family: var(--body); font-size: .75rem; opacity: .85; text-shadow: none; }
