@@ -22,7 +22,7 @@
   function blank() {
     return { name: "", hatched: false, hatchedAt: null, fur: "brown", belly: "+", wear: {}, unlockAll: false,
       fedUpTo: null, grapes: null, grapesEarned: 0, grapesEaten: 0, weight: 0.5, tummy: 3, tummyAt: null, happy: 3, happyAt: null, dances: 0,
-      lastSeen: null, asleep: false, seen: [], stage: 0, owned: [], ownedFurs: [], updatedAt: "" };
+      lastSeen: null, asleep: false, seen: [], stage: 0, owned: [], ownedFurs: [], done: [], updatedAt: "" };
   }
   function load(id) {
     var local = K.get("pet." + id, null), srv = K.serverPet ? K.serverPet(id) : null;

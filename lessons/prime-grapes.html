@@ -501,8 +501,21 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   }
   function act(extra) { setActions((extra || []).concat(answers())); }
 
+  // In the test a wrong answer is explained, then swapped for a new number of the same kind.
+  // The test is complete after 5 right answers.
+  function replacement(n) {
+    var used = S.testNums.concat(S.missed || []);
+    var pool = LEVELS[3].pool.filter(function (x) { return isPrime(x) === isPrime(n) && used.indexOf(x) === -1; });
+    if (!pool.length) pool = LEVELS[3].pool.filter(function (x) { return x !== n; });
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
   function nextRound() {
-    S.round++;
+    if (S.L.test && S.retry) {
+      S.retry = false;
+      (S.missed = S.missed || []).push(S.n);
+      S.testNums[S.round - 1] = replacement(S.n);
+    } else S.round++;
     if (S.round > S.rounds) return S.L.test ? testDone() : levelDone();
     if (S.L.test) {
       S.n = S.testNums[S.round - 1];
@@ -692,7 +705,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     if (S.answered) return;
     S.answered = true;
     var prime = isPrime(S.n), right = saidPrime === prime;
-    S.results.push(right);
+    if (right) S.results.push(true); else S.retry = true;
     renderDots();
     lockBowl(true);
     if (prime) $("stamp").hidden = false;
@@ -701,13 +714,14 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     say((right ? "That's right! " : "Oops! ") + fact);
     setActions([]);
     setTimeout(function () {
-      setActions([{ label: S.round < S.rounds ? "Next question ▶" : "See my score ▶", color: "leaf", onClick: nextRound }]);
+      setActions([{ label: !right ? "Try another number ▶" : S.round < S.rounds ? "Next question ▶" : "Finish the test ▶", color: "leaf", onClick: nextRound }]);
     }, 600);
   }
 
   function testDone() {
     var got = S.results.filter(Boolean).length;
     K.addGrapes(5);
+    if (got === ROUNDS) K.markDone(LESSON);
     var p = progress();
     p.levels[4] = (p.levels[4] || 0) + 1;
     K.progress(LESSON, p);
@@ -720,7 +734,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       award(5); K.record("test_passed");
       $("tr-emoji").textContent = "🏆";
       $("tr-title").textContent = "5 out of 5!";
-      $("tr-text").textContent = "You passed the prime test, " + me.name + "! You earned 5 grapes 🍇 for your teddy. Now spin the prize wheel!";
+      $("tr-text").textContent = "You finished the prime test, " + me.name + "! You earned 5 grapes 🍇 for your teddy. Now spin the prize wheel!";
       btn("🎡 Spin!", "sun", function () { $("test-result").hidden = true; openWheel(); });
       fireworks(4500);
       K.say("Five out of five! You passed the test! You earned five grapes for your teddy. Spin for a prize!");

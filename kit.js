@@ -227,6 +227,21 @@
     return d.grapes;
   }
 
+  // Lesson ticks: a lesson is "done" once its quiz has been completed.
+  function markDone(lessonId) {
+    var id = playerId(); if (!id || !lessonId) return;
+    var d = JSON.parse(JSON.stringify(petDoc(id)));
+    d.done = Array.isArray(d.done) ? d.done : [];
+    if (d.done.indexOf(lessonId) === -1) d.done.push(lessonId);
+    d.updatedAt = new Date().toISOString();
+    set("pet." + id, d);
+    if (URL_) pushPet(id, d);
+  }
+  function isDone(lessonId, id) {
+    var d = petDoc(id || playerId());
+    return Array.isArray(d.done) && d.done.indexOf(lessonId) !== -1;
+  }
+
   carryOver();
   window.addEventListener("online", function () { flush(); flushPets(); });
   setTimeout(function () { flush(); flushPets(); }, 1500);
@@ -287,7 +302,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress,
-    fetchState: fetchState, serverPet: serverPet, grapes: grapes, addGrapes: addGrapes, pushPet: pushPet, visiblePlayers: visiblePlayers,
+    fetchState: fetchState, serverPet: serverPet, grapes: grapes, addGrapes: addGrapes, markDone: markDone, isDone: isDone, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

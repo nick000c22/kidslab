@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Kids Lab Basics</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: one lesson at a time. Question on top, grapes in the middle to count or move, big answer buttons at the bottom. */
+:root {
+  --bg: #EAF1FB; --bg-2: #DCE8F7; --ink: #1E2240; --muted: #5B6188; --card: #FFFFFF; --rim: #D5DDEE;
+  --grape: #6E44A8; --leaf: #2F9358; --sun: #E9A21F; --berry: #D4466F; --sky: #2F7FC6; --tang: #E26A2C;
+  --shadow: rgba(30, 34, 64, .22);
+  --display: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Nunito", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141830; --bg-2: #1B2042; --ink: #EEF0FB; --muted: #A9AFD3; --card: #232850; --rim: #353B6B;
+    --grape: #8A5FCB; --leaf: #3AAA69; --sun: #E3A630; --berry: #DC5A81; --sky: #3E8FD6; --tang: #E57A3E;
+    --shadow: rgba(0, 0, 0, .45); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141830; --bg-2: #1B2042; --ink: #EEF0FB; --muted: #A9AFD3; --card: #232850; --rim: #353B6B;
+  --grape: #8A5FCB; --leaf: #3AAA69; --sun: #E3A630; --berry: #DC5A81; --sky: #3E8FD6; --tang: #E57A3E;
+  --shadow: rgba(0, 0, 0, .45); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-weight: 700;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; overflow-x: hidden;
+}
+button { font: inherit; color: inherit; touch-action: manipulation; cursor: pointer; }
+button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
+.screen {
+  min-height: 100%; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding-block: 18px 28px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.top { width: 100%; min-height: 64px; display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.chip { display: flex; align-items: center; gap: 6px; height: 52px; padding: 0 18px 0 12px; background: var(--card); border-radius: 26px;
+  box-shadow: 0 5px 0 var(--shadow); font-family: var(--display); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+
+.block {
+  --c: var(--grape); border: 0; color: #fff; background: var(--c); border-radius: 24px;
+  box-shadow: 0 9px 0 color-mix(in srgb, var(--c) 62%, #000), 0 14px 22px var(--shadow); transition: transform .09s, box-shadow .09s;
+  font-family: var(--display); font-weight: 800; font-size: clamp(1.3rem, 3vw, 1.8rem); padding: 14px 28px;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-shadow: 0 2px 0 rgba(0,0,0,.18); position: relative; overflow: hidden;
+}
+.block::before { content: ""; position: absolute; inset: 0 0 55% 0; background: linear-gradient(rgba(255,255,255,.22), transparent); pointer-events: none; }
+.block:active { transform: translateY(7px); box-shadow: 0 2px 0 color-mix(in srgb, var(--c) 62%, #000), 0 4px 10px var(--shadow); }
+.c-grape { --c: var(--grape); } .c-leaf { --c: var(--leaf); } .c-sun { --c: var(--sun); } .c-berry { --c: var(--berry); } .c-sky { --c: var(--sky); } .c-tang { --c: var(--tang); }
+
+/* menu */
+.hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 8px; }
+.hero .big-emoji { font-size: clamp(80px, 16vw, 130px); line-height: 1; }
+.hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.4rem, 7vw, 4rem); line-height: 1; margin: 0; text-wrap: balance; }
+.hero p { margin: 0; color: var(--muted); font-size: 1.2rem; max-width: 36ch; text-wrap: balance; }
+.done-tag { background: var(--leaf); color: #fff; border-radius: 999px; padding: 4px 14px; font-size: 1rem; }
+.modes { width: min(720px, 100%); display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); margin-top: 10px; }
+.mode { min-height: 190px; }
+.mode .m-emoji { font-size: 60px; line-height: 1.1; text-shadow: none; }
+.mode .m-sub { font-family: var(--body); font-size: 1rem; text-shadow: none; opacity: .92; }
+
+/* game */
+.tag { color: var(--muted); font-size: 1rem; letter-spacing: .08em; text-transform: uppercase; margin-top: -40px; }
+.dots { display: flex; gap: 10px; }
+.dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--card); box-shadow: inset 0 0 0 3px var(--rim); color: #fff; font-size: 1.1rem; }
+.dot.now { box-shadow: inset 0 0 0 4px var(--sun); }
+.dot.yes { background: var(--leaf); box-shadow: none; }
+.prompt { font-family: var(--display); font-weight: 800; font-size: clamp(1.6rem, 4.6vw, 2.6rem); line-height: 1.1; margin: 0; text-align: center; text-wrap: balance; max-width: 22ch; }
+.sum { font-family: var(--display); font-weight: 800; font-size: clamp(2.6rem, 9vw, 4.6rem); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.sum .gap { display: inline-block; min-width: 1.2em; border-bottom: 6px solid var(--sun); color: var(--sun); text-align: center; }
+.visual { width: min(820px, 100%); min-height: 120px; background: var(--card); border-radius: 28px; box-shadow: 0 8px 0 var(--shadow);
+  padding: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px; position: relative; }
+.say { min-height: 2.4em; max-width: 34ch; text-align: center; text-wrap: balance; font-family: var(--display); font-weight: 700; font-size: clamp(1.25rem, 3vw, 1.7rem); line-height: 1.2; margin: 0; }
+.say.good { color: var(--leaf); } .say.bad { color: var(--berry); }
+.choices { width: min(820px, 100%); display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+.choices .block { font-size: clamp(2rem, 6vw, 3rem); padding: 16px 10px; min-height: 96px; font-variant-numeric: tabular-nums; }
+.choices .block.wrong { --c: #9AA0B8; opacity: .55; }
+.choices .block.right { --c: var(--leaf); }
+.actions { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; min-height: 10px; }
+
+/* grapes and things */
+.g { width: 40px; height: 40px; border-radius: 50%; flex: none; display: inline-grid; place-items: center; border: 0; padding: 0;
+  background: radial-gradient(circle at 34% 30%, #EBDDFB 0 10%, #A577DE 34%, #5B2E95 100%); box-shadow: inset -2px -3px 0 rgba(40, 10, 80, .25);
+  color: #fff; font-family: var(--display); font-size: 1.1rem; text-shadow: 0 1px 0 rgba(0,0,0,.4); animation: pop .35s cubic-bezier(.3,1.6,.5,1) both; }
+.g.green { background: radial-gradient(circle at 34% 30%, #E9FBD9 0 10%, #8FD26A 34%, #3E8A2A 100%); box-shadow: inset -2px -3px 0 rgba(20, 60, 10, .25); }
+.g.eaten { background: transparent; box-shadow: inset 0 0 0 3px var(--rim); animation: none; position: relative; }
+.g.eaten::after { content: "✕"; color: var(--berry); font-size: 1.4rem; text-shadow: none; }
+.g.empty { background: transparent; box-shadow: inset 0 0 0 3px var(--rim); animation: none; }
+.g.tap { cursor: pointer; }
+.g.counted { outline: 4px solid var(--sun); outline-offset: 2px; }
+.small .g { width: 28px; height: 28px; font-size: .85rem; }
+@keyframes pop { from { transform: scale(.3); opacity: 0; } }
+.row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.frame { display: grid; grid-template-columns: repeat(5, 44px); gap: 8px; padding: 10px; border-radius: 16px; background: var(--bg-2); }
+.group { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-content: center; max-width: 230px; padding: 14px; border-radius: 22px; background: var(--bg-2); min-height: 80px; }
+.op { font-family: var(--display); font-weight: 800; font-size: 3rem; color: var(--muted); }
+.plate { width: clamp(84px, 14vw, 120px); aspect-ratio: 1 / 1; max-width: 100%; border-radius: 50%; background: var(--card); box-shadow: inset 0 0 0 10px var(--rim), 0 6px 0 var(--shadow);
+  display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; align-content: center; padding: 26%; }
+.plate .g { width: 18px; height: 18px; }
+.plates { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; width: 100%; }
+.array { display: grid; gap: 8px; padding: 12px; border-radius: 18px; background: var(--bg-2); }
+.array .g { width: 32px; height: 32px; }
+.tens { display: flex; gap: 10px; align-items: flex-end; }
+.ten { display: grid; grid-template-rows: repeat(10, 18px); gap: 3px; padding: 6px; border-radius: 12px; background: var(--sky); }
+.ten span { width: 18px; height: 18px; border-radius: 50%; background: #fff; opacity: .9; }
+.ones { display: flex; flex-wrap: wrap; gap: 6px; max-width: 120px; align-content: flex-end; }
+.one { width: 22px; height: 22px; border-radius: 50%; background: var(--tang); }
+.vlabel { font-family: var(--display); font-size: 1.2rem; color: var(--muted); text-align: center; width: 100%; }
+.seq { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.seq span { min-width: 72px; height: 72px; padding: 0 8px; border-radius: 18px; background: var(--bg-2); display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 2.2rem; font-variant-numeric: tabular-nums; }
+.seq span.gap { background: transparent; box-shadow: inset 0 0 0 4px var(--sun); color: var(--sun); }
+.hop { font-size: 1.6rem; align-self: center; color: var(--muted); }
+.cmp { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.cmp .num { font-family: var(--display); font-weight: 800; font-size: 3rem; line-height: 1; }
+
+/* overlays */
+.overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(10, 12, 30, .5);
+  padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.card { background: var(--card); border-radius: 28px; padding: 28px; width: min(560px, 100%); max-height: 100%; overflow-y: auto;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.35); display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.card h2 { font-family: var(--display); font-weight: 800; font-size: 2.4rem; margin: 0; line-height: 1; }
+.card .big { font-size: 64px; line-height: 1; }
+.card .rowb { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+.fine { color: var(--muted); font-size: 1.05rem; margin: 0; text-wrap: balance; }
+.grape-gain { font-family: var(--display); font-weight: 800; font-size: 1.6rem; background: var(--bg-2); border-radius: 999px; padding: 4px 18px; }
+#fw { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 90; pointer-events: none; }
+.wheel-wrap { position: relative; width: min(420px, 82vw, 60vh); aspect-ratio: 1 / 1; max-width: 100%; }
+.wheel { width: 100%; height: 100%; display: block; }
+.wheel-spin { transform-box: fill-box; transform-origin: center; }
+.pointer { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); width: 0; height: 0; border-left: 22px solid transparent;
+  border-right: 22px solid transparent; border-top: 40px solid var(--ink); z-index: 2; }
+.prize-art { width: min(220px, 60vw); }
+.prize-art svg { width: 100%; height: auto; }
+@media (prefers-reduced-motion: reduce) { .g { animation: none; } }
+</style>
+</head>
+<body>
+
+<section class="screen" id="menu">
+  <div class="top"><div class="chip"><span>🍇</span><span class="grape-count">0</span></div><div class="chip"><span>⭐</span><span class="star-count">0</span></div></div>
+  <div class="hero">
+    <div class="big-emoji" id="m-emoji"></div>
+    <h1 id="m-title"></h1>
+    <p id="m-intro"></p>
+    <span class="done-tag" id="m-done" hidden>✓ Quiz done</span>
+  </div>
+  <div class="modes">
+    <button class="block mode c-sky" type="button" id="go-practice"><span class="m-emoji">🎯</span><span>Practice</span><span class="m-sub">As many as you like. 1 ⭐ each</span></button>
+    <button class="block mode c-sun" type="button" id="go-quiz"><span class="m-emoji">📝🎡</span><span>Take the quiz</span><span class="m-sub">Get 5 right: 🍇 5 grapes + a spin!</span></button>
+  </div>
+</section>
+
+<section class="screen" id="game" hidden>
+  <div class="top"><div class="chip"><span>🍇</span><span class="grape-count">0</span></div><div class="chip"><span>⭐</span><span class="star-count">0</span></div></div>
+  <div class="tag" id="tag"></div>
+  <div class="dots" id="dots" hidden></div>
+  <p class="prompt" id="prompt"></p>
+  <div class="sum" id="sum" hidden></div>
+  <div class="visual" id="visual"></div>
+  <p class="say" id="say" aria-live="polite"></p>
+  <div class="choices" id="choices"></div>
+  <div class="actions" id="actions"></div>
+</section>
+
+<div class="overlay" id="reward" hidden>
+  <div class="card">
+    <div class="big">🏆</div>
+    <h2 id="r-title">Quiz complete!</h2>
+    <div class="grape-gain">+ 🍇 5 grapes</div>
+    <p class="fine" id="r-text"></p>
+    <div class="rowb"><button class="block c-sun" type="button" id="r-spin">🎡 Spin!</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="spin" hidden>
+  <div class="card">
+    <h2 id="spin-title">Spin for a prize!</h2>
+    <div class="wheel-wrap"><div class="pointer" aria-hidden="true"></div><svg class="wheel" id="wheel" viewBox="-110 -110 220 220" role="img" aria-label="Prize wheel"></svg></div>
+    <div class="rowb" id="spin-actions"></div>
+  </div>
+</div>
+
+<div class="overlay" id="prize" hidden>
+  <div class="card">
+    <div id="prize-art"></div>
+    <h2 id="prize-title"></h2>
+    <p class="fine" id="prize-text"></p>
+    <div class="rowb"><button class="block c-leaf" type="button" id="prize-ok">Yay! ▶</button></div>
+  </div>
+</div>
+
+<canvas id="fw" hidden></canvas>
+
+<script src="../config.js"></script>
+<script src="../kit.js"></script>
+<script src="../items.js"></script>
+<script src="../pet.js"></script>
+<script>
+(function () {
+  var K = window.KidsLab;
+  var $ = function (id) { return document.getElementById(id); };
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  K.backButton();
+  var me = K.player() || { name: "you", emoji: "🙂" };
+
+  /* ---------- helpers ---------- */
+  function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pickOne(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  // Answer buttons: the right answer plus nearby wrong ones.
+  function options(ans, n, min, max, step) {
+    n = n || 4; min = min == null ? 0 : min; max = max == null ? ans + 10 : max; step = step || 1;
+    var set = [ans], tries = 0;
+    while (set.length < n && tries++ < 200) {
+      var d = (rnd(1, 3) * step) * (Math.random() < .5 ? -1 : 1), v = ans + d;
+      if (v >= min && v <= max && set.indexOf(v) === -1) set.push(v);
+    }
+    for (var v2 = min; set.length < n && v2 <= max; v2 += step) if (set.indexOf(v2) === -1) set.push(v2);
+    return set.sort(function (a, b) { return a - b; });
+  }
+  function grapes(n, cls) { var o = ""; for (var i = 0; i < n; i++) o += '<span class="g ' + (cls || "") + '" style="animation-delay:' + (reduce ? 0 : i * 25) + 'ms"></span>'; return o; }
+  function frame(filled, total, cls) {
+    var o = '<div class="frame">';
+    for (var i = 0; i < total; i++) o += i < filled ? '<span class="g ' + (cls || "") + '"></span>' : '<span class="g empty"></span>';
+    return o + "</div>";
+  }
+  function frames(n, cls) { var o = ""; for (var i = 0; i < n; i += 10) o += frame(Math.min(10, n - i), 10, cls); return o; }
+
+  /* ---------- the lessons (easy to hard) ---------- */
+  var LESSONS = {
+    counting: {
+      title: "Count the Grapes", emoji: "🔢", color: "grape", intro: "Tap each grape to count it.",
+      gen: function (quiz) {
+        var n = quiz ? rnd(6, 20) : rnd(3, 12);
+        var vis = '<div class="row" style="max-width:520px">';
+        for (var i = 0; i < n; i++) vis += '<button type="button" class="g tap" aria-label="grape"></button>';
+        vis += "</div>";
+        return { prompt: "How many grapes?", visual: vis, answer: n, choices: options(n, 4, 1, 20),
+          explain: "There are " + n + " grapes. Tap each one and count out loud!", after: countTaps };
+      }
+    },
+    compare: {
+      title: "More or Less", emoji: "🐊", color: "leaf", intro: "The hungry crocodile always eats the bigger number!",
+      gen: function (quiz) {
+        var max = quiz ? 20 : 10, a = rnd(1, max), b; do { b = rnd(1, max); } while (b === a);
+        var more = quiz ? Math.random() < .6 : true;
+        var vis = '<div class="cmp"><div class="group small">' + grapes(a) + '</div><div class="num">' + a + '</div></div>' +
+          '<div class="op">🐊</div>' +
+          '<div class="cmp"><div class="group small">' + grapes(b, "green") + '</div><div class="num">' + b + "</div></div>";
+        var ans = more ? Math.max(a, b) : Math.min(a, b);
+        return { prompt: more ? "Which number is bigger?" : "Which number is smaller?", visual: vis, answer: ans, choices: [a, b].sort(function (x, y) { return x - y; }),
+          explain: Math.max(a, b) + " is bigger than " + Math.min(a, b) + ". " + (more ? "The crocodile eats " + ans + "!" : Math.min(a, b) + " is the smaller one.") };
+      }
+    },
+    add10: {
+      title: "Adding Up", emoji: "➕", color: "sky", intro: "Put the grapes together and count them all.",
+      gen: function (quiz) {
+        var total = quiz ? rnd(5, 10) : rnd(2, 8), a = rnd(1, total - 1), b = total - a;
+        var vis = '<div class="group">' + grapes(a) + '</div><div class="op">+</div><div class="group">' + grapes(b, "green") + "</div>";
+        return { prompt: "How many altogether?", sum: a + " + " + b + " = ?", visual: vis, answer: total, choices: options(total, 4, 1, 12),
+          explain: a + " and " + b + " more makes " + total + ". " + a + " + " + b + " = " + total + "." };
+      }
+    },
+    sub10: {
+      title: "Taking Away", emoji: "➖", color: "berry", intro: "Teddy eats some grapes. How many are left?",
+      gen: function (quiz) {
+        var a = quiz ? rnd(5, 10) : rnd(3, 8), b = rnd(1, a - 1), left = a - b;
+        var vis = '<div class="row" style="max-width:560px">' + grapes(left) + grapes(b, "eaten") + "</div>";
+        return { prompt: "Teddy ate " + b + ". How many are left?", sum: a + " − " + b + " = ?", visual: vis, answer: left, choices: options(left, 4, 0, 10),
+          explain: "Count the grapes that are still there: " + left + ". " + a + " take away " + b + " is " + left + "." };
+      }
+    },
+    bonds: {
+      title: "Make 10", emoji: "🔟", color: "tang", intro: "Fill the box! How many more make 10?",
+      gen: function (quiz) {
+        var n = rnd(quiz ? 1 : 3, 9), need = 10 - n;
+        return { prompt: "How many more to make 10?", sum: n + " + ? = 10", visual: frame(n, 10), answer: need, choices: options(need, 4, 1, 9),
+          explain: "Count the empty spaces: " + need + ". " + n + " and " + need + " make 10!" };
+      }
+    },
+    doubles: {
+      title: "Doubles and Halves", emoji: "👯", color: "grape", intro: "Double means two the same. Half means share into two the same.",
+      gen: function (quiz) {
+        if (Math.random() < (quiz ? .5 : .6)) {
+          var n = rnd(1, quiz ? 10 : 6), d = n * 2;
+          var vis = '<div class="group">' + grapes(n) + '</div><div class="op">+</div><div class="group">' + grapes(n) + "</div>";
+          return { prompt: "What is double " + n + "?", sum: n + " + " + n + " = ?", visual: vis, answer: d, choices: options(d, 4, 2, 22, 1),
+            explain: "Double " + n + " is " + n + " and " + n + " again. That's " + d + "!" };
+        }
+        var h = rnd(1, quiz ? 10 : 6), whole = h * 2;
+        var vis2 = '<div class="group" style="max-width:420px">' + grapes(whole) + '</div><div class="vlabel">Share them onto 2 plates</div>' +
+          '<div class="plates"><div class="plate"></div><div class="plate"></div></div>';
+        return { prompt: "What is half of " + whole + "?", visual: vis2, answer: h, choices: options(h, 4, 1, 12),
+          explain: "Share " + whole + " into two equal groups: " + h + " each. Half of " + whole + " is " + h + ".",
+          after: function (v) { addShareButton(v, whole, 2); } };
+      }
+    },
+    skip: {
+      title: "Count in 2s, 5s and 10s", emoji: "🦘", color: "leaf", intro: "Hop along the numbers like a kangaroo!",
+      gen: function (quiz) {
+        var step = pickOne(quiz ? [2, 5, 10, 3] : [2, 5, 10]), start = step * rnd(0, quiz ? 6 : 3), len = 5, gapAt = rnd(1, len - 1);
+        var seq = [], vis = '<div class="seq">';
+        for (var i = 0; i < len; i++) seq.push(start + i * step);
+        seq.forEach(function (v, i) { vis += (i ? '<span class="hop" aria-hidden="true">›</span>' : "") + (i === gapAt ? '<span class="gap">?</span>' : "<span>" + v + "</span>"); });
+        vis += "</div>";
+        var ans = seq[gapAt];
+        return { prompt: "Counting in " + step + "s. What's missing?", visual: vis, answer: ans, choices: options(ans, 4, 0, ans + 3 * step, step === 3 ? 1 : step === 10 ? 5 : 1),
+          explain: "Each hop adds " + step + ". " + seq.join(", ") + "." };
+      }
+    },
+    place: {
+      title: "Tens and Ones", emoji: "🧱", color: "sky", intro: "A stick holds 10. Count the sticks in tens, then add the ones.",
+      gen: function (quiz) {
+        var t = rnd(1, quiz ? 9 : 5), o = rnd(0, 9), n = t * 10 + o, vis = '<div class="tens">';
+        for (var i = 0; i < t; i++) { vis += '<div class="ten">'; for (var j = 0; j < 10; j++) vis += "<span></span>"; vis += "</div>"; }
+        vis += '</div><div class="ones">';
+        for (var k = 0; k < o; k++) vis += '<span class="one"></span>';
+        vis += '</div><div class="vlabel">' + t + (t === 1 ? " ten" : " tens") + " and " + o + (o === 1 ? " one" : " ones") + "</div>";
+        var ch = shuffle([n, o * 10 + t !== n && o > 0 ? o * 10 + t : n + 10, n + 1 <= 99 ? n + 1 : n - 2, n - 10 >= 1 ? n - 10 : n + 20]);
+        ch = ch.filter(function (v, i) { return ch.indexOf(v) === i; });
+        while (ch.length < 4) { var extra = rnd(10, 99); if (ch.indexOf(extra) === -1) ch.push(extra); }
+        return { prompt: "What number is this?", visual: vis, answer: n, choices: ch.sort(function (a, b) { return a - b; }),
+          explain: t + " tens make " + t * 10 + ", and " + o + " more makes " + n + "." };
+      }
+    },
+    times: {
+      title: "Times Tables", emoji: "✖️", color: "berry", intro: "Times means groups of. 3 × 4 is 3 rows of 4.",
+      gen: function (quiz) {
+        var a = quiz ? pickOne([2, 3, 4, 5, 10]) : pickOne([2, 5, 10]), b = rnd(1, quiz ? 10 : 6);
+        if (Math.random() < .5) { var t = a; a = b; b = t; }
+        var rows = Math.min(a, b) === a ? a : a, cols = b, ans = a * b;
+        var vis = '<div class="array" style="grid-template-columns:repeat(' + cols + ', 32px)">' + grapes(ans) + '</div><div class="vlabel">' + a + " rows of " + b + "</div>";
+        return { prompt: "What is " + a + " × " + b + "?", sum: a + " × " + b + " = ?", visual: vis, answer: ans,
+          choices: options(ans, 4, 1, 100, a === 10 || b === 10 ? 10 : Math.min(a, b) > 1 ? Math.min(a, b) : 1),
+          explain: a + " rows of " + b + " grapes. Count in " + b + "s: " + ans + ". So " + a + " × " + b + " = " + ans + "." };
+      }
+    },
+    share: {
+      title: "Sharing Fairly", emoji: "➗", color: "tang", intro: "Divide means share fairly. Everyone gets the same!",
+      gen: function (quiz) {
+        var k = rnd(2, quiz ? 5 : 3), each = rnd(1, quiz ? 6 : 4), total = k * each;
+        var vis = '<div class="group" style="max-width:520px">' + grapes(total) + '</div><div class="plates">';
+        for (var i = 0; i < k; i++) vis += '<div class="plate"></div>';
+        vis += "</div>";
+        return { prompt: "Share " + total + " grapes onto " + k + " plates. How many each?", sum: total + " ÷ " + k + " = ?", visual: vis, answer: each,
+          choices: options(each, 4, 1, 12),
+          explain: total + " shared onto " + k + " plates is " + each + " each. " + total + " ÷ " + k + " = " + each + ".",
+          after: function (v) { addShareButton(v, total, k); } };
+      }
+    }
+  };
+
+  /* ---------- interactive bits ---------- */
+  function countTaps(v) {
+    var n = 0;
+    v.querySelectorAll(".g.tap").forEach(function (g) {
+      g.addEventListener("click", function () {
+        if (g.classList.contains("counted")) return;
+        n++; g.classList.add("counted"); g.textContent = n; K.say(String(n)); blip(n);
+      });
+    });
+  }
+  // A button that deals the grapes out onto the plates, one at a time, like sharing at the table.
+  function addShareButton(v, total, k) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "block c-sky"; b.textContent = "🍽️ Share them out";
+    b.style.fontSize = "1.3rem";
+    b.addEventListener("click", function () {
+      b.remove();
+      var src = v.querySelector(".group"), plates = v.querySelectorAll(".plate"), i = 0;
+      (function step() {
+        var g = src.querySelector(".g"); if (!g) return;
+        plates[i % k].appendChild(g); g.style.animation = "pop .3s both"; blip(i); i++;
+        setTimeout(step, reduce ? 20 : 160);
+      })();
+    });
+    v.appendChild(b);
+  }
+
+  /* ---------- sound ---------- */
+  var ac = null;
+  function blip(i) {
+    if (!K.get("sound", true)) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+      o.type = "sine"; o.frequency.value = 440 + (i % 8) * 55;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.2);
+    } catch (e) {}
+  }
+
+  /* ---------- lesson setup ---------- */
+  var id = (location.search.match(/[?&]l=([a-z0-9-]+)/) || [])[1] || "counting";
+  var L = LESSONS[id] || LESSONS.counting;
+  var LESSON_ID = id;
+  document.title = L.title;
+  $("m-emoji").textContent = L.emoji; $("m-title").textContent = L.title; $("m-intro").textContent = L.intro;
+
+  function refreshChips() {
+    document.querySelectorAll(".star-count").forEach(function (e) { e.textContent = K.stars(); });
+    document.querySelectorAll(".grape-count").forEach(function (e) { e.textContent = K.grapes(); });
+    $("m-done").hidden = !K.isDone(LESSON_ID);
+  }
+  function show(which) { $("menu").hidden = which !== "menu"; $("game").hidden = which !== "game"; window.scrollTo(0, 0); }
+  function say(text, cls) { $("say").textContent = text; $("say").className = "say" + (cls ? " " + cls : ""); K.say(text); }
+
+  /* ---------- playing ---------- */
+  var mode = "practice", right = 0, Q = null, locked = false, QUIZ_N = 5;
+
+  function start(m) {
+    mode = m; right = 0; show("game");
+    $("dots").hidden = mode !== "quiz";
+    $("tag").textContent = L.title + (mode === "quiz" ? "  ·  Quiz" : "  ·  Practice");
+    next();
+  }
+  function renderDots() {
+    var d = $("dots"); d.innerHTML = "";
+    for (var i = 0; i < QUIZ_N; i++) { var s = document.createElement("span"); s.className = "dot" + (i < right ? " yes" : i === right ? " now" : ""); if (i < right) s.textContent = "✓"; d.appendChild(s); }
+  }
+  function next() {
+    locked = false;
+    Q = L.gen(mode === "quiz");
+    $("prompt").textContent = Q.prompt;
+    $("sum").hidden = !Q.sum; $("sum").textContent = Q.sum || "";
+    $("visual").innerHTML = Q.visual;
+    if (Q.after) Q.after($("visual"));
+    $("say").textContent = ""; $("actions").innerHTML = "";
+    if (mode === "quiz") renderDots();
+    var c = $("choices"); c.innerHTML = "";
+    var colors = ["grape", "sky", "tang", "leaf"];
+    Q.choices.forEach(function (v, i) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "block c-" + colors[i % 4]; b.textContent = v;
+      b.addEventListener("click", function () { choose(v, b); });
+      c.appendChild(b);
+    });
+    K.say(Q.prompt + (Q.sum ? " " + Q.sum.replace("?", "what").replace("−", "minus").replace("×", "times").replace("÷", "divided by") : ""));
+  }
+  function choose(v, btn) {
+    if (locked) return;
+    if (v === Q.answer) {
+      locked = true; btn.classList.add("right");
+      right++; K.addStars(1, LESSON_ID); refreshChips(); K.celebrate(btn); blip(7);
+      if (mode === "quiz") renderDots();
+      var praise = pickOne(["That's right!", "Brilliant!", "Yes! Well done!", "Super!", "You got it!"]);
+      if (mode === "quiz" && right >= QUIZ_N) { say(praise + " " + Q.explain, "good"); setTimeout(quizDone, 1400); return; }
+      say(praise + " " + Q.explain, "good");
+      setAction(mode === "quiz" ? "Next question ▶" : "Another one ▶", "leaf", next);
+      if (mode === "practice") addAction("Back to menu", "sky", backToMenu);
+    } else if (mode === "practice") {
+      btn.classList.add("wrong"); btn.disabled = true;
+      say("Not quite. Have another go!", "bad");
+    } else {
+      locked = true; btn.classList.add("wrong");
+      $("choices").querySelectorAll("button").forEach(function (b) { if (Number(b.textContent) === Q.answer) b.classList.add("right"); });
+      say("Oops! The answer is " + Q.answer + ". " + Q.explain, "bad");
+      setAction("Try another one ▶", "leaf", next);
+    }
+  }
+  function setAction(label, color, fn) { $("actions").innerHTML = ""; addAction(label, color, fn); }
+  function addAction(label, color, fn) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "block c-" + color; b.textContent = label;
+    b.addEventListener("click", fn); $("actions").appendChild(b);
+  }
+  function backToMenu() { show("menu"); refreshChips(); }
+
+  /* ---------- quiz complete: grapes, tick, fireworks, spin ---------- */
+  function quizDone() {
+    K.addGrapes(5); K.markDone(LESSON_ID); K.addStars(3, LESSON_ID); K.record("quiz_done", LESSON_ID);
+    refreshChips();
+    $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". Your teddy gets 5 grapes, and you get a spin!";
+    $("reward").hidden = false;
+    fireworks(4000);
+    K.say("Quiz complete! Well done " + me.name + "! Five grapes for your teddy. Now spin the wheel!");
+  }
+  $("r-spin").addEventListener("click", function () { $("reward").hidden = true; openWheel(); });
+
+  function fireworks(ms) {
+    var c = $("fw"); c.hidden = false;
+    var ctx = c.getContext("2d"), dpr = window.devicePixelRatio || 1;
+    c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var parts = [], cols = ["#FFD166", "#EF476F", "#06D6A0", "#8A5FCB", "#4CC9F0", "#FFFFFF"], end = Date.now() + (reduce ? 1200 : ms), nextBurst = 0;
+    function burst() {
+      var x = innerWidth * (0.15 + Math.random() * 0.7), y = innerHeight * (0.12 + Math.random() * 0.35), col = pickOne(cols), n = reduce ? 20 : 60;
+      for (var i = 0; i < n; i++) { var a = (Math.PI * 2 * i) / n, sp = 2 + Math.random() * 4; parts.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, col: col }); }
+      blip(rnd(0, 7));
+    }
+    (function frame() {
+      var now = Date.now();
+      if (now < end && now > nextBurst) { burst(); nextBurst = now + 380 + Math.random() * 300; }
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      parts = parts.filter(function (p) { return p.life > 0; });
+      parts.forEach(function (p) { p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.vx *= 0.985; p.life -= 0.012; ctx.globalAlpha = Math.max(p.life, 0); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill(); });
+      ctx.globalAlpha = 1;
+      if (now < end || parts.length) requestAnimationFrame(frame); else c.hidden = true;
+    })();
+  }
+
+  var PRIZES = [
+    { id: "icecream", name: "an ice cream", title: "Ice cream!", emoji: "🍦", color: "#F2A7C3" },
+    { id: "kiss", name: "a kiss from Mummy or Daddy", title: "A big kiss!", emoji: "💋", color: "#F6C453" },
+    { id: "teddy", name: "Math Teddy", title: "Math Teddy!", emoji: "🧸", color: "#9BC9F0" }
+  ];
+  var SLICES = [0, 1, 2, 0, 1, 2], wheelAngle = 0, spinning = false;
+  function openWheel() {
+    var svg = $("wheel"), NS = "http://www.w3.org/2000/svg", n = SLICES.length, R = 100;
+    svg.innerHTML = "";
+    var g = document.createElementNS(NS, "g"); g.setAttribute("class", "wheel-spin"); g.id = "wheel-g";
+    for (var i = 0; i < n; i++) {
+      var a0 = (i / n) * 2 * Math.PI - Math.PI / 2, a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2, mid = (a0 + a1) / 2;
+      var path = document.createElementNS(NS, "path");
+      path.setAttribute("d", "M0 0 L" + R * Math.cos(a0) + " " + R * Math.sin(a0) + " A" + R + " " + R + " 0 0 1 " + R * Math.cos(a1) + " " + R * Math.sin(a1) + " Z");
+      path.setAttribute("fill", PRIZES[SLICES[i]].color); path.setAttribute("stroke", "#FFFFFF"); path.setAttribute("stroke-width", "3");
+      g.appendChild(path);
+      var t = document.createElementNS(NS, "text"), tx = 64 * Math.cos(mid), ty = 64 * Math.sin(mid);
+      t.setAttribute("x", tx); t.setAttribute("y", ty); t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "central"); t.setAttribute("font-size", "34");
+      t.setAttribute("transform", "rotate(" + (mid * 180 / Math.PI + 90) + " " + tx + " " + ty + ")");
+      t.textContent = PRIZES[SLICES[i]].emoji; g.appendChild(t);
+    }
+    svg.appendChild(g);
+    svg.insertAdjacentHTML("beforeend", '<circle r="103" fill="none" stroke="#1E2240" stroke-width="6"/><circle r="16" fill="#1E2240"/><text text-anchor="middle" dominant-baseline="central" font-size="16">⭐</text>');
+    g.style.transform = "rotate(" + wheelAngle + "deg)";
+    var a = $("spin-actions"); a.innerHTML = "";
+    var b = document.createElement("button"); b.type = "button"; b.className = "block c-sun"; b.textContent = "🎡 Spin!";
+    b.addEventListener("click", function () { b.disabled = true; b.style.opacity = ".5"; spinWheel(); });
+    a.appendChild(b);
+    $("spin-title").textContent = "Spin for a prize!";
+    $("spin").hidden = false;
+    K.say("Tap spin!");
+  }
+  function spinWheel() {
+    if (spinning) return; spinning = true;
+    var n = SLICES.length, slice = rnd(0, n - 1), target = slice * (360 / n) + 10 + Math.random() * 40;
+    var finalAngle = wheelAngle - (wheelAngle % 360) + 360 * 6 + (360 - target), g = $("wheel-g"), dur = reduce ? 600 : 5200;
+    g.style.transition = "transform " + dur + "ms cubic-bezier(.12,.67,.12,1)";
+    requestAnimationFrame(function () { g.style.transform = "rotate(" + finalAngle + "deg)"; });
+    $("spin-title").textContent = "Spinning…";
+    var lastIdx = -1, t0 = performance.now();
+    (function tick() {
+      var m = getComputedStyle(g).transform;
+      if (m && m !== "none") { var v = m.split("(")[1].split(")")[0].split(","), ang = Math.atan2(+v[1], +v[0]) * 180 / Math.PI, idx = Math.floor((((-ang) % 360 + 360) % 360) / (360 / n)); if (idx !== lastIdx) { if (lastIdx !== -1) blip(idx); lastIdx = idx; } }
+      if (performance.now() - t0 < dur) requestAnimationFrame(tick);
+    })();
+    setTimeout(function () { wheelAngle = finalAngle; spinning = false; showPrize(PRIZES[SLICES[slice]]); }, dur + 250);
+  }
+  function showPrize(prize) {
+    $("spin").hidden = true;
+    $("prize-art").innerHTML = prize.id === "teddy" && window.KidsPet
+      ? '<div class="prize-art">' + KidsPet.teddySVG(3, { fur: "brown", wear: { face: "glasses" } }) + "</div>"
+      : '<div class="big" style="font-size:120px">' + prize.emoji + "</div>";
+    $("prize-title").textContent = prize.title;
+    $("prize-text").textContent = "You won " + prize.name + "! Go and show Mum or Dad.";
+    $("prize").hidden = false;
+    fireworks(2500);
+    K.say("You won " + prize.name + "! Go and show Mum or Dad!");
+    var log = K.get("pg.prizes", []);
+    log.unshift({ prize: prize.id, player: me.name, at: new Date().toISOString(), lesson: L.title });
+    K.set("pg.prizes", log.slice(0, 100));
+  }
+  $("prize-ok").addEventListener("click", function () { $("prize").hidden = true; backToMenu(); });
+
+  /* ---------- start ---------- */
+  $("go-practice").addEventListener("click", function () { start("practice"); });
+  $("go-quiz").addEventListener("click", function () { start("quiz"); });
+  refreshChips();
+  K.say(L.title + "! " + L.intro);
+  if (K.fetchState) K.fetchState().then(refreshChips);
+})();
+</script>
+</body>
+</html>

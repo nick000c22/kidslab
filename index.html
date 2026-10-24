@@ -145,10 +145,22 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   font-family: var(--display); font-size: 1.5rem; font-variant-numeric: tabular-nums;
 }
 .stars span:first-child { font-size: 1.6rem; }
-.lessons {
-  display: grid; gap: clamp(18px, 2.6vw, 28px);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
-  padding-bottom: 16px;
+.lessons { padding-bottom: 16px; }
+.lesson-grid {
+  display: grid; gap: clamp(16px, 2.4vw, 24px);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
+  margin-bottom: 26px;
+}
+.section-title { font-family: var(--display); font-weight: 800; font-size: 1.7rem; margin: 6px 0 12px; }
+.lesson-grid .block .emoji { font-size: clamp(52px, 8vw, 80px); }
+.lesson-grid .block .label { font-size: clamp(1.2rem, 2.6vw, 1.6rem); padding: 0 6px; text-wrap: balance; }
+.tick {
+  position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%;
+  background: #fff; color: var(--leaf); display: grid; place-items: center; font-size: 1.6rem; font-weight: 800;
+  box-shadow: 0 3px 0 rgba(0,0,0,.2); text-shadow: none;
+}
+.lesson-num {
+  position: absolute; top: 12px; left: 14px; font-family: var(--display); font-size: 1.1rem; opacity: .8; text-shadow: none;
 }
 .lessons .block { aspect-ratio: 1 / 1; max-width: 100%; padding: 16px; }
 .block.locked { --c: var(--locked); color: var(--ink); }
@@ -285,7 +297,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     </button>
   </div>
   <div id="pet-card"></div>
-  <h2 class="pick-title" id="greet">Pick a game</h2>
+  <h2 class="pick-title" id="greet" hidden>Pick a game</h2>
   <div class="lessons" id="lessons"></div>
 </section>
 
@@ -409,9 +421,24 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       wrap.innerHTML = '<p class="empty">No games yet. New ones will pop up here.</p>';
       return;
     }
+    // Group into sections (Basics, Concepts…), each with its own heading and grid.
+    var order = (C.sections || []).slice();
+    list.forEach(function (l) { var sec = l.section || "Games"; if (order.indexOf(sec) === -1) order.push(sec); });
+    var grids = {};
+    order.forEach(function (sec) {
+      if (!list.some(function (l) { return (l.section || "Games") === sec; })) return;
+      var h = document.createElement("h2"); h.className = "section-title"; h.textContent = sec; wrap.appendChild(h);
+      var g = document.createElement("div"); g.className = "lesson-grid"; wrap.appendChild(g); grids[sec] = g;
+    });
     list.forEach(function (l, i) {
       var soon = l.status !== "ready";
       var b = block({ emoji: l.emoji, label: l.title, color: l.color, locked: soon, badge: soon ? "Soon" : "" });
+      if (!soon && K.isDone && K.isDone(l.id, p.id)) {
+        var tick = document.createElement("span"); tick.className = "tick"; tick.textContent = "✓"; tick.setAttribute("aria-label", "Quiz done"); b.appendChild(tick);
+      }
+      if (l.section === "Basics" || !l.section) {
+        var num = document.createElement("span"); num.className = "lesson-num"; num.textContent = list.filter(function (x) { return x.section === l.section; }).indexOf(l) + 1; b.appendChild(num);
+      }
       b.style.animationDelay = (i * 60) + "ms";
       b.addEventListener("click", function () {
         if (soon) {
@@ -423,7 +450,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         b.classList.add("pressed");
         setTimeout(function () { location.href = l.href; }, 450);
       });
-      wrap.appendChild(b);
+      grids[l.section || "Games"].appendChild(b);
     });
   }
 

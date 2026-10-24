@@ -29,7 +29,7 @@ function cleanPlayer(p) {
 
 // Keep teddy docs to known fields and sane sizes.
 const PET_FIELDS = ["name", "hatched", "hatchedAt", "fur", "belly", "wear", "unlockAll", "fedUpTo", "grapesEaten",
-  "weight", "tummy", "tummyAt", "happy", "happyAt", "dances", "lastSeen", "asleep", "seen", "stage", "updatedAt", "grapes", "grapesEarned", "owned", "ownedFurs"];
+  "weight", "tummy", "tummyAt", "happy", "happyAt", "dances", "lastSeen", "asleep", "seen", "stage", "updatedAt", "grapes", "grapesEarned", "owned", "ownedFurs", "done"];
 function cleanPet(p) {
   const out = {};
   if (!p || typeof p !== "object") return out;
