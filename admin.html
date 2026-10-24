@@ -46,6 +46,37 @@ a.btn { text-decoration: none; display: inline-block; }
 .status { font-size: .95rem; color: var(--muted); min-width: 10ch; }
 .status.ok { color: var(--leaf); } .status.err { color: var(--berry); }
 
+/* progress */
+.prog { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); margin-bottom: 26px; }
+.pcard { background: var(--card); border-radius: 16px; padding: 16px 18px; box-shadow: 0 6px 20px rgba(0,0,0,.06); min-width: 0; }
+.pcard h3 { margin: 0 0 4px; font-family: var(--display); font-size: 1.15rem; }
+.pcard .sub { margin: 0 0 12px; font-size: .88rem; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tile { background: var(--bg); border-radius: 12px; padding: 10px 12px; }
+.tile b { display: block; font-family: var(--display); font-size: 1.7rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile span { color: var(--muted); font-size: .82rem; }
+.tile em { font-style: normal; font-weight: 800; font-size: .85rem; }
+.up { color: var(--leaf); } .down { color: var(--berry); }
+.trow { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 56px; gap: 10px; align-items: center; padding: 5px 0; position: relative; }
+.trow .tn { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track { height: 14px; border-radius: 4px; background: var(--head); position: relative; }
+.fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; }
+.tv { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
+.trow:hover .tn, .trow:focus-within .tn { text-decoration: underline; }
+.tip { position: absolute; z-index: 5; left: 160px; top: -38px; background: var(--ink); color: var(--card); font-size: .82rem; font-weight: 700; padding: 6px 10px; border-radius: 8px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .1s; }
+.trow:hover .tip { opacity: 1; }
+.key { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: .82rem; color: var(--muted); }
+.key i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.mist { display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto; }
+.mist { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.mrow { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-radius: 10px; background: var(--bg); min-width: 0; }
+.pcard.wide { grid-column: 1 / -1; }
+.mrow .mq { font-weight: 800; overflow-wrap: anywhere; }
+.mrow .ml { color: var(--muted); font-size: .8rem; }
+.mrow .ma { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.mrow .ma s { color: var(--berry); } .mrow .ma b { color: var(--leaf); }
+.none { color: var(--muted); }
+
 /* lesson report */
 .report { margin-top: 26px; }
 .report-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
@@ -159,9 +190,13 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
 
     <section class="report">
       <div class="report-head">
-        <h2>Lesson report</h2>
+        <h2>Progress</h2>
         <label for="rep-kid">Kid</label>
         <select id="rep-kid"></select>
+      </div>
+      <div class="prog" id="prog"></div>
+      <div class="report-head">
+        <h2>Lesson report</h2>
         <span class="sub">Tap 🎯 to flag a lesson for practice. It glows on that kid's home screen. Remember to Save.</span>
       </div>
       <div class="sheet-scroll"><table class="rep-table">
@@ -374,6 +409,7 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
     repKid = selEl.value;
     var r = rows.filter(function (x) { return x.p.id === repKid; })[0], body = $("rep-rows"); body.innerHTML = "";
     if (!r) return;
+    renderProgress(r);
     var pet = r.pet; pet.stats = pet.stats || {}; pet.practice = Array.isArray(pet.practice) ? pet.practice : []; pet.done = Array.isArray(pet.done) ? pet.done : [];
     var lessons = (window.KIDSLAB_CONFIG.lessons || []).filter(function (l) { return l.status === "ready" && (!l.players || l.players.indexOf(r.p.id) !== -1); });
     var n = 0, lastTopic = null;
@@ -415,6 +451,109 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       body.appendChild(tr);
     });
   }
+  /* ---------- progress: where each kid needs work ---------- */
+  var LEVELS = [
+    { min: 85, name: "Strong", color: "var(--leaf)", icon: "✓" },
+    { min: 70, name: "Getting there", color: "var(--sun)", icon: "~" },
+    { min: 0, name: "Needs work", color: "var(--berry)", icon: "!" }
+  ];
+  function level(acc) { for (var i = 0; i < LEVELS.length; i++) if (acc >= LEVELS[i].min) return LEVELS[i]; return LEVELS[2]; }
+  function ymd(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function renderProgress(r) {
+    var C = window.KIDSLAB_CONFIG, pet = r.pet, stats = pet.stats || {}, days = pet.days || {}, box = $("prog");
+    var lessons = (C.lessons || []).filter(function (l) { return !l.players || l.players.indexOf(r.p.id) !== -1; });
+    var byId = {}; lessons.forEach(function (l) { byId[l.id] = l; });
+    function groupOf(l) {
+      if (!l) return "Other";
+      if (l.topic) { var t = (C.topics || []).filter(function (x) { return x.id === l.topic; })[0]; return t ? t.emoji + " " + t.title : l.topic; }
+      return (l.section === "Special" ? "🌟 " : "💡 ") + l.title;
+    }
+    // Totals per topic (all time) and per week from the daily log.
+    var groups = {}, order = [];
+    Object.keys(stats).forEach(function (id) {
+      var g = groupOf(byId[id]), st = stats[id];
+      if (!groups[g]) { groups[g] = { r: 0, w: 0, lessons: [] }; order.push(g); }
+      groups[g].r += st.r || 0; groups[g].w += st.w || 0;
+      if ((st.r || 0) + (st.w || 0)) groups[g].lessons.push((byId[id] || { title: id }).title + " " + Math.round((st.r || 0) / ((st.r || 0) + (st.w || 0)) * 100) + "%");
+    });
+    var now = new Date(), wk = { r: 0, w: 0 }, prev = { r: 0, w: 0 };
+    Object.keys(days).forEach(function (k) {
+      var age = Math.floor((now - new Date(k + "T12:00:00")) / 864e5), bucket = age < 7 ? wk : age < 14 ? prev : null;
+      if (!bucket) return;
+      Object.keys(days[k]).forEach(function (id) { bucket.r += days[k][id].r || 0; bucket.w += days[k][id].w || 0; });
+    });
+    var allR = 0, allW = 0; order.forEach(function (g) { allR += groups[g].r; allW += groups[g].w; });
+    var accWk = wk.r + wk.w ? Math.round(wk.r / (wk.r + wk.w) * 100) : null, accPrev = prev.r + prev.w ? Math.round(prev.r / (prev.r + prev.w) * 100) : null;
+    box.innerHTML = "";
+
+    // 1. Headline numbers
+    var c1 = el("div", { class: "pcard" });
+    c1.innerHTML = "<h3>Overview</h3><p class=\"sub\">All answers in lessons and quizzes.</p><div class=\"tiles\"></div>";
+    var tl = c1.querySelector(".tiles");
+    function tile(big, label, note, cls) { var t = el("div", { class: "tile" }); t.innerHTML = "<b></b><span></span><br><em></em>"; t.querySelector("b").textContent = big; t.querySelector("span").textContent = label; var e = t.querySelector("em"); e.textContent = note || ""; if (cls) e.className = cls; tl.appendChild(t); }
+    tile(String(wk.r + wk.w), "answers this week", accPrev === null ? "" : (prev.r + prev.w) + " last week");
+    tile(accWk === null ? "–" : accWk + "%", "right this week", accWk === null || accPrev === null ? "" : (accWk >= accPrev ? "▲ " : "▼ ") + Math.abs(accWk - accPrev) + " pts vs last week", accWk === null || accPrev === null ? "" : accWk >= accPrev ? "up" : "down");
+    tile(allR + allW ? Math.round(allR / (allR + allW) * 100) + "%" : "–", "right all time", (allR + allW) + " answers");
+    box.appendChild(c1);
+
+    // 2. Accuracy by topic: one bar each, coloured by how they're going, weakest first
+    var c2 = el("div", { class: "pcard" });
+    c2.innerHTML = "<h3>Accuracy by topic</h3><p class=\"sub\">Weakest first. Topics with fewer than 5 answers are left out.</p><div class=\"bars\"></div><div class=\"key\"></div>";
+    var bars = c2.querySelector(".bars");
+    var ranked = order.filter(function (g) { return groups[g].r + groups[g].w >= 5; })
+      .map(function (g) { var t = groups[g].r + groups[g].w; return { g: g, acc: Math.round(groups[g].r / t * 100), t: t, w: groups[g].w, lessons: groups[g].lessons }; })
+      .sort(function (a, b) { return a.acc - b.acc; });
+    if (!ranked.length) bars.innerHTML = '<p class="none">Not enough answers yet. Check back after a few sessions.</p>';
+    ranked.forEach(function (x) {
+      var L = level(x.acc), row = el("div", { class: "trow", tabindex: "0" });
+      row.innerHTML = '<span class="tn"></span><span class="track"><span class="fill"></span></span><span class="tv"></span><span class="tip"></span>';
+      row.querySelector(".tn").textContent = x.g;
+      var fill = row.querySelector(".fill"); fill.style.width = Math.max(2, x.acc) + "%"; fill.style.background = L.color;
+      row.querySelector(".tv").textContent = x.acc + "%";
+      row.querySelector(".tip").textContent = L.icon + " " + L.name + " · " + (x.t - x.w) + " right, " + x.w + " wrong · " + x.lessons.join(", ");
+      row.setAttribute("aria-label", x.g + ": " + x.acc + " percent right, " + L.name);
+      bars.appendChild(row);
+    });
+    var key = c2.querySelector(".key");
+    LEVELS.forEach(function (L) { var k = el("span"); k.innerHTML = "<i></i>"; k.querySelector("i").style.background = L.color; k.appendChild(document.createTextNode(L.icon + " " + L.name + (L.min ? " (" + L.min + "%+)" : " (under 70%)"))); key.appendChild(k); });
+    box.appendChild(c2);
+
+    // 3. Where the mistakes come from: share of all wrong answers, biggest first
+    var c3 = el("div", { class: "pcard" });
+    c3.innerHTML = "<h3>Where the mistakes come from</h3><p class=\"sub\">Share of all wrong answers. A big share in a strong topic usually just means lots of practice there.</p><div class=\"bars\"></div>";
+    var b3 = c3.querySelector(".bars");
+    var mis = order.map(function (g) { return { g: g, w: groups[g].w, t: groups[g].r + groups[g].w }; }).filter(function (x) { return x.w; }).sort(function (a, b) { return b.w - a.w; });
+    if (!mis.length) b3.innerHTML = '<p class="none">No mistakes recorded yet.</p>';
+    var maxW = mis.length ? mis[0].w : 1;
+    mis.slice(0, 8).forEach(function (x) {
+      var share = Math.round(x.w / allW * 100), row = el("div", { class: "trow", tabindex: "0" });
+      row.innerHTML = '<span class="tn"></span><span class="track"><span class="fill"></span></span><span class="tv"></span><span class="tip"></span>';
+      row.querySelector(".tn").textContent = x.g;
+      var fill = row.querySelector(".fill"); fill.style.width = Math.max(2, x.w / maxW * 100) + "%"; fill.style.background = "var(--grape)";
+      row.querySelector(".tv").textContent = share + "%";
+      row.querySelector(".tip").textContent = x.w + " wrong out of " + x.t + " answers";
+      b3.appendChild(row);
+    });
+    if (mis.length > 8) { var more = el("p", { class: "none", text: "+ " + (mis.length - 8) + " more topics with a few mistakes" }); b3.appendChild(more); }
+    box.appendChild(c3);
+
+    // 4. The actual questions they got wrong, newest first
+    var c4 = el("div", { class: "pcard wide" });
+    c4.innerHTML = "<h3>Recent mistakes</h3><p class=\"sub\">The last 40 wrong answers, newest first. Look for the same slip repeating.</p><div class=\"mist\"></div>";
+    var m4 = c4.querySelector(".mist"), list = (pet.mistakes || []).slice().reverse();
+    if (!list.length) m4.innerHTML = '<p class="none">Nothing yet. This list starts filling from now on.</p>';
+    list.forEach(function (m) {
+      var row = el("div", { class: "mrow" });
+      row.innerHTML = '<span class="mq"></span><span class="ma">said <s></s> · answer <b></b></span><span class="ml"></span>';
+      row.querySelector(".mq").textContent = m.q;
+      row.querySelector("s").textContent = m.g; row.querySelector("b").textContent = m.a;
+      var l = byId[m.l];
+      row.querySelector(".ml").textContent = (l ? groupOf(l) + " · " + l.title : m.l) + " · " + new Date(m.at).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+      m4.appendChild(row);
+    });
+    box.appendChild(c4);
+  }
+
   $("rep-kid").addEventListener("change", function () { repKid = $("rep-kid").value; renderReport(); });
 
   function anyDirty() { return rows.some(function (r) { return r.dirty.kid || r.dirty.pet || r.dirty.sc; }); }

@@ -706,7 +706,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     S.answered = true;
     var prime = isPrime(S.n), right = saidPrime === prime;
     if (right) S.results.push(true); else S.retry = true;
-    K.recordAnswer(LESSON, right);
+    K.recordAnswer(LESSON, right, { q: "Is " + S.n + " prime?", given: saidPrime ? "Yes" : "No", answer: prime ? "Yes" : "No" });
     renderDots();
     lockBowl(true);
     if (prime) $("stamp").hidden = false;

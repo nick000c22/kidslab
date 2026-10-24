@@ -291,7 +291,8 @@
   }
 
   // Right/wrong tally per lesson, for the grown-ups' lesson report. Also notes the last time it was played.
-  function recordAnswer(lessonId, right) {
+  // detail (wrong answers only): { q: "7 × 8", given: 54, answer: 56 } for the grown-ups' mistake list.
+  function recordAnswer(lessonId, right, detail) {
     var id = playerId(); if (!id || !lessonId) return;
     var d = JSON.parse(JSON.stringify(petDoc(id)));
     d.stats = d.stats && typeof d.stats === "object" ? d.stats : {};
@@ -299,6 +300,17 @@
     if (right) st.r++; else st.w++;
     st.at = new Date().toISOString();
     d.stats[lessonId] = st;
+    // Daily tally per lesson (kept for 60 days) so grown-ups can compare this week with last week.
+    var now = new Date(), day = now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2) + "-" + ("0" + now.getDate()).slice(-2);
+    d.days = d.days && typeof d.days === "object" ? d.days : {};
+    var dd = d.days[day] = d.days[day] || {}, ds = dd[lessonId] = dd[lessonId] || { r: 0, w: 0 };
+    if (right) ds.r++; else ds.w++;
+    Object.keys(d.days).sort().slice(0, -60).forEach(function (k) { delete d.days[k]; });
+    if (!right && detail) {
+      d.mistakes = Array.isArray(d.mistakes) ? d.mistakes : [];
+      d.mistakes.push({ l: lessonId, q: String(detail.q || "").slice(0, 80), g: String(detail.given == null ? "" : detail.given).slice(0, 30), a: String(detail.answer == null ? "" : detail.answer).slice(0, 30), at: st.at });
+      d.mistakes = d.mistakes.slice(-40);
+    }
     d.updatedAt = st.at;
     set("pet." + id, d);
     if (URL_) pushPet(id, d);

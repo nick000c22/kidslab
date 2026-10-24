@@ -1067,17 +1067,22 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       setAction(mode === "quiz" ? "Next question ▶" : "Another one ▶", "leaf", next);
       if (mode === "practice") addAction("Back to menu", "sky", backToMenu);
     } else if (mode === "practice") {
-      K.recordAnswer(LESSON_ID, false);
+      K.recordAnswer(LESSON_ID, false, mistake(v));
       if (Q.input) { $("choices")._pad._clear(); say("Not quite. " + (Q.hint || "Have another go!"), "bad"); return; }
       btn.classList.add("wrong"); btn.disabled = true;
       say("Not quite. Have another go!", "bad");
     } else {
-      K.recordAnswer(LESSON_ID, false);
+      K.recordAnswer(LESSON_ID, false, mistake(v));
       locked = true; if (!Q.input) btn.classList.add("wrong");
       $("choices").querySelectorAll(".block").forEach(function (b) { if (b.textContent === String(Q.answer)) b.classList.add("right"); });
       say("Oops! The answer is " + (Q.answerText || Q.answer) + ". " + Q.explain, "bad");
       setAction("Try another one ▶", "leaf", next);
     }
+  }
+  // What to show grown-ups for a wrong answer: the sum if there is one, else the question.
+  function mistake(given) {
+    var q = Q.input && Q.speak ? Q.speak : Q.sum ? Q.sum.replace(" = ?", "").replace("?", "_") : Q.prompt;
+    return { q: q, given: given, answer: Q.answerText || Q.answer };
   }
   function setAction(label, color, fn) { $("actions").innerHTML = ""; addAction(label, color, fn); }
   function addAction(label, color, fn) {
