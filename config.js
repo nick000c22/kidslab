@@ -48,7 +48,12 @@ window.KIDSLAB_CONFIG = {
     { id: "shapes",    title: "Shapes",           emoji: "🔷", color: "sky" },
     { id: "time",      title: "Time",             emoji: "⏰", color: "grape" },
     { id: "money",     title: "Money",            emoji: "💰", color: "leaf" },
-    { id: "problems",  title: "Problem Solving",  emoji: "🧩", color: "berry" }
+    { id: "problems",  title: "Problem Solving",  emoji: "🧩", color: "berry" },
+    // Science topics
+    { id: "biology",   title: "Biology",          emoji: "🌿", color: "leaf" },
+    { id: "chemistry", title: "Chemistry",        emoji: "🧪", color: "grape" },
+    { id: "physics",   title: "Physics",          emoji: "⚡", color: "sun" },
+    { id: "space",     title: "Earth and Space",  emoji: "🪐", color: "sky" }
   ],
   // Folders inside each subject. Special lessons usually list `players` so only that kid sees them.
   folders: {
@@ -112,6 +117,26 @@ window.KIDSLAB_CONFIG = {
     { id: "patterns", subject: "maths", section: "Basics", topic: "problems", title: "What Comes Next?", emoji: "🔁", color: "sky", href: "lessons/basics.html?l=patterns", status: "ready" },
     { id: "story",    subject: "maths", section: "Basics", topic: "problems", title: "Story Sums",     emoji: "📖", color: "tang",  href: "lessons/basics.html?l=story",    status: "ready" },
     { id: "story2", subject: "maths", section: "Basics", topic: "problems", title: "Two-Step Stories", emoji: "📚", color: "grape", href: "lessons/basics.html?l=story2", status: "ready" },
+    // ---- science: biology ----
+    { id: "living", subject: "science", section: "Basics", topic: "biology", title: "Living or Not Living?", emoji: "🌱", color: "leaf", href: "lessons/basics.html?l=living", status: "ready" },
+    { id: "animalgroups", subject: "science", section: "Basics", topic: "biology", title: "Animal Groups", emoji: "🦁", color: "tang", href: "lessons/basics.html?l=animalgroups", status: "ready" },
+    { id: "lifecycles", subject: "science", section: "Basics", topic: "biology", title: "Life Cycles", emoji: "🐸", color: "grape", href: "lessons/basics.html?l=lifecycles", status: "ready" },
+    { id: "body", subject: "science", section: "Basics", topic: "biology", title: "My Body", emoji: "🫀", color: "berry", href: "lessons/basics.html?l=body", status: "ready" },
+    { id: "foodchains", subject: "science", section: "Basics", topic: "biology", title: "Food Chains", emoji: "🦊", color: "sky", href: "lessons/basics.html?l=foodchains", status: "ready" },
+    // ---- science: chemistry ----
+    { id: "states", subject: "science", section: "Basics", topic: "chemistry", title: "Solid, Liquid or Gas?", emoji: "🧊", color: "sky", href: "lessons/basics.html?l=states", status: "ready" },
+    { id: "melting", subject: "science", section: "Basics", topic: "chemistry", title: "Melting and Freezing", emoji: "🌡️", color: "berry", href: "lessons/basics.html?l=melting", status: "ready" },
+    { id: "colours", subject: "science", section: "Basics", topic: "chemistry", title: "Mixing Colours", emoji: "🎨", color: "tang", href: "lessons/basics.html?l=colours", status: "ready" },
+    { id: "dissolving", subject: "science", section: "Basics", topic: "chemistry", title: "Dissolve or Not?", emoji: "🥄", color: "grape", href: "lessons/basics.html?l=dissolving", status: "ready" },
+    // ---- science: physics ----
+    { id: "pushpull", subject: "science", section: "Basics", topic: "physics", title: "Push or Pull?", emoji: "👐", color: "sky", href: "lessons/basics.html?l=pushpull", status: "ready" },
+    { id: "floatsink", subject: "science", section: "Basics", topic: "physics", title: "Float or Sink?", emoji: "🛁", color: "grape", href: "lessons/basics.html?l=floatsink", status: "ready" },
+    { id: "magnets", subject: "science", section: "Basics", topic: "physics", title: "Magnets", emoji: "🧲", color: "berry", href: "lessons/basics.html?l=magnets", status: "ready" },
+    { id: "shadows", subject: "science", section: "Basics", topic: "physics", title: "Light and Shadows", emoji: "🔦", color: "sun", href: "lessons/basics.html?l=shadows", status: "ready" },
+    { id: "circuits", subject: "science", section: "Basics", topic: "physics", title: "Electric Circuits", emoji: "💡", color: "leaf", href: "lessons/basics.html?l=circuits", status: "ready" },
+    // ---- science: space ----
+    { id: "daynight", subject: "science", section: "Basics", topic: "space", title: "Day and Night", emoji: "🌗", color: "grape", href: "lessons/basics.html?l=daynight", status: "ready" },
+    { id: "planets", subject: "science", section: "Basics", topic: "space", title: "The Planets", emoji: "🪐", color: "sky", href: "lessons/basics.html?l=planets", status: "ready" },
     { id: "n1000", subject: "maths", section: "Special", players: ["alice"], title: "Numbers to 1000", say: "Numbers to one thousand!", emoji: "🏰", color: "grape", href: "lessons/basics.html?l=n1000", status: "ready" },
     { id: "prime-grapes", subject: "maths", section: "Concepts", title: "Prime Grapes", say: "Prime grapes! Can you make a rectangle?", emoji: "🍇", color: "grape", href: "lessons/prime-grapes.html", status: "ready" }
   ]

@@ -243,6 +243,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 <script src="../kit.js"></script>
 <script src="../items.js"></script>
 <script src="../pet.js"></script>
+<script src="science.js"></script>
 <script>
 (function () {
   var K = window.KidsLab;
@@ -809,6 +810,11 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     }
   };
 
+  // Science lessons live in science.js and use the same helpers.
+  if (window.makeScienceLessons) {
+    var SCI = window.makeScienceLessons({ K: K, rnd: rnd, pickOne: pickOne, shuffle: shuffle, options: options, grapes: grapes, blip: blip, reduce: reduce });
+    for (var sk in SCI) LESSONS[sk] = SCI[sk];
+  }
   window.__lessons = LESSONS; // lets the automated checks run every question generator
 
 
@@ -994,10 +1000,37 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   var mode = "practice", right = 0, Q = null, locked = false, part = null;
 
   function start(m, p) {
+    if (m === "practice" && L.explore) return explore();
     mode = m; right = 0; part = p == null ? null : p; show("game");
     $("dots").hidden = mode !== "quiz";
     $("tag").textContent = L.title + "  ·  " + (mode === "quiz" ? "Quiz" : part != null ? L.parts[part].name : "Practice");
     next();
+  }
+  // Explore mode: the lesson builds its own hands-on activity in the big white area.
+  function explore() {
+    mode = "explore"; show("game");
+    $("dots").hidden = true; $("sum").hidden = true;
+    $("tag").textContent = L.title + "  ·  Explore";
+    $("prompt").textContent = L.explorePrompt || "Explore!";
+    $("choices").innerHTML = ""; $("choices").className = "choices"; $("actions").innerHTML = ""; $("say").textContent = "";
+    var v = $("visual"); v.innerHTML = ""; v.className = "visual explore-stage";
+    var finished = false;
+    L.explore(v, {
+      say: function (t, cls) { say(t, cls); },
+      prompt: function (t) { $("prompt").textContent = t; },
+      choices: $("choices"),
+      right: function (detail) { K.addStars(1, LESSON_ID); K.recordAnswer(LESSON_ID, true); refreshChips(); blip(7); },
+      wrong: function (detail) { K.recordAnswer(LESSON_ID, false, detail); blip(1); },
+      celebrate: function (node) { K.celebrate(node); },
+      done: function (msg) {
+        if (finished) return; finished = true;
+        say(msg || "Great exploring! Ready for the quiz?", "good");
+        $("actions").innerHTML = "";
+        addAction("📝 Take the quiz", "sun", function () { $("visual").className = "visual"; start("quiz"); });
+        addAction("🔁 Explore again", "sky", explore);
+        addAction("Back to menu", "leaf", function () { $("visual").className = "visual"; backToMenu(); });
+      }
+    });
   }
   function generate() {
     if (!L.parts) return L.gen(mode === "quiz");
@@ -1014,6 +1047,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     window.__lessonQ = Q; // lets the automated checks read the current question
     $("prompt").textContent = Q.prompt;
     $("sum").hidden = !Q.sum; $("sum").textContent = Q.sum || "";
+    $("visual").className = "visual";
     $("visual").innerHTML = Q.visual;
     if (Q.after) Q.after($("visual"));
     $("say").textContent = ""; $("actions").innerHTML = "";
@@ -1191,6 +1225,9 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   $("prize-ok").addEventListener("click", function () { $("prize").hidden = true; backToMenu(); });
 
   /* ---------- start ---------- */
+  if (L.explore) {
+    $("go-practice").innerHTML = '<span class="m-emoji">🔬</span><span>Explore</span><span class="m-sub">Hands-on. Try things and see what happens!</span>';
+  }
   $("go-practice").addEventListener("click", function () { start("practice"); });
   $("go-quiz").addEventListener("click", function () { start("quiz"); });
   refreshChips();
