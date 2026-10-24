@@ -156,6 +156,10 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 .folders .block { min-height: clamp(190px, 26vw, 250px); }
 .folders .emoji { font-size: clamp(70px, 11vw, 100px); }
 .folders .label { font-size: clamp(1.7rem, 3.6vw, 2.3rem); }
+.folders.topics { grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+.folders.topics .block { min-height: 170px; }
+.folders.topics .emoji { font-size: clamp(56px, 9vw, 80px); }
+.folders.topics .label { font-size: clamp(1.3rem, 2.8vw, 1.8rem); }
 .folder-note { font-family: var(--body); font-weight: 700; font-size: .9rem; text-shadow: none; opacity: .92; }
 .subject-head { display: flex; align-items: center; gap: 14px; margin: 0 0 8px; }
 .subject-title { font-family: var(--display); font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0; }
@@ -422,7 +426,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       b.addEventListener("click", function () {
         K.setPlayer(p.id);
         try { sessionStorage.setItem("kidslab.visit", "1"); } catch (e) {}
-        subjectId = null; folderId = null; try { sessionStorage.removeItem("kidslab.subject"); sessionStorage.removeItem("kidslab.folder"); } catch (e) {}
+        subjectId = null; folderId = null; topicId = null; try { sessionStorage.removeItem("kidslab.subject"); sessionStorage.removeItem("kidslab.folder"); sessionStorage.removeItem("kidslab.topic"); } catch (e) {}
         if (window.KidsPet) KidsPet.arrive(p.id);
         K.say("Hi " + p.name + "!");
         renderHome();
@@ -456,9 +460,13 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   }
   var folderId = null;
   try { folderId = sessionStorage.getItem("kidslab.folder"); } catch (e) {}
-  function setFolder(id) { folderId = id; try { if (id) sessionStorage.setItem("kidslab.folder", id); else sessionStorage.removeItem("kidslab.folder"); } catch (e) {} renderHome(); window.scrollTo(0, 0); }
+  var topicId = null;
+  try { topicId = sessionStorage.getItem("kidslab.topic"); } catch (e) {}
+  function setTopic(id) { topicId = id; try { if (id) sessionStorage.setItem("kidslab.topic", id); else sessionStorage.removeItem("kidslab.topic"); } catch (e) {} renderHome(); window.scrollTo(0, 0); }
+  function setFolder(id) { topicId = null; try { sessionStorage.removeItem("kidslab.topic"); } catch (e) {} folderId = id; try { if (id) sessionStorage.setItem("kidslab.folder", id); else sessionStorage.removeItem("kidslab.folder"); } catch (e) {} renderHome(); window.scrollTo(0, 0); }
   $("subject-back").addEventListener("click", function () {
-    if (folderId) { K.say(currentSubject() ? currentSubject().title : "Back"); setFolder(null); }
+    if (topicId) { K.say(folderId || "Back"); setTopic(null); }
+    else if (folderId) { K.say(currentSubject() ? currentSubject().title : "Back"); setFolder(null); }
     else { K.say("Pick a subject"); setSubject(null); }
   });
 
@@ -509,6 +517,31 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     var FF = (C.folders || {})[folder] || {};
     $("subject-title").textContent = (FF.emoji || "📁") + " " + subj.title + ": " + folder;
     var list = all.filter(function (l) { return (l.section || "Games") === folder; });
+
+    // Topics (Adding, Multiplication, Fractions…): a folder with topics shows topic tiles first.
+    var topics = (C.topics || []).filter(function (t) { return list.some(function (l) { return l.topic === t.id; }); });
+    var topic = topicId && topics.some(function (t) { return t.id === topicId; }) ? topicId : null;
+    if (topics.length && !topic) {
+      var tg = document.createElement("div"); tg.className = "folders topics"; wrap.appendChild(tg);
+      topics.forEach(function (t, i) {
+        var inT = list.filter(function (l) { return l.topic === t.id && l.status === "ready"; });
+        var done = inT.filter(function (l) { return K.isDone && K.isDone(l.id, p.id); }).length;
+        var b = block({ emoji: t.emoji, label: t.title, color: t.color });
+        b.classList.add("folder"); b.style.animationDelay = (Math.min(i, 8) * 50) + "ms";
+        var meta = document.createElement("span"); meta.className = "subject-meta"; meta.textContent = done + " of " + inT.length + " done"; b.appendChild(meta);
+        if (done === inT.length && inT.length) { var tk = document.createElement("span"); tk.className = "tick"; tk.textContent = "✓"; b.appendChild(tk); }
+        var pr = inT.filter(function (l) { return K.isPractice && K.isPractice(l.id, p.id); }).length;
+        if (pr) { b.classList.add("practise"); var pt = document.createElement("span"); pt.className = "practise-tag"; pt.style.top = "10px"; pt.style.bottom = "auto"; pt.textContent = "🎯 " + pr + " to practise"; b.appendChild(pt); }
+        b.addEventListener("click", function () { K.say(t.title + "!"); setTopic(t.id); });
+        tg.appendChild(b);
+      });
+      return;
+    }
+    if (topic) {
+      var T = topics.filter(function (t) { return t.id === topic; })[0];
+      $("subject-title").textContent = T.emoji + " " + T.title;
+      list = list.filter(function (l) { return l.topic === topic; });
+    }
     var grids = {};
     var g0 = document.createElement("div"); g0.className = "lesson-grid"; wrap.appendChild(g0); grids[folder] = g0;
     list.forEach(function (l, i) {
@@ -523,7 +556,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         var pr = document.createElement("span"); pr.className = "practise-tag"; pr.textContent = "🎯 Practise!"; b.appendChild(pr);
       }
       if (folder === "Basics") {
-        var num = document.createElement("span"); num.className = "lesson-num"; num.textContent = list.filter(function (x) { return x.section === l.section; }).indexOf(l) + 1; b.appendChild(num);
+        var num = document.createElement("span"); num.className = "lesson-num"; num.textContent = (topic ? "Level " : "") + (list.indexOf(l) + 1); b.appendChild(num);
       }
       b.style.animationDelay = (Math.min(i, 8) * 50) + "ms";
       b.addEventListener("click", function () {

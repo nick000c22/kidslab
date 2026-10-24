@@ -539,11 +539,237 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         if (kind === "share") { b = rnd(2, 4); ans = rnd(2, 5); a = b * ans; text = who + " shares " + a + " " + thing[0] + " between " + b + " friends. How many does each friend get?"; sum = a + " ÷ " + b; }
         var vis = '<div class="row" style="font-size:2rem;max-width:560px;gap:4px">' + new Array((kind === "sub" || kind === "share" ? a : kind === "add" ? a : 0) + 1).join(thing[1]) + (kind === "add" ? '<span style="width:20px"></span>' + new Array(b + 1).join(thing[1]) : "") + "</div>";
         if (kind === "times") { vis = ""; for (var i = 0; i < a; i++) vis += '<div class="group" style="font-size:1.6rem;padding:10px">🛍️ ' + new Array(b + 1).join(thing[1]) + "</div>"; }
+        text = text.charAt(0).toUpperCase() + text.slice(1);
         return { prompt: text, visual: vis, answer: ans, choices: options(ans, 4, 0, 40), speak: text,
           explain: "The sum is " + sum + " = " + ans + "." };
       }
     }
 ,
+    /* ===== Basics, round 3: more lessons per topic ===== */
+    round10: {
+      title: "Rounding to 10", emoji: "🎯", color: "sky", intro: "Find the nearest ten. 5 or more rounds up!",
+      gen: function (quiz) {
+        var n; do { n = rnd(11, quiz ? 99 : 59); } while (n % 10 === 0);
+        var lo = n - n % 10, hi = lo + 10, ans = n % 10 >= 5 ? hi : lo, pct = (n - lo) * 10;
+        var vis = '<div style="width:min(520px,100%);position:relative;height:110px"><div style="position:absolute;left:4%;right:4%;top:58px;height:6px;background:var(--ink);border-radius:3px"></div>' +
+          '<div style="position:absolute;left:4%;top:28px;transform:translateX(-50%);font:800 1.8rem var(--display)">' + lo + '</div><div style="position:absolute;right:4%;top:28px;transform:translateX(50%);font:800 1.8rem var(--display)">' + hi + "</div>" +
+          '<div style="position:absolute;left:calc(4% + ' + (pct * 0.92) + '%);top:44px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center"><span class="g" style="width:34px;height:34px"></span><b style="font:800 1.5rem var(--display)">' + n + "</b></div></div>";
+        var ch = [lo, hi, hi + 10, lo - 10 > 0 ? lo - 10 : hi + 20].filter(function (v, i, a) { return a.indexOf(v) === i; }).sort(function (a, b) { return a - b; });
+        return { prompt: "Round " + n + " to the nearest ten.", visual: vis, answer: ans, choices: ch,
+          explain: n + " is between " + lo + " and " + hi + ". The ones digit is " + (n % 10) + (n % 10 >= 5 ? ", so it rounds up to " : ", so it rounds down to ") + ans + "." };
+      }
+    },
+    add3: {
+      title: "Adding Three Numbers", emoji: "🧺", color: "leaf", intro: "Look for two numbers that make 10 first!",
+      gen: function (quiz) {
+        var a = rnd(1, 9), b, c;
+        if (Math.random() < .6) { b = 10 - a; c = rnd(1, quiz ? 9 : 5); } else { b = rnd(1, 9); c = rnd(1, quiz ? 9 : 5); }
+        var nums = shuffle([a, b, c]), ans = a + b + c;
+        var ten = a + b === 10 ? " " + a + " + " + b + " = 10, then add " + c + "." : "";
+        return { prompt: "Add them all up!", sum: nums.join(" + ") + " = ?", visual: '<div class="row">' + nums.map(function (n, i) { return '<div class="group small" style="max-width:160px">' + grapes(n, i === 1 ? "green" : "") + "</div>"; }).join('<div class="op">+</div>') + "</div>",
+          answer: ans, choices: options(ans, 4, 3, 30), explain: nums.join(" + ") + " = " + ans + "." + ten };
+      }
+    },
+    add2digit: {
+      title: "Adding Big Numbers", emoji: "🧮", color: "grape", intro: "Add the ones, then add the tens.",
+      gen: function (quiz) {
+        var a1 = rnd(1, 7), b1 = rnd(1, 8 - a1), a0 = rnd(0, 8), b0 = rnd(0, 9 - a0), a = a1 * 10 + a0, b = b1 * 10 + b0, ans = a + b;
+        return { prompt: "What is " + a + " + " + b + "?", visual: colSum(a, b, "+"), answer: ans, choices: options(ans, 4, 10, 99, Math.random() < .5 ? 10 : 1),
+          explain: "Ones: " + a0 + " + " + b0 + " = " + (a0 + b0) + ". Tens: " + a1 + " + " + b1 + " = " + (a1 + b1) + ". So " + a + " + " + b + " = " + ans + "." };
+      }
+    },
+    addcarry: {
+      title: "Adding with Carrying", emoji: "🎒", color: "tang", intro: "If the ones make 10 or more, carry a ten over!",
+      gen: function (quiz) {
+        var a0 = rnd(3, 9), b0 = rnd(10 - a0, 9), a1 = rnd(1, quiz ? 7 : 4), b1 = rnd(1, (quiz ? 8 : 5) - a1);
+        var a = a1 * 10 + a0, b = b1 * 10 + b0, ans = a + b;
+        return { prompt: "What is " + a + " + " + b + "?", visual: colSum(a, b, "+"), answer: ans, choices: options(ans, 4, 20, 199, Math.random() < .5 ? 10 : 1).concat([]).filter(function (v, i, arr) { return arr.indexOf(v) === i; }),
+          explain: "Ones: " + a0 + " + " + b0 + " = " + (a0 + b0) + ". Write " + ((a0 + b0) % 10) + " and carry 1 ten. Tens: " + a1 + " + " + b1 + " + 1 = " + (a1 + b1 + 1) + ". Answer " + ans + "." };
+      }
+    },
+    subtens: {
+      title: "Taking Away Tens", emoji: "🪜", color: "sky", intro: "Taking away tens? Only the tens digit changes!",
+      gen: function (quiz) {
+        var t = rnd(3, 9), o = quiz ? rnd(0, 9) : 0, a = t * 10 + o, k = rnd(1, t - 1), b = k * 10, ans = a - b;
+        return { prompt: "What is " + a + " − " + b + "?", sum: a + " − " + b + " = ?", visual: tensVis(t, o, k), answer: ans, choices: options(ans, 4, 0, 99, 10),
+          explain: a + " has " + t + " tens. Take away " + k + (k === 1 ? " ten" : " tens") + " and " + (t - k) + " tens are left: " + ans + "." };
+      }
+    },
+    sub2digit: {
+      title: "Taking Away Big Numbers", emoji: "🧮", color: "berry", intro: "Take away the ones, then take away the tens.",
+      gen: function (quiz) {
+        var a1 = rnd(2, 9), b1 = rnd(1, a1 - 1), a0 = rnd(1, 9), b0 = rnd(0, a0), a = a1 * 10 + a0, b = b1 * 10 + b0, ans = a - b;
+        return { prompt: "What is " + a + " − " + b + "?", visual: colSum(a, b, "−"), answer: ans, choices: options(ans, 4, 0, 99, Math.random() < .5 ? 10 : 1),
+          explain: "Ones: " + a0 + " − " + b0 + " = " + (a0 - b0) + ". Tens: " + a1 + " − " + b1 + " = " + (a1 - b1) + ". So the answer is " + ans + "." };
+      }
+    },
+    subborrow: {
+      title: "Taking Away with Swapping", emoji: "🔁", color: "grape", intro: "Not enough ones? Swap a ten for 10 ones!",
+      gen: function (quiz) {
+        var a1 = rnd(3, 9), b1 = rnd(1, a1 - 2), a0 = rnd(0, 7), b0 = rnd(a0 + 1, 9), a = a1 * 10 + a0, b = b1 * 10 + b0, ans = a - b;
+        return { prompt: "What is " + a + " − " + b + "?", visual: colSum(a, b, "−"), answer: ans, choices: options(ans, 4, 1, 99, Math.random() < .5 ? 10 : 1),
+          explain: a0 + " is less than " + b0 + ", so swap a ten: " + (a0 + 10) + " − " + b0 + " = " + (a0 + 10 - b0) + ". Tens: " + (a1 - 1) + " − " + b1 + " = " + (a1 - 1 - b1) + ". Answer " + ans + "." };
+      }
+    },
+    times34: { title: "3 and 4 Times Tables", emoji: "🍀", color: "leaf", intro: "Groups of 3 and groups of 4. Count in 3s and 4s!", gen: function (quiz) { return timesQ([3, 4], quiz ? 12 : 10, false); } },
+    times69: { title: "6, 7, 8 and 9 Times Tables", emoji: "🕷️", color: "grape", intro: "The tricky tables! Use ones you already know to help.", gen: function (quiz) { return timesQ([6, 7, 8, 9], quiz ? 12 : 10, quiz); } },
+    timesmix: { title: "Times Tables Challenge", emoji: "🏆", color: "tang", intro: "All the tables up to 12 × 12, and missing numbers too!", gen: function (quiz) { return timesQ([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 12, true); } },
+    divfacts: {
+      title: "Dividing by 2, 5 and 10", emoji: "🍰", color: "sky", intro: "Dividing is the opposite of times. 20 ÷ 5: how many 5s make 20?",
+      gen: function (quiz) { return divQ(quiz ? [2, 5, 10] : [2, 5, 10], quiz ? 12 : 10); }
+    },
+    divtables: {
+      title: "Dividing with All Tables", emoji: "🍕", color: "berry", intro: "Think of the times table backwards. 42 ÷ 6? 6 times what is 42?",
+      gen: function (quiz) { return divQ([3, 4, 6, 7, 8, 9], quiz ? 12 : 10); }
+    },
+    divrem: {
+      title: "Leftovers (Remainders)", emoji: "🧁", color: "tang", intro: "Sometimes it doesn't share fairly. The leftovers are the remainder!",
+      gen: function (quiz) {
+        var d = rnd(2, quiz ? 9 : 5), q = rnd(1, quiz ? 9 : 5), r = rnd(1, d - 1), n = d * q + r, ans = q + " r " + r;
+        var set = [ans, q + " r " + (r === d - 1 ? r - 1 : r + 1), (q + 1) + " r " + r, (q > 1 ? q - 1 : q + 2) + " r " + r].filter(function (v, i, a) { return a.indexOf(v) === i && !/r -|r 0$/.test(v); });
+        var vis = n <= 30 ? '<div class="group" style="max-width:520px">' + grapes(n) + '</div><div class="plates">' + new Array(d + 1).join('<div class="plate"></div>') + "</div>" : '<div class="bignum">' + n + " ÷ " + d + "</div>";
+        return { prompt: "Share " + n + " between " + d + ". How many each, and how many left over?", sum: n <= 30 ? n + " ÷ " + d + " = ?" : null, visual: vis, answer: ans, choices: shuffle(set),
+          explain: d + " × " + q + " = " + (d * q) + ", and " + r + " more makes " + n + ". So " + n + " ÷ " + d + " = " + q + " remainder " + r + ".", after: n <= 30 ? function (v) { addShareButton(v, n, d); } : null };
+      }
+    },
+    fracof: {
+      title: "Fractions of Numbers", emoji: "🥧", color: "grape", intro: "Half of 8 means share 8 into 2 equal groups.",
+      gen: function (quiz) {
+        var d = pickOne(quiz ? [2, 3, 4, 2, 4] : [2, 2, 4]), each = rnd(1, quiz ? 8 : 5), n = d * each;
+        var name = { 2: "half", 3: "a third", 4: "a quarter" }[d];
+        return { prompt: "What is " + name + " of " + n + "?", visual: '<div class="group" style="max-width:520px">' + grapes(n) + '</div><div class="vlabel">Share into ' + d + " equal groups</div><div class=\"plates\">" + new Array(d + 1).join('<div class="plate"></div>') + "</div>",
+          answer: each, choices: options(each, 4, 1, 20), after: function (v) { addShareButton(v, n, d); },
+          explain: n + " shared into " + d + " equal groups is " + each + " each. " + name.charAt(0).toUpperCase() + name.slice(1) + " of " + n + " is " + each + "." };
+      }
+    },
+    fracbigger: {
+      title: "Which Fraction is Bigger?", emoji: "⚖️", color: "leaf", intro: "Same number on top? The smaller the bottom number, the bigger the slices!",
+      gen: function (quiz) {
+        var pairs = quiz ? [["1/2", "1/4"], ["1/3", "1/4"], ["1/2", "1/3"], ["3/4", "1/4"], ["2/3", "1/3"], ["1/2", "3/4"], ["1/4", "2/4"]] : [["1/2", "1/4"], ["3/4", "1/4"], ["1/2", "1/3"]];
+        var pr = shuffle(pickOne(pairs)), val = function (f) { var p = f.split("/"); return p[0] / p[1]; };
+        var ans = val(pr[0]) > val(pr[1]) ? pr[0] : pr[1];
+        return { prompt: "Which is bigger?", visual: pr.map(function (f) { return '<div class="cmp">' + fracBar(f) + '<div class="num">' + f + "</div></div>"; }).join('<div class="op">?</div>'),
+          answer: ans, choices: pr.slice().sort(), explain: "Look at the bars: " + ans + " covers more. " + ans + " is bigger." };
+      }
+    },
+    fracequiv: {
+      title: "Same Fractions", emoji: "🍫", color: "sky", intro: "Different numbers, same amount! 1/2 is the same as 2/4.",
+      gen: function (quiz) {
+        var sets = [["1/2", "2/4"], ["1/2", "3/6"], ["1/3", "2/6"], ["2/3", "4/6"], ["1/4", "2/8"], ["3/4", "6/8"], ["1/2", "4/8"]];
+        var s = pickOne(quiz ? sets : sets.slice(0, 3)), pool = ["1/4", "1/3", "2/3", "3/4", "1/2", "2/5", "3/8", "5/6", "1/6"].filter(function (x) { return x !== s[1] && x !== s[0]; });
+        var ch = shuffle([s[1]].concat(shuffle(pool).slice(0, 3)));
+        return { prompt: "Which fraction is the same as " + s[0] + "?", visual: '<div class="cmp">' + fracBar(s[0]) + '<div class="num">' + s[0] + '</div></div><div class="op">=</div><div class="cmp">' + fracBar(s[1], true) + '<div class="num">?</div></div>',
+          answer: s[1], choices: ch, explain: s[0] + " and " + s[1] + " cover exactly the same amount of the bar." };
+      }
+    },
+    shapes3d: {
+      title: "3D Shapes", emoji: "🧊", color: "berry", intro: "Solid shapes! Cubes, spheres, cylinders, cones and pyramids.",
+      gen: function (quiz) {
+        var S = pickOne([["cube", 6], ["sphere", 0], ["cylinder", 2], ["cone", 1], ["pyramid", 5]]), vis = solid(S[0]);
+        if (quiz && S[1] > 0 && Math.random() < .5) return { prompt: "How many flat faces does a " + S[0] + " have?", visual: vis, answer: S[1], choices: options(S[1], 4, 0, 8),
+          explain: "A " + S[0] + " has " + S[1] + " flat " + (S[1] === 1 ? "face" : "faces") + "." };
+        var names = ["cube", "sphere", "cylinder", "cone", "pyramid"];
+        return { prompt: "What is this shape called?", visual: vis, answer: S[0], choices: shuffle([S[0]].concat(shuffle(names.filter(function (x) { return x !== S[0]; })).slice(0, 3))),
+          explain: "It's a " + S[0] + "! " + { cube: "Like a dice.", sphere: "Like a ball.", cylinder: "Like a tin of beans.", cone: "Like an ice-cream cone.", pyramid: "Like the pyramids in Egypt." }[S[0]] };
+      }
+    },
+    symmetry: {
+      title: "Symmetry", emoji: "🦋", color: "grape", intro: "If you fold it on the line, do both sides match?",
+      gen: function (quiz) {
+        var yes = "AHIMOTUVWXY".split(""), no = "BCDEFGJKLNPQRSZ".split("");
+        var sym = Math.random() < .5, ch = pickOne(sym ? yes : no);
+        var vis = '<div style="position:relative;font:800 9rem/1 var(--display);padding:0 30px">' + ch + '<span style="position:absolute;left:50%;top:-6px;bottom:-6px;border-left:5px dashed var(--berry)"></span></div>';
+        return { prompt: "Is the dashed line a line of symmetry?", visual: vis, answer: sym ? "Yes" : "No", choices: ["Yes", "No"],
+          explain: sym ? "Fold the " + ch + " on the line and both halves match. Yes!" : "Fold the " + ch + " on the line and the halves don't match. No." };
+      }
+    },
+    clock5: {
+      title: "Time to 5 Minutes", emoji: "🕰️", color: "sky", intro: "Count around the clock in 5s to find the minutes.",
+      gen: function (quiz) {
+        var h = rnd(1, 12), m = pickOne([5, 10, 20, 25, 35, 40, 50, 55].concat(quiz ? [15, 45] : [])), nx = h % 12 + 1;
+        function lab(hr, mn) { var n2 = hr % 12 + 1; if (mn === 15) return "quarter past " + hr; if (mn === 45) return "quarter to " + n2; return mn < 30 ? mn + " past " + hr : (60 - mn) + " to " + n2; }
+        var ans = lab(h, m), set = [ans, lab(nx, m), lab(h, 60 - m), lab(h, m <= 25 ? m + 5 : m - 5)].filter(function (v, i, a) { return a.indexOf(v) === i; });
+        return { prompt: "What time is it?", visual: clockSvg(h, m), answer: ans, choices: shuffle(set),
+          explain: "The long hand is on " + (m / 5) + ", that's " + m + " minutes. " + (m < 30 ? "So it's " + m + " minutes past " + h + "." : "That's " + (60 - m) + " minutes to " + nx + ".") };
+      }
+    },
+    calendar: {
+      title: "Days and Months", emoji: "📅", color: "leaf", intro: "Seven days in a week, twelve months in a year!",
+      gen: function (quiz) {
+        var D = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        var M = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        var useM = quiz ? Math.random() < .5 : Math.random() < .3, L2 = useM ? M : D, i = rnd(0, L2.length - 1), after = Math.random() < .6;
+        var ans = L2[(i + (after ? 1 : -1) + L2.length) % L2.length], set = [ans, L2[(i + (after ? -1 : 1) + L2.length) % L2.length], L2[(i + 2) % L2.length], L2[i]].filter(function (v, k, a) { return a.indexOf(v) === k; });
+        return { prompt: "What " + (useM ? "month" : "day") + " comes " + (after ? "after " : "before ") + L2[i] + "?", visual: '<div class="seq">' + [-1, 0, 1].map(function (k) { var v = L2[(i + k + L2.length) % L2.length]; return k === (after ? 1 : -1) ? '<span class="gap">?</span>' : "<span style=\"font-size:1.4rem\">" + (k === 0 ? v : "…") + "</span>"; }).join("") + "</div>",
+          answer: ans, choices: shuffle(set), explain: L2.join(", ") + "." };
+      }
+    },
+    duration: {
+      title: "How Long?", emoji: "⏳", color: "tang", intro: "Count on in hours to find what time it will be.",
+      gen: function (quiz) {
+        var h = rnd(1, 11), add = rnd(1, quiz ? 5 : 3), half = quiz && Math.random() < .4, end = (h + add - 1) % 12 + 1;
+        var lab = function (hr, hf) { return hf ? "half past " + hr : hr + " o'clock"; };
+        var ans = lab(end, half), set = [ans, lab(end % 12 + 1, half), lab((end + 10) % 12 + 1, half), lab(end, !half)].filter(function (v, i, a) { return a.indexOf(v) === i; });
+        return { prompt: "It's " + lab(h, half) + ". What time will it be in " + add + (add === 1 ? " hour" : " hours") + "?", visual: clockSvg(h, half ? 30 : 0), answer: ans, choices: shuffle(set),
+          explain: "Count on " + add + " from " + h + ": " + Array.from({ length: add }, function (_, k) { return (h + k) % 12 + 1; }).join(", ") + ". It will be " + ans + "." };
+      }
+    },
+    shopping: {
+      title: "Going Shopping", emoji: "🛒", color: "berry", intro: "Add up the prices to find the total.",
+      gen: function (quiz) {
+        var items = shuffle([["🍎", "apple"], ["🧃", "juice"], ["🍦", "ice cream"], ["🧸", "teddy"], ["📒", "book"], ["⚽", "ball"], ["🍪", "cookie"], ["🖍️", "crayons"]]).slice(0, 2);
+        var p = items.map(function () { return quiz ? rnd(1, 9) * 100 + pickOne([0, 50, 0, 20]) : rnd(1, 6) * 100; }), tot = p[0] + p[1];
+        function fmt(c) { return c % 100 ? "$" + (c / 100).toFixed(2) : "$" + c / 100; }
+        var vis = items.map(function (it, i) { return '<div class="cmp"><div style="font-size:4rem;line-height:1">' + it[0] + '</div><div class="num" style="font-size:2rem">' + fmt(p[i]) + "</div></div>"; }).join('<div class="op">+</div>');
+        var set = [tot, tot + 100, tot - 100, tot + (quiz ? 50 : 200)].filter(function (v, i, a) { return v > 0 && a.indexOf(v) === i; }).sort(function (a, b) { return a - b; });
+        return { prompt: "You buy a " + items[0][1] + " and a " + items[1][1] + ". How much altogether?", visual: vis, answer: fmt(tot), choices: set.map(fmt),
+          explain: fmt(p[0]) + " + " + fmt(p[1]) + " = " + fmt(tot) + "." };
+      }
+    },
+    change: {
+      title: "Getting Change", emoji: "💵", color: "sun", intro: "Pay with a note, get change back. Count up from the price!",
+      gen: function (quiz) {
+        var note = quiz ? pickOne([500, 1000, 2000]) : pickOne([500, 1000]), price = quiz ? rnd(1, note / 100 - 1) * 100 + pickOne([0, 50]) : rnd(1, note / 100 - 1) * 100;
+        if (price >= note) price = note - 100;
+        var ch = note - price;
+        function fmt(c) { return c % 100 ? "$" + (c / 100).toFixed(2) : "$" + c / 100; }
+        var vis = '<div class="cmp"><div style="font-size:4rem;line-height:1">🧸</div><div class="num" style="font-size:2rem">' + fmt(price) + '</div></div><div class="op">←</div><div class="cmp"><div style="font-size:4rem;line-height:1">💵</div><div class="num" style="font-size:2rem">' + fmt(note) + "</div></div>";
+        var set = [ch, ch + 100, Math.max(50, ch - 100), ch + (quiz ? 50 : 200)].filter(function (v, i, a) { return a.indexOf(v) === i; }).sort(function (a, b) { return a - b; });
+        return { prompt: "The teddy costs " + fmt(price) + ". You pay with " + fmt(note) + ". How much change?", visual: vis, answer: fmt(ch), choices: set.map(fmt),
+          explain: "Count up from " + fmt(price) + " to " + fmt(note) + ": that's " + fmt(ch) + ". " + fmt(note) + " − " + fmt(price) + " = " + fmt(ch) + "." };
+      }
+    },
+    patterns: {
+      title: "What Comes Next?", emoji: "🔁", color: "sky", intro: "Spot the pattern, then work out what comes next!",
+      gen: function (quiz) {
+        if (!quiz || Math.random() < .5) {
+          var E = shuffle(["🍎", "🍌", "🍇", "⭐", "🐶", "🌸", "🚗"]), kind = pickOne(quiz ? ["AB", "AAB", "ABC", "ABB"] : ["AB", "AAB", "ABC"]);
+          var unit = kind.split("").map(function (c) { return E["ABC".indexOf(c)]; }), seq = [];
+          for (var i = 0; i < unit.length * 2 + 1; i++) seq.push(unit[i % unit.length]);
+          var ans = unit[seq.length % unit.length];
+          return { prompt: "What comes next?", visual: '<div class="seq">' + seq.map(function (e) { return '<span style="font-size:2.4rem">' + e + "</span>"; }).join("") + '<span class="gap">?</span></div>', answer: ans,
+            choices: shuffle(E.slice(0, 3).concat([E[3]])).filter(function (v, k, a) { return a.indexOf(v) === k; }), explain: "The pattern repeats: " + unit.join(" ") + ". Next is " + ans + "." };
+        }
+        var step = pickOne([2, 3, 5, 10, -1, -2]), start = step < 0 ? rnd(12, 30) : rnd(1, 20), nums = [];
+        for (var j = 0; j < 4; j++) nums.push(start + j * step);
+        var nxt = start + 4 * step;
+        return { prompt: "What number comes next?", visual: '<div class="seq">' + nums.map(function (n) { return "<span>" + n + "</span>"; }).join("") + '<span class="gap">?</span></div>', answer: nxt,
+          choices: options(nxt, 4, 0, 80), explain: "Each number " + (step > 0 ? "goes up by " + step : "goes down by " + -step) + ". Next is " + nxt + "." };
+      }
+    },
+    story2: {
+      title: "Two-Step Stories", emoji: "📚", color: "grape", intro: "These stories have two steps. Work out one, then the other!",
+      gen: function (quiz) {
+        var who = pickOne(["Teddy", "Dad", "Grandma", "the farmer", "a pirate", "Mum"]), th = pickOne([["apples", "🍎"], ["shells", "🐚"], ["eggs", "🥚"], ["stickers", "⭐"]]);
+        var kind = pickOne(["addsub", "subadd", "timesadd", "sharesub"]), text, ans, steps;
+        if (kind === "addsub") { var a = rnd(5, 12), b = rnd(2, 8), c = rnd(1, a + b - 2); ans = a + b - c; text = who + " has " + a + " " + th[0] + ", finds " + b + " more, then gives away " + c + ". How many now?"; steps = a + " + " + b + " = " + (a + b) + ", then " + (a + b) + " − " + c + " = " + ans; }
+        if (kind === "subadd") { var d = rnd(10, 20), e = rnd(2, 8), f = rnd(2, 9); ans = d - e + f; text = who + " has " + d + " " + th[0] + ", loses " + e + ", then gets " + f + " more. How many now?"; steps = d + " − " + e + " = " + (d - e) + ", then " + (d - e) + " + " + f + " = " + ans; }
+        if (kind === "timesadd") { var g = rnd(2, 5), h = rnd(2, 5), k = rnd(1, 6); ans = g * h + k; text = who + " has " + g + " bags of " + h + " " + th[0] + " and " + k + " more on the table. How many altogether?"; steps = g + " × " + h + " = " + g * h + ", then + " + k + " = " + ans; }
+        if (kind === "sharesub") { var m = rnd(2, 4), q = rnd(3, 6), r = rnd(1, q - 1); ans = q - r; text = who + " shares " + m * q + " " + th[0] + " between " + m + " friends. Each friend eats " + r + ". How many does each friend have left?"; steps = m * q + " ÷ " + m + " = " + q + ", then " + q + " − " + r + " = " + ans; }
+        text = text.charAt(0).toUpperCase() + text.slice(1);
+        return { prompt: text, speak: text, visual: '<div style="font-size:4rem">' + th[1] + " 🤔</div>", answer: ans, choices: options(ans, 4, 0, 40), explain: steps + "." };
+      }
+    },
     /* ===== Special: Numbers to 1000 (read, write, sequence, before and after) ===== */
     n1000: {
       title: "Numbers to 1000", emoji: "🏰", color: "grape", quizN: 8,
@@ -584,6 +810,59 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   };
 
   window.__lessons = LESSONS; // lets the automated checks run every question generator
+
+
+  /* ---------- helpers for the topic lessons ---------- */
+  // Column sum, the way it's written in a maths book.
+  function colSum(a, b, op) {
+    return '<div style="font:800 3.4rem/1.15 var(--display);font-variant-numeric:tabular-nums;text-align:right;padding:6px 20px;border-radius:18px;background:var(--bg-2)">' +
+      '<div><span style="color:var(--muted);font-size:.6em;margin-right:8px">T&nbsp;O</span></div><div>' + a + '</div><div><span style="color:var(--muted);margin-right:14px">' + op + "</span>" + b + '</div><div style="border-top:5px solid var(--ink);color:var(--sun)">?</div></div>';
+  }
+  function tensVis(t, o, takeAway) {
+    var v = '<div class="tens">';
+    for (var i = 0; i < t; i++) { v += '<div class="ten"' + (i >= t - takeAway ? ' style="opacity:.25;outline:3px dashed var(--berry)"' : "") + ">"; for (var j = 0; j < 10; j++) v += "<span></span>"; v += "</div>"; }
+    v += '</div><div class="ones">'; for (var k = 0; k < o; k++) v += '<span class="one"></span>';
+    return v + "</div>";
+  }
+  function timesQ(tables, maxB, missing) {
+    var a = pickOne(tables), b = rnd(1, maxB), ans = a * b, small = a * b <= 40;
+    if (Math.random() < .5) { var t = a; a = b; b = t; }
+    var vis = small ? '<div class="array" style="grid-template-columns:repeat(' + b + ', 28px)">' + grapes(ans) + '</div><div class="vlabel">' + a + " rows of " + b + "</div>" : '<div class="bignum">' + a + " × " + b + "</div>";
+    if (missing && Math.random() < .35) {
+      var known = Math.random() < .5 ? a : b, miss = known === a ? b : a;
+      return { prompt: "What's the missing number?", sum: (known === a ? a + " × ?" : "? × " + b) + " = " + ans, visual: '<div class="bignum">' + (known === a ? a + " × ?" : "? × " + b) + " = " + ans + "</div>",
+        answer: miss, choices: options(miss, 4, 1, 12), explain: known + " × " + miss + " = " + ans + ", so the missing number is " + miss + "." };
+    }
+    var step = Math.max(a, b) <= 12 ? Math.min(a, b) : 1;
+    return { prompt: "What is " + a + " × " + b + "?", sum: small ? a + " × " + b + " = ?" : null, visual: vis, answer: ans, choices: options(ans, 4, 1, 144, step > 1 ? step : 1),
+      explain: a + " × " + b + " = " + ans + ". Count in " + b + "s " + a + (a === 1 ? " time" : " times") + ": " + ans + "." };
+  }
+  function divQ(divisors, maxQ) {
+    var d = pickOne(divisors), q = rnd(1, maxQ), n = d * q, smallD = n <= 40;
+    var vis = n <= 40 ? '<div class="array" style="grid-template-columns:repeat(' + d + ', 28px)">' + grapes(n) + '</div><div class="vlabel">' + n + " grapes in rows of " + d + "</div>" : '<div class="bignum">' + n + " ÷ " + d + "</div>";
+    return { prompt: "What is " + n + " ÷ " + d + "?", sum: smallD ? n + " ÷ " + d + " = ?" : null, visual: vis, answer: q, choices: options(q, 4, 1, 12),
+      explain: d + " × " + q + " = " + n + ", so " + n + " ÷ " + d + " = " + q + "." };
+  }
+  function fracBar(f, plain) {
+    var p = f.split("/"), num = +p[0], den = +p[1], v = '<div style="display:flex;width:min(240px,40vw);height:46px;border:4px solid var(--ink);border-radius:10px;overflow:hidden">';
+    for (var i = 0; i < den; i++) v += '<span style="flex:1;background:' + (i < num ? "var(--sun)" : "var(--card)") + (i ? ";border-left:3px solid var(--ink)" : "") + '"></span>';
+    return v + "</div>";
+  }
+  function solid(name) {
+    var s = '<svg viewBox="0 0 220 200" width="220" height="200" aria-hidden="true" style="max-width:100%">', st = ' stroke="#1E2240" stroke-width="4" stroke-linejoin="round"';
+    if (name === "cube") s += '<path d="M50 70 L140 70 L140 160 L50 160 Z" fill="#8CC8FF"' + st + '/><path d="M50 70 L90 35 L180 35 L140 70 Z" fill="#C7E3FF"' + st + '/><path d="M140 70 L180 35 L180 125 L140 160 Z" fill="#5FA8EA"' + st + "/>";
+    if (name === "sphere") s += '<circle cx="110" cy="100" r="78" fill="#F7A8C4"' + st + '/><ellipse cx="110" cy="100" rx="78" ry="22" fill="none" stroke="#1E2240" stroke-width="3" stroke-dasharray="8 6"/><circle cx="82" cy="70" r="16" fill="#FFFFFF" opacity=".6"/>';
+    if (name === "cylinder") s += '<path d="M50 50 L50 155 A60 20 0 0 0 170 155 L170 50" fill="#8FD26A"' + st + '/><ellipse cx="110" cy="50" rx="60" ry="20" fill="#C6EFA8"' + st + "/>";
+    if (name === "cone") s += '<path d="M110 20 L45 160 A65 22 0 0 0 175 160 Z" fill="#F6C453"' + st + '/><path d="M45 160 A65 22 0 0 1 175 160" fill="none" stroke="#1E2240" stroke-width="3" stroke-dasharray="8 6"/>';
+    if (name === "pyramid") s += '<path d="M110 20 L40 150 L130 175 Z" fill="#E26A2C"' + st + '/><path d="M110 20 L130 175 L185 140 Z" fill="#B54E1C"' + st + "/>";
+    return s + "</svg>";
+  }
+  function clockSvg(h, mins) {
+    var hourAng = ((h % 12) + mins / 60) * 30, minAng = mins * 6, vis = '<svg viewBox="-110 -110 220 220" width="240" height="240" aria-hidden="true"><circle r="100" fill="#FFFFFF" stroke="#1E2240" stroke-width="6"/>';
+    for (var i = 1; i <= 12; i++) { var a = (i * 30 - 90) * Math.PI / 180; vis += '<text x="' + (78 * Math.cos(a)).toFixed(1) + '" y="' + (78 * Math.sin(a)).toFixed(1) + '" text-anchor="middle" dominant-baseline="central" font-family="Baloo 2, sans-serif" font-weight="800" font-size="20" fill="#1E2240">' + i + "</text>"; }
+    for (var t = 0; t < 60; t++) { var b = (t * 6 - 90) * Math.PI / 180, r1 = t % 5 ? 92 : 88; vis += '<line x1="' + (r1 * Math.cos(b)).toFixed(1) + '" y1="' + (r1 * Math.sin(b)).toFixed(1) + '" x2="' + (97 * Math.cos(b)).toFixed(1) + '" y2="' + (97 * Math.sin(b)).toFixed(1) + '" stroke="#1E2240" stroke-width="' + (t % 5 ? 1.5 : 3) + '"/>'; }
+    return vis + '<line x1="0" y1="0" x2="0" y2="-48" stroke="#D4466F" stroke-width="10" stroke-linecap="round" transform="rotate(' + hourAng + ')"/><line x1="0" y1="0" x2="0" y2="-80" stroke="#2F7FC6" stroke-width="6" stroke-linecap="round" transform="rotate(' + minAng + ')"/><circle r="7" fill="#1E2240"/></svg>';
+  }
 
   /* ---------- helpers for big numbers ---------- */
   var ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];

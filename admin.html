@@ -376,13 +376,15 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
     if (!r) return;
     var pet = r.pet; pet.stats = pet.stats || {}; pet.practice = Array.isArray(pet.practice) ? pet.practice : []; pet.done = Array.isArray(pet.done) ? pet.done : [];
     var lessons = (window.KIDSLAB_CONFIG.lessons || []).filter(function (l) { return l.status === "ready" && (!l.players || l.players.indexOf(r.p.id) !== -1); });
-    var n = 0;
+    var n = 0, lastTopic = null;
     lessons.forEach(function (l) {
       var st = pet.stats[l.id] || { r: 0, w: 0 }, tot = st.r + st.w, acc = tot ? Math.round(st.r / tot * 100) : null;
       var tr = el("tr"); if (acc !== null && tot >= 4 && acc < 70) tr.className = "weak";
-      tr.appendChild(td(el("span", { text: l.section === "Basics" ? String(++n) : "" })));
+      var topicName = l.topic ? ((window.KIDSLAB_CONFIG.topics || []).filter(function (t) { return t.id === l.topic; })[0] || { title: l.topic }).title : "";
+      if (l.topic !== lastTopic) { n = 0; lastTopic = l.topic; }
+      tr.appendChild(td(el("span", { text: l.topic ? "L" + (++n) : "" })));
       tr.appendChild(td(el("span", { text: l.emoji + " " + l.title })));
-      tr.appendChild(td(el("span", { text: l.section || "" })));
+      tr.appendChild(td(el("span", { text: (l.section || "") + (topicName ? " · " + topicName : "") })));
       tr.appendChild(td(el("span", { text: pet.done.indexOf(l.id) !== -1 ? "✓" : "" })));
       tr.appendChild(td(el("span", { text: String(st.r) })));
       tr.appendChild(td(el("span", { text: String(st.w) })));
