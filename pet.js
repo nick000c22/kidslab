@@ -321,6 +321,7 @@
     btn("🍇", "Feed", feed, grapesWaiting(R.p.id, s) || "");
     btn("💃", "Play", play);
     if (window.KidsGym) btn("🏋️", "Gym", function () { KidsGym.open(R.p, function () { if (R && room) drawRoom(false); }); }, "", KidsGym.unseen(R.p.id));
+    if (window.KidsAdventure) btn("🗺️", "Explore", function () { KidsAdventure.open(R.p, function () { if (R && room) drawRoom(false); }); });
     btn("🛍️", "Shop", openShop);
     btn("🚪", "Cupboard", openWardrobe, "", hasNew);
     btn("📋", "Stats", openStats);

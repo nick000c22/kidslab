@@ -264,8 +264,9 @@
 .tile-kid { position: absolute; top: 12px; left: 14px; font-size: 30px; line-height: 1; text-shadow: none; }
 .tile-teddy { font-family: var(--body); font-size: .95rem; font-weight: 800; opacity: .92; text-shadow: none; margin-top: -2px; }
 @media (prefers-reduced-motion: reduce) { .sparkle, .flame { animation: none; } }
-/* keep all five device buttons on one row; keep the shop preview in view while scrolling */
-.tama-btns { flex-wrap: nowrap; gap: clamp(6px, 2vw, 12px); }
-.tb-face { width: clamp(48px, 11vw, 58px); height: clamp(48px, 11vw, 58px); font-size: clamp(22px, 5.4vw, 26px); }
+/* keep all seven device buttons on one row; keep the shop preview in view while scrolling */
+.tama-btns { flex-wrap: nowrap; gap: clamp(3px, 1vw, 6px); }
+.tb-face { width: clamp(42px, 9.5vw, 58px); height: clamp(42px, 9.5vw, 58px); font-size: clamp(20px, 4.8vw, 26px); }
 .shop-top { position: sticky; top: -24px; z-index: 2; background: var(--card); padding: 10px 0 12px; margin-top: -10px; box-shadow: 0 10px 12px -12px rgba(0,0,0,.35); }
 .shop-top .ward-preview { width: 130px; }
+@media (max-width: 520px) { .tama-btns { flex-wrap: wrap; row-gap: 8px; } }
