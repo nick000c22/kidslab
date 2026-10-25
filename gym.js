@@ -81,6 +81,7 @@
       '<div class="g-hero"><div class="g-bear"></div><div class="g-side"><div class="g-stats"></div><div class="g-power"></div><p class="g-tip"></p></div></div>' +
       '<h3 class="ward-h">Train (finish a quiz to win 🎟️ 2. The stronger a stat gets, the more tokens it costs)</h3>' +
       '<div class="g-train"></div>' +
+      (window.KidsAdventure ? '<button class="block c-sky g-battle g-adventure" type="button"><span class="emoji">🗺️</span><span class="label">Adventure!</span><span class="g-sub">Fight monsters and bosses with your times tables</span></button>' : '') +
       '<button class="block c-berry g-battle" type="button"><span class="emoji">⚔️</span><span class="label">Battle!</span><span class="g-sub">Challenge a cousin\'s teddy</span></button>' +
       '<div class="g-record"></div>' +
       "</div>";
@@ -118,7 +119,9 @@
     }
     draw();
     w.querySelector(".g-back").addEventListener("click", function () { w.remove(); if (onClose) onClose(); });
-    w.querySelector(".g-battle").addEventListener("click", function () { chooseOpponent(player, draw); });
+    w.querySelector(".g-battle:not(.g-adventure)").addEventListener("click", function () { chooseOpponent(player, draw); });
+    var advBtn = w.querySelector(".g-adventure");
+    if (advBtn) advBtn.addEventListener("click", function () { KidsAdventure.open(player, draw); });
     K.say("Welcome to the gym! What shall we train?");
   }
   function esc(s) { return String(s || "").replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
