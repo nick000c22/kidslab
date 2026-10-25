@@ -34,6 +34,29 @@
   function total(f) { return (f.str || 0) + (f.end || 0) + (f.spd || 0) + (f.brn || 0); }
   function today() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 
+  /* ---------- daily fights (Adventure + cousin battles share them) ----------
+     5 a day, plus 1 more for every 200 Endurance (so 10 at 1000). Starting a fight uses one. */
+  var FIGHTS_BASE = 5, FIGHTS_PER = 200;
+  function fightsMax(p) { return FIGHTS_BASE + Math.floor(((p.fit && p.fit.end) || 0) / FIGHTS_PER); }
+  function fightsUsed(p) { return p.fights && p.fights.d === today() ? Number(p.fights.n) || 0 : 0; }
+  function fightsLeft(id) { var p = P.load(id); return Math.max(0, fightsMax(p) - fightsUsed(p)); }
+  function nextFightAt(p) { var e = (p.fit && p.fit.end) || 0, n = (Math.floor(e / FIGHTS_PER) + 1) * FIGHTS_PER; return n <= 1000 ? n : null; }
+  function fightsLine(id) {
+    var p = P.load(id), left = fightsLeft(id), max = fightsMax(p), nx = nextFightAt(p);
+    return "⚔️ " + left + " of " + max + " fights left today." + (nx ? " Train ❤️ Endurance to " + nx + " for another fight a day!" : "");
+  }
+  // Uses up one fight. Returns false (and says so) when there are none left.
+  function useFight(id) {
+    var p = P.load(id);
+    if (fightsMax(p) - fightsUsed(p) <= 0) {
+      K.say("No fights left today! Do your lessons to win tokens, then train Endurance in the gym to get more fights.");
+      return false;
+    }
+    p.fights = { d: today(), n: fightsUsed(p) + 1 };
+    P.save(id, p);
+    return true;
+  }
+
   /* ---------- sound ---------- */
   var ac = null;
   function tone(f, at, len, type, vol) {
@@ -92,14 +115,14 @@
       w.querySelector(".g-power").textContent = "Power " + total(p2.fit) + " / " + c2 * 4;
       w.querySelector(".g-tip").textContent = total(p2.fit) >= c2 * 4 ? "Maxed out! Earn stars so " + p2.name + " grows bigger and can train more." : "Stats can go up to " + c2 + " while " + p2.name + " is a " + P.STAGES[Math.max(1, P.stageFor(K.stars(player.id))) - 1].name.toLowerCase() + ".";
       var rec = record(player.id);
-      w.querySelector(".g-record").textContent = "Battles: " + rec.w + " won, " + rec.l + " lost";
+      w.querySelector(".g-record").textContent = "Battles: " + rec.w + " won, " + rec.l + " lost. " + fightsLine(player.id);
       var tr = w.querySelector(".g-train"); tr.innerHTML = "";
       STATS.forEach(function (S) {
         var full = (p2.fit[S.id] || 0) >= c2;
         var b = el('<button type="button" class="block c-' + S.color + ' g-tile"><span class="emoji"></span><span class="label"></span><span class="g-sub"></span></button>');
         var v = p2.fit[S.id] || 0, cost = costFor(v), nt = nextTierAt(v);
         txt(b, ".emoji", S.icon); txt(b, ".label", S.name);
-        txt(b, ".g-sub", full ? "Full! Grow bigger" : S.game);
+        txt(b, ".g-sub", full ? "Full! Grow bigger" : S.id === "end" ? S.game + " · more fights a day" : S.game);
         if (!full) {
           var cs = document.createElement("span"); cs.className = "g-cost"; cs.textContent = new Array(cost + 1).join("🎟️"); cs.setAttribute("aria-label", "Costs " + cost + (cost === 1 ? " token" : " tokens"));
           b.appendChild(cs);
@@ -276,11 +299,11 @@
       txt(b, ".g-opp-name", o.pet.name || "Teddy");
       txt(b, ".g-opp-sub", o.p.emoji + " " + o.p.name + "'s teddy");
       txt(b, ".g-opp-power", "Power " + total(o.pet.fit));
-      b.addEventListener("click", function () { w.remove(); battle(player, o, after); });
+      b.addEventListener("click", function () { if (!useFight(player.id)) return; w.remove(); battle(player, o, after); });
       box.appendChild(b);
     });
     var me = P.load(player.id), day = me.battleDay && me.battleDay.d === today() ? me.battleDay.n : 0;
-    w.querySelector(".g-tip:last-child").textContent = day >= DAILY ? "You can still battle for fun, but no more battle grapes today." : "Win 🍇 " + WIN_GRAPES + " grapes. Even if you lose you get 🍇 " + LOSE_GRAPES + ". (" + (DAILY - day) + " grape battles left today)";
+    w.querySelector(".g-tip:last-child").textContent = fightsLine(player.id) + " " + (day >= DAILY ? "You can still battle for fun, but no more battle grapes today." : "Win 🍇 " + WIN_GRAPES + " grapes. Even if you lose you get 🍇 " + LOSE_GRAPES + ". (" + (DAILY - day) + " grape battles left today)");
     w.querySelector(".g-back").addEventListener("click", function () { w.remove(); });
     K.say("Who will you battle?");
   }
@@ -423,5 +446,5 @@
     w.querySelector(".block").addEventListener("click", function () { w.remove(); });
   }
 
-  window.KidsGym = { open: open, notices: notices, unseen: unseen, winChance: winChance, script: script, total: total };
+  window.KidsGym = { useFight: useFight, fightsLeft: fightsLeft, fightsLine: fightsLine, open: open, notices: notices, unseen: unseen, winChance: winChance, script: script, total: total };
 })();

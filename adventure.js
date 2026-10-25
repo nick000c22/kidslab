@@ -8,13 +8,13 @@
    Brains = Super power. It's a grind on purpose: losing gives nothing (and costs nothing).
    Rough stats needed (all four about the same): Crab ~100, Troll ~300, Goblin King ~500,
    Ice Giant ~600, Dragon ~800 (needs a Big teddy).
-   Rewards: monster win 🍇1 + 🎟️1 (first 12 wins a day). Boss: big loot the first time,
-   🍇5 + 🎟️2 once a day after that. Progress lives on the teddy (pet.adv), so it syncs. */
+   Fights a day are limited (5, more with Endurance; see gym.js) and shared with cousin battles.
+   Tokens come from lessons, not fights. Rewards: monster win 🍇2. Boss: big loot (grapes + tokens)
+   the first time, 🍇5 once a day after that. Progress lives on the teddy (pet.adv), so it syncs. */
 (function () {
   var K = window.KidsLab, P = window.KidsPet;
   if (!K || !P) return;
 
-  var DAILY_MONSTERS = 12;
 
   /* ---------- the lands ---------- */
   // hp/hit: monster health and damage. rage: boss big attack every N turns (0 = never).
@@ -145,9 +145,9 @@
         map.appendChild(n);
       });
       var won = WORLDS.filter(function (W) { return adv.beaten[W.boss.id]; }).length;
-      txt(w, ".adv-tip", won === WORLDS.length ? "You beat every boss! You're a legend. Keep fighting to stay strong!" :
+      txt(w, ".adv-tip", (window.KidsGym ? KidsGym.fightsLine(player.id) + " " : "") + (won === WORLDS.length ? "You beat every boss! You're a legend. Keep fighting to stay strong!" :
         won ? won + " of 5 bosses beaten. The 💀 skulls show how tough each boss is." :
-        "Go anywhere you like! The 💀 skulls show how tough each boss is. Start on Teddy Island.");
+        "Go anywhere you like! The 💀 skulls show how tough each boss is. Start on Teddy Island."));
     }
     draw();
     w.querySelector(".adv-back").addEventListener("click", function () { w.remove(); if (onClose) onClose(); });
@@ -162,7 +162,7 @@
       '<div class="g-top"><button class="round small adv-back" type="button" aria-label="Back to the map">🗺️</button><h2></h2></div>' +
       '<p class="adv-intro"></p>' +
       '<div class="adv-me"><div class="adv-me-bear"></div><div class="adv-me-stats"></div></div>' +
-      '<h3 class="ward-h">Monsters (win 🍇 1 + 🎟️ 1)</h3><div class="adv-foes"></div>' +
+      '<h3 class="ward-h">Monsters (win 🍇 2)</h3><div class="adv-foes"></div>' +
       '<h3 class="ward-h">The Boss</h3><div class="adv-bossbox"></div>' +
       '<p class="g-tip adv-daily"></p>' +
       "</div>";
@@ -188,11 +188,10 @@
       txt(bt, ".adv-bname", B.name + " " + new Array(B.level + 1).join("💀"));
       txt(bt, ".adv-bpow", "⚠️ " + B.power + (B.rage ? " · big attack every " + B.rage + " turns" : ""));
       txt(bt, ".adv-bstat", "❤️ " + B.hp + " · hits " + B.hit);
-      txt(bt, ".adv-bloot", beat ? "🏆 Beaten " + beat + (beat === 1 ? " time" : " times") + ". Again: 🍇 5 + 🎟️ 2 (once a day)" : "First win: 🍇 " + B.loot.grapes + " + 🎟️ " + B.loot.tokens + " + a trophy!");
+      txt(bt, ".adv-bloot", beat ? "🏆 Beaten " + beat + (beat === 1 ? " time" : " times") + ". Again: 🍇 5 (once a day)" : "First win: 🍇 " + B.loot.grapes + " + 🎟️ " + B.loot.tokens + " + a trophy!");
       bt.addEventListener("click", function () { fight(player, W, B, true, function () { draw(); if (redrawMap) redrawMap(); }); });
       bb.appendChild(bt);
-      var day = pet.advDay && pet.advDay.d === today() ? pet.advDay.n : 0;
-      txt(w, ".adv-daily", day >= DAILY_MONSTERS ? "No more monster prizes today, but you can still fight for practice!" : (DAILY_MONSTERS - day) + " monster prizes left today. Lost a fight? Earn tokens, train in the gym, and come back stronger!");
+      txt(w, ".adv-daily", (window.KidsGym ? KidsGym.fightsLine(player.id) + " " : "") + "Lost a fight? Do lessons for tokens, train in the gym, and come back stronger!");
     }
     draw();
     w.querySelector(".adv-back").addEventListener("click", function () { w.remove(); });
@@ -201,6 +200,7 @@
 
   /* ---------- the fight ---------- */
   function fight(player, W, F, isBoss, after) {
+    if (window.KidsGym && !KidsGym.useFight(player.id)) return;
     var pet = P.load(player.id), k = kit(pet);
     var me = { hp: k.hp, max: k.hp }, foe = { hp: F.hp, max: F.hp };
     var turn = 0, charge = 0, busy = true, over = false, frozen = false, hits = 0, dodges = 0;
@@ -361,14 +361,11 @@
           adv.beaten[F.id] = (adv.beaten[F.id] || 0) + 1;
           adv.bossDay = adv.bossDay && typeof adv.bossDay === "object" ? adv.bossDay : {};
           if (first) { gGain = F.loot.grapes; tGain = F.loot.tokens; lines.push("🏆 Trophy: " + F.name + "!"); }
-          else if (adv.bossDay[F.id] !== d) { gGain = 5; tGain = 2; }
+          else if (adv.bossDay[F.id] !== d) { gGain = 5; }
           else lines.push("Already got today's boss prize. Come back tomorrow!");
           adv.bossDay[F.id] = d;
         } else {
-          if (!p2.advDay || p2.advDay.d !== d) p2.advDay = { d: d, n: 0 };
-          if (p2.advDay.n < DAILY_MONSTERS) { gGain = 1; tGain = 1; }
-          else lines.push("No more monster prizes today.");
-          p2.advDay.n++;
+          gGain = 2;
         }
         if (gGain) { p2.grapes = Math.max(0, Number(p2.grapes) || 0) + gGain; p2.grapesEarned = (Number(p2.grapesEarned) || 0) + gGain; }
         if (tGain) p2.tokens = Math.max(0, Number(p2.tokens) || 0) + tGain;
@@ -385,9 +382,10 @@
         box.innerHTML = '<div class="card"><div class="big"></div><h2></h2><p class="fine"></p><div class="rowb"><button type="button" class="block c-sun adv-again">⚔️ Fight again</button><button type="button" class="block c-leaf adv-done">Back</button></div></div>';
         txt(box, ".big", won ? (isBoss ? "🏆" : "⭐") : "💪");
         txt(box, "h2", won ? "You beat the " + F.name + "!" : F.name + " was too strong!");
-        var prize = gGain || tGain ? "You won 🍇 " + gGain + " and 🎟️ " + tGain + ". " : "";
-        txt(box, ".fine", won ? prize + lines.join(" ") : "No prize this time. Do lessons for tokens, train in the gym, then come back stronger!");
-        K.say(won ? (isBoss ? "You beat the " + F.name + "! Amazing!" : "You won! ") + (gGain ? "You get " + gGain + (gGain === 1 ? " grape" : " grapes") + " and " + tGain + (tGain === 1 ? " token!" : " tokens!") : "")
+        var prize = gGain ? "You won 🍇 " + gGain + (tGain ? " and 🎟️ " + tGain : "") + ". " : "";
+        txt(box, ".fine", (won ? prize + lines.join(" ") : "No prize this time. Do lessons for tokens, train in the gym, then come back stronger!") + (window.KidsGym ? " " + KidsGym.fightsLine(player.id) : ""));
+        if (window.KidsGym && KidsGym.fightsLeft(player.id) <= 0) { var ag = box.querySelector(".adv-again"); ag.disabled = true; ag.textContent = "No fights left today"; }
+        K.say(won ? (isBoss ? "You beat the " + F.name + "! Amazing!" : "You won! ") + (gGain ? "You get " + gGain + " grapes" + (tGain ? " and " + tGain + " tokens!" : "!") : "")
           : "The " + F.name + " was too strong this time. Do some lessons, train in the gym, and come back!");
         box.querySelector(".adv-again").addEventListener("click", function () { w.remove(); fight(player, W, F, isBoss, after); });
         box.querySelector(".adv-done").addEventListener("click", function () { w.remove(); after(); });
