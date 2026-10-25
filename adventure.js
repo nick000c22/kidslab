@@ -8,7 +8,8 @@
    Brains = Super power. It's a grind on purpose: losing gives nothing (and costs nothing).
    Rough stats needed (all four about the same): Crab ~100, Troll ~300, Goblin King ~500,
    Ice Giant ~600, Dragon ~800 (needs a Big teddy).
-   Fights a day are limited (5, more with Endurance; see gym.js) and shared with cousin battles.
+   Monster fights a day are limited (10, more with Endurance; see gym.js) and shared with cousin
+   battles. Boss fights are unlimited.
    Tokens come from lessons, not fights. Rewards: monster win 🍇2. Boss: big loot (grapes + tokens)
    the first time, 🍇5 once a day after that. Progress lives on the teddy (pet.adv), so it syncs. */
 (function () {
@@ -200,7 +201,7 @@
 
   /* ---------- the fight ---------- */
   function fight(player, W, F, isBoss, after) {
-    if (window.KidsGym && !KidsGym.useFight(player.id)) return;
+    if (!isBoss && window.KidsGym && !KidsGym.useFight(player.id)) return; // boss fights are unlimited
     var pet = P.load(player.id), k = kit(pet);
     var me = { hp: k.hp, max: k.hp }, foe = { hp: F.hp, max: F.hp };
     var turn = 0, charge = 0, busy = true, over = false, frozen = false, hits = 0, dodges = 0;
@@ -384,7 +385,7 @@
         txt(box, "h2", won ? "You beat the " + F.name + "!" : F.name + " was too strong!");
         var prize = gGain ? "You won 🍇 " + gGain + (tGain ? " and 🎟️ " + tGain : "") + ". " : "";
         txt(box, ".fine", (won ? prize + lines.join(" ") : "No prize this time. Do lessons for tokens, train in the gym, then come back stronger!") + (window.KidsGym ? " " + KidsGym.fightsLine(player.id) : ""));
-        if (window.KidsGym && KidsGym.fightsLeft(player.id) <= 0) { var ag = box.querySelector(".adv-again"); ag.disabled = true; ag.textContent = "No fights left today"; }
+        if (!isBoss && window.KidsGym && KidsGym.fightsLeft(player.id) <= 0) { var ag = box.querySelector(".adv-again"); ag.disabled = true; ag.textContent = "No fights left today"; }
         K.say(won ? (isBoss ? "You beat the " + F.name + "! Amazing!" : "You won! ") + (gGain ? "You get " + gGain + " grapes" + (tGain ? " and " + tGain + " tokens!" : "!") : "")
           : "The " + F.name + " was too strong this time. Do some lessons, train in the gym, and come back!");
         box.querySelector(".adv-again").addEventListener("click", function () { w.remove(); fight(player, W, F, isBoss, after); });

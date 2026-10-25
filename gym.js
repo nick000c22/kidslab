@@ -34,16 +34,16 @@
   function total(f) { return (f.str || 0) + (f.end || 0) + (f.spd || 0) + (f.brn || 0); }
   function today() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 
-  /* ---------- daily fights (Adventure + cousin battles share them) ----------
-     5 a day, plus 1 more for every 200 Endurance (so 10 at 1000). Starting a fight uses one. */
-  var FIGHTS_BASE = 5, FIGHTS_PER = 200;
+  /* ---------- daily fights (Adventure monsters + cousin battles share them; boss fights are free) ----------
+     10 a day, plus 1 more for every 200 Endurance (so 15 at 1000). Starting a fight uses one. */
+  var FIGHTS_BASE = 10, FIGHTS_PER = 200;
   function fightsMax(p) { return FIGHTS_BASE + Math.floor(((p.fit && p.fit.end) || 0) / FIGHTS_PER); }
   function fightsUsed(p) { return p.fights && p.fights.d === today() ? Number(p.fights.n) || 0 : 0; }
   function fightsLeft(id) { var p = P.load(id); return Math.max(0, fightsMax(p) - fightsUsed(p)); }
   function nextFightAt(p) { var e = (p.fit && p.fit.end) || 0, n = (Math.floor(e / FIGHTS_PER) + 1) * FIGHTS_PER; return n <= 1000 ? n : null; }
   function fightsLine(id) {
     var p = P.load(id), left = fightsLeft(id), max = fightsMax(p), nx = nextFightAt(p);
-    return "⚔️ " + left + " of " + max + " fights left today." + (nx ? " Train ❤️ Endurance to " + nx + " for another fight a day!" : "");
+    return "⚔️ " + left + " of " + max + " fights left today (bosses are free)." + (nx ? " Train ❤️ Endurance to " + nx + " for another fight a day!" : "");
   }
   // Uses up one fight. Returns false (and says so) when there are none left.
   function useFight(id) {
