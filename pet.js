@@ -61,9 +61,10 @@
 
   function stageFor(stars) { var st = 0; STAGES.forEach(function (S) { if (stars >= S.at) st = S.id; }); return st; }
   // Can he wear it? Star prizes unlock by stars; shop items must be bought. "unlockAll" (grown-ups) frees everything.
-  function has(o, stars, s) { return !!(s.unlockAll || (o.stars ? stars >= o.stars : s.owned.indexOf(o.id) !== -1)); }
+  function has(o, stars, s) { return !!(s.unlockAll || o.gift || (o.stars ? stars >= o.stars : s.owned.indexOf(o.id) !== -1)); }
   function hasFur(k, s) { return !FURS[k].price || s.unlockAll || s.ownedFurs.indexOf(k) !== -1; }
-  function unlocked(stars, s) { return PRIZES.filter(function (o) { return has(o, stars, s); }); }
+  var GIFTS = ITEMS.filter(function (i) { return i.gift; });            // free seasonal things (Halloween)
+  function unlocked(stars, s) { return PRIZES.concat(GIFTS).filter(function (o) { return has(o, stars, s); }); }
   function nextGoal(stars, s) {
     if (!s.hatched) return { at: HATCH, from: 0, text: stars >= HATCH ? "Ready to hatch!" : "Hatch at " + HATCH + " ⭐" };
     var goals = STAGES.filter(function (S) { return S.at > HATCH; }).map(function (S) { return { at: S.at, text: "Grows into a " + S.name.toLowerCase() }; })
@@ -473,18 +474,22 @@
     }
     function build() {
       var st = load(p.id), box = wrap.querySelector(".cupboard"); box.innerHTML = "";
-      T.SLOTS.forEach(function (slot) {
-        var mine = ITEMS.filter(function (it) { return it.slot === slot.id && has(it, stars, st); });
-        var lockedPrizes = PRIZES.filter(function (it) { return it.slot === slot.id && !has(it, stars, st); });
+      var groups = [{ name: "🎃 Halloween", items: GIFTS.filter(function (it) { return it.gift === "halloween"; }) }].concat(T.SLOTS.map(function (slot) {
+        return { slot: slot, name: slot.name, items: ITEMS.filter(function (it) { return it.slot === slot.id && !it.gift && has(it, stars, st); }) };
+      }));
+      groups.forEach(function (G) {
+        var slot = G.slot || null;
+        var mine = G.items;
+        var lockedPrizes = slot ? PRIZES.filter(function (it) { return it.slot === slot.id && !has(it, stars, st); }) : [];
         if (!mine.length && !lockedPrizes.length) return;
-        var h = document.createElement("h3"); h.className = "ward-h"; h.textContent = slot.name; box.appendChild(h);
+        var h = document.createElement("h3"); h.className = "ward-h"; h.textContent = G.name; box.appendChild(h);
         var grid = document.createElement("div"); grid.className = "wardrobe"; box.appendChild(grid);
         mine.forEach(function (it) {
-          var on = st.wear[slot.id] === it.id;
+          var on = st.wear[it.slot] === it.id;
           var b = itemTile(it, on ? "Wearing" : "Tap to wear", on ? "on" : "");
-          if (it.stars && st.seen.indexOf(it.id) === -1) { var n = document.createElement("span"); n.className = "badge-new"; n.textContent = "NEW"; b.appendChild(n); }
+          if ((it.stars || it.gift) && st.seen.indexOf(it.id) === -1) { var n = document.createElement("span"); n.className = "badge-new"; n.textContent = "NEW"; b.appendChild(n); }
           b.addEventListener("click", function () {
-            change(function (x) { if (x.wear[slot.id] === it.id) delete x.wear[slot.id]; else x.wear[slot.id] = it.id; },
+            change(function (x) { if (x.wear[it.slot] === it.id) delete x.wear[it.slot]; else x.wear[it.slot] = it.id; },
               on ? "Okay, off it comes." : pick(["Ooh, I love my " + it.name.toLowerCase() + "!", "Do I look fancy?", "So stylish!"]));
           });
           grid.appendChild(b);

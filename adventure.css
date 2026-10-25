@@ -95,29 +95,22 @@
 .adv-warn { width: 100%; text-align: center; font-family: var(--display); font-weight: 800; font-size: 1.3rem; color: #fff; background: var(--berry);
   border-radius: 14px; padding: 6px 10px; animation: warn .6s ease-in-out infinite alternate; }
 @keyframes warn { to { background: #E26A2C; } }
-.adv-timer { width: 100%; height: 14px; border-radius: 7px; background: var(--bg-2); overflow: hidden; }
-.adv-timer span { display: block; height: 100%; width: 100%; background: var(--leaf); border-radius: 7px; }
-.adv-timer.hurry span { background: var(--berry); }
-.adv-q { font-family: var(--display); font-weight: 800; font-size: clamp(2.6rem, 8vw, 3.8rem); line-height: 1; font-variant-numeric: tabular-nums; }
-.adv-help { display: flex; flex-direction: column; align-items: center; }
-.adv-hint { border: 0; border-radius: 999px; background: var(--bg-2); color: var(--ink); font-weight: 800; font-size: 1rem; padding: 6px 14px; cursor: pointer; }
-.adv-grid { font-size: clamp(14px, 2.6vw, 22px); line-height: 1.15; letter-spacing: -2px; text-align: left; }
-.adv-opts { width: 100%; display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
-.adv-opts.n4 { grid-template-columns: repeat(4, 1fr); }
-.adv-opts .block { font-size: clamp(1.8rem, 5vw, 2.4rem); min-height: 84px; font-family: var(--display); font-weight: 800; }
-.adv-opts .block.faded { opacity: .15; }
-.adv-opts .block.right { outline: 5px solid #FFD166; outline-offset: 2px; }
-.adv-opts .block.wrong { opacity: .45; }
-.adv-opts .block:disabled { cursor: default; }
-.adv-streak { min-height: 1.3em; font-weight: 800; color: var(--tang); }
 .adv-fight .adv-flee { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); top: 112px; z-index: 3; }
+.adv-moves { width: 100%; display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
+.adv-move { min-height: 96px; font-family: var(--display); font-weight: 800; gap: 2px; }
+.adv-mi { font-size: clamp(34px, 7vw, 46px); line-height: 1; }
+.adv-ml { font-size: clamp(1.2rem, 3.4vw, 1.6rem); }
+.adv-charge { font-size: .9rem; letter-spacing: 2px; opacity: .95; }
+.adv-move:disabled { opacity: .45; cursor: default; }
+.adv-move.ready:not(:disabled) { animation: ready 1s ease-in-out infinite alternate; }
+@keyframes ready { to { box-shadow: 0 10px 0 color-mix(in srgb, var(--c) 62%, #000), 0 0 28px #FFD166; } }
+.adv-enemy.dodge-e { animation: dodgee .6s ease-out; }
+@keyframes dodgee { 40% { transform: scaleX(-1) translateY(-30%); } }
 .adv-flame { position: fixed; z-index: 96; pointer-events: none; font-size: 40px; transform: translate(-50%, -50%); animation: flame 1s ease-out forwards; }
 @keyframes flame { from { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 30% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -120%) scale(1.3); } }
-.adv-score { margin: 0; font-weight: 800; font-size: 1.2rem; }
 .gym-wrap .ar-end .adv-again, .gym-wrap .ar-end .adv-done { min-height: 64px; padding: 12px 28px; font-size: 1.4rem; flex-direction: row; }
 
 @media (max-width: 560px) {
-  .adv-opts.n4 { grid-template-columns: repeat(2, 1fr); }
   .adv-node { width: 32%; }
   .adv-me { gap: 10px; }
   .adv-floor .fighter { width: 38%; }

@@ -1,13 +1,13 @@
 /* Teddy Adventure: a world map of five lands, each with small monsters and a big boss.
-   Every attack is a times-table question:
-     right  -> your teddy hits (fast answers are SUPER hits, 3 in a row is a COMBO)
-     wrong  -> the monster hits you (and you see the right answer)
-     too slow (where there's a timer) -> the monster hits you
-   Gym stats matter: Strength = how hard you hit, Endurance = how much health you have,
-   Speed = extra seconds on the timer, Brains = sometimes a wrong answer fades away.
-   Bosses also do a "big attack" every few turns: answer FAST to block it.
-   It's a grind on purpose: losing gives nothing (and costs nothing). Win small monsters for
-   grapes and gym tokens, train in the gym, then come back for the boss.
+   Fights are moves, not sums (the sums are in the lessons, which pay the grapes and tokens):
+     ⚔️ Attack  a normal hit (sometimes a lucky crit)
+     🛡️ Block   no hit, but the monster only does a quarter damage
+     ✨ Super   a huge hit, ready after 3 moves
+   Bosses warn you a turn before their big attack: Block it, or it hits twice as hard.
+   Gym stats decide who wins: Strength = hit power, Endurance = health, Speed = dodge chance,
+   Brains = Super power. It's a grind on purpose: losing gives nothing (and costs nothing).
+   Rough stats needed (all four about the same): Crab ~100, Troll ~300, Goblin King ~500,
+   Ice Giant ~600, Dragon ~800 (needs a Big teddy).
    Rewards: monster win 🍇1 + 🎟️1 (first 12 wins a day). Boss: big loot the first time,
    🍇5 + 🎟️2 once a day after that. Progress lives on the teddy (pet.adv), so it syncs. */
 (function () {
@@ -15,57 +15,55 @@
   if (!K || !P) return;
 
   var DAILY_MONSTERS = 12;
-  var LESSON = "timesmix"; // answers show up under Multiplication on the grown-ups page
 
   /* ---------- the lands ---------- */
-  // tables: which times tables the questions use. timer: seconds per question (0 = no timer).
-  // rage: boss big attack every N questions (0 = never). hp/hit: monster health and damage.
+  // hp/hit: monster health and damage. rage: boss big attack every N turns (0 = never).
   var WORLDS = [
-    { id: "island", name: "Teddy Island", icon: "🏝️", sky: "island", tables: [2, 10], opts: 3, x: 16, y: 74,
-      intro: "Home sweet home. The 2s and 10s live here.",
+    { id: "island", name: "Teddy Island", icon: "🏝️", sky: "island", x: 16, y: 74,
+      intro: "Home sweet home, with sandy beaches and one very grumpy crab.",
       monsters: [
-        { id: "snail", name: "Slow Snail", face: "🐌", hp: 40, hit: 8, timer: 0 },
-        { id: "bee", name: "Buzzy Bee", face: "🐝", hp: 55, hit: 10, timer: 0 },
-        { id: "seagull", name: "Cheeky Seagull", face: "🐦", hp: 70, hit: 12, timer: 0 }
+        { id: "snail", name: "Slow Snail", face: "🐌", hp: 40, hit: 8 },
+        { id: "bee", name: "Buzzy Bee", face: "🐝", hp: 55, hit: 10 },
+        { id: "seagull", name: "Cheeky Seagull", face: "🐦", hp: 70, hit: 12 }
       ],
-      boss: { id: "crab", name: "Grumpy Crab", face: "🦀", hp: 170, hit: 14, timer: 0, rage: 0, level: 1,
+      boss: { id: "crab", name: "Grumpy Crab", face: "🦀", hp: 170, hit: 14, rage: 0, level: 1,
         loot: { grapes: 15, tokens: 4 }, taunt: "Snip snap! Nobody gets past my beach!", power: "Snappy claws" } },
-    { id: "forest", name: "Whispering Forest", icon: "🌲", sky: "forest", tables: [5, 3], opts: 3, x: 36, y: 44,
-      intro: "Tall trees and sneaky creatures. The 5s and 3s live here.",
+    { id: "forest", name: "Whispering Forest", icon: "🌲", sky: "forest", x: 36, y: 44,
+      intro: "Tall trees, sneaky creatures, and a troll who loves to SMASH.",
       monsters: [
-        { id: "spider", name: "Wiggly Spider", face: "🕷️", hp: 80, hit: 14, timer: 14 },
-        { id: "wolf", name: "Howly Wolf", face: "🐺", hp: 110, hit: 17, timer: 14 },
-        { id: "boar", name: "Grumbly Boar", face: "🐗", hp: 140, hit: 20, timer: 13 }
+        { id: "spider", name: "Wiggly Spider", face: "🕷️", hp: 80, hit: 14 },
+        { id: "wolf", name: "Howly Wolf", face: "🐺", hp: 110, hit: 17 },
+        { id: "boar", name: "Grumbly Boar", face: "🐗", hp: 140, hit: 20 }
       ],
-      boss: { id: "troll", name: "Forest Troll", face: "🧌", hp: 500, hit: 32, timer: 13, rage: 4, level: 2,
+      boss: { id: "troll", name: "Forest Troll", face: "🧌", hp: 500, hit: 32, rage: 4, level: 2,
         loot: { grapes: 25, tokens: 6 }, taunt: "TROLL SMASH! You are tiny!", power: "Big slow SMASH" } },
-    { id: "caves", name: "Goblin Caves", icon: "🕳️", sky: "caves", tables: [4, 8], opts: 4, x: 64, y: 74,
-      intro: "Dark tunnels full of goblins. The 4s and 8s live here.",
+    { id: "caves", name: "Goblin Caves", icon: "🕳️", sky: "caves", x: 64, y: 74,
+      intro: "Dark tunnels full of goblins. Their king is so fast he dodges hits.",
       monsters: [
-        { id: "bat", name: "Flappy Bat", face: "🦇", hp: 130, hit: 20, timer: 11 },
-        { id: "rat", name: "Cave Rat", face: "🐀", hp: 170, hit: 24, timer: 11 },
-        { id: "skeleton", name: "Rattly Skeleton", face: "💀", hp: 210, hit: 27, timer: 10 }
+        { id: "bat", name: "Flappy Bat", face: "🦇", hp: 130, hit: 20 },
+        { id: "rat", name: "Cave Rat", face: "🐀", hp: 170, hit: 24 },
+        { id: "skeleton", name: "Rattly Skeleton", face: "💀", hp: 210, hit: 27 }
       ],
-      boss: { id: "goblin", name: "Goblin King", face: "👺", crown: true, hp: 750, hit: 36, timer: 8, rage: 4, level: 3,
-        loot: { grapes: 35, tokens: 8 }, taunt: "Hee hee! I'm too FAST for you!", power: "Super speedy" } },
-    { id: "mountains", name: "Frozen Mountains", icon: "🏔️", sky: "snow", tables: [9, 6], opts: 4, x: 58, y: 22,
-      intro: "Brrr! Snow and ice. The 9s and 6s live here.",
+      boss: { id: "goblin", name: "Goblin King", face: "👺", crown: true, hp: 750, hit: 36, rage: 4, level: 3,
+        loot: { grapes: 35, tokens: 8 }, taunt: "Hee hee! I'm too FAST for you!", power: "Dodges some of your hits", evade: true } },
+    { id: "mountains", name: "Frozen Mountains", icon: "🏔️", sky: "snow", x: 58, y: 22,
+      intro: "Brrr! Snow and ice, and a giant who freezes you solid.",
       monsters: [
-        { id: "snowman", name: "Snowman", face: "⛄", hp: 190, hit: 27, timer: 11 },
-        { id: "yeti", name: "Grumpy Goat", face: "🐐", hp: 240, hit: 31, timer: 11 },
-        { id: "owl", name: "Snow Owl", face: "🦉", hp: 290, hit: 34, timer: 10 }
+        { id: "snowman", name: "Snowman", face: "⛄", hp: 190, hit: 27 },
+        { id: "yeti", name: "Grumpy Goat", face: "🐐", hp: 240, hit: 31 },
+        { id: "owl", name: "Snow Owl", face: "🦉", hp: 290, hit: 34 }
       ],
-      boss: { id: "icegiant", name: "Ice Giant", face: "👹", ice: true, hp: 1100, hit: 44, timer: 10, rage: 4, level: 4, freeze: true,
-        loot: { grapes: 45, tokens: 10 }, taunt: "Get one wrong and I'll FREEZE you!", power: "Wrong answers freeze you" } },
-    { id: "volcano", name: "Dragon Volcano", icon: "🌋", sky: "volcano", tables: [2, 3, 4, 5, 6, 7, 8, 9, 10], opts: 4, x: 86, y: 44,
-      intro: "The hottest place of all. Every table lives here, even the tricky 7s.",
+      boss: { id: "icegiant", name: "Ice Giant", face: "👹", ice: true, hp: 1100, hit: 44, rage: 4, level: 4, freeze: true,
+        loot: { grapes: 45, tokens: 10 }, taunt: "Get one wrong and I'll FREEZE you!", power: "Freezes you if you don't block" } },
+    { id: "volcano", name: "Dragon Volcano", icon: "🌋", sky: "volcano", x: 86, y: 44,
+      intro: "The hottest place of all. Only the mightiest teddy can beat the dragon.",
       monsters: [
-        { id: "imp", name: "Fire Imp", face: "😈", hp: 260, hit: 34, timer: 10 },
-        { id: "lizard", name: "Lava Lizard", face: "🦎", hp: 320, hit: 38, timer: 10 },
-        { id: "golem", name: "Rock Golem", face: "🗿", hp: 380, hit: 42, timer: 9 }
+        { id: "imp", name: "Fire Imp", face: "😈", hp: 260, hit: 34 },
+        { id: "lizard", name: "Lava Lizard", face: "🦎", hp: 320, hit: 38 },
+        { id: "golem", name: "Rock Golem", face: "🗿", hp: 380, hit: 42 }
       ],
-      boss: { id: "dragon", name: "Fire Dragon", face: "🐉", hp: 1700, hit: 58, timer: 9, rage: 3, level: 5, fire: true,
-        loot: { grapes: 70, tokens: 15 }, taunt: "ROAAAR! Only a mighty teddy can beat me!", power: "Fire breath every 3 turns" } }
+      boss: { id: "dragon", name: "Fire Dragon", face: "🐉", hp: 1700, hit: 58, rage: 3, level: 5, fire: true,
+        loot: { grapes: 70, tokens: 15 }, taunt: "ROAAAR! Only a mighty teddy can beat me!", power: "Fire breath" } }
   ];
 
   /* ---------- helpers ---------- */
@@ -88,10 +86,10 @@
   function kit(pet) {
     var f = pet.fit || {};
     return {
-      hp: Math.round(80 + (f.end || 0) * 0.6),           // 80 .. 680
-      dmg: Math.round(10 + (f.str || 0) * 0.11),         // 10 .. 120
-      extra: Math.min(4, (f.spd || 0) * 0.004),          // +0 .. +4 seconds on timers
-      fade: Math.min(0.7, (f.brn || 0) / 1000 * 0.7)     // chance a wrong answer fades out
+      hp: Math.round(80 + (f.end || 0) * 0.6),                 // 80 .. 680
+      dmg: Math.round(10 + (f.str || 0) * 0.11),               // 10 .. 120
+      dodge: 0.05 + Math.min(1000, f.spd || 0) / 1000 * 0.25,  // 5% .. 30%
+      sup: 2 + Math.min(1000, f.brn || 0) / 1000 * 1.5         // Super = 2x .. 3.5x a hit
     };
   }
 
@@ -109,44 +107,9 @@
   }
   function bonk() { tone(140, 0, 0.12, "sawtooth", 0.1); tone(90, 0.06, 0.14, "sawtooth", 0.08); }
   function zap() { [600, 900, 1200, 1500].forEach(function (f, i) { tone(f, i * 0.05, 0.08, "square", 0.06); }); }
-  function ding() { tone(990, 0, 0.08, "square", 0.06); tone(1320, 0.07, 0.1, "square", 0.06); }
-  function buzz() { tone(180, 0, 0.18, "sawtooth", 0.08); }
   function roar() { tone(110, 0, 0.35, "sawtooth", 0.11); tone(80, 0.1, 0.4, "sawtooth", 0.09); }
   function fanfare() { [523, 659, 784, 1047, 784, 1047].forEach(function (f, i) { tone(f, i * 0.13, 0.14, "square", 0.07); }); }
   function sad() { [392, 349, 311, 262].forEach(function (f, i) { tone(f, i * 0.2, 0.22, "triangle", 0.07); }); }
-
-  /* ---------- questions: weak facts come back more often ---------- */
-  function factKey(a, b) { return Math.min(a, b) + "x" + Math.max(a, b); }
-  function facts(id) { return K.get("advfacts." + id, {}); }
-  function noteFact(id, a, b, right) {
-    var all = facts(id), k = factKey(a, b), f = all[k] || { r: 0, w: 0 };
-    if (right) f.r++; else f.w++;
-    all[k] = f; K.set("advfacts." + id, all);
-  }
-  function question(id, world, last) {
-    var all = facts(id), pool = [];
-    world.tables.forEach(function (t) {
-      for (var n = 1; n <= 10; n++) {
-        var f = all[factKey(t, n)] || { r: 0, w: 0 };
-        var w = Math.max(0.4, Math.min(8, 1 + f.w * 2.5 - f.r * 0.25));
-        if (n === 1 || t === 10 && world.id !== "island") w *= 0.4; // the easy ones less often
-        pool.push({ t: t, n: n, w: w });
-      }
-    });
-    var tot = pool.reduce(function (s, p) { return s + p.w; }, 0), r = Math.random() * tot, q = pool[0];
-    for (var i = 0; i < pool.length; i++) { r -= pool[i].w; if (r <= 0) { q = pool[i]; break; } }
-    if (last && factKey(q.t, q.n) === last && pool.length > 1) return question(id, world, last);
-    var a = q.t, b = q.n;
-    if (Math.random() < 0.5) { var s = a; a = b; b = s; }   // 3 × 7 and 7 × 3 are the same fact
-    var ans = a * b, opts = [ans];
-    // Wrong answers that look right: a neighbour in the same table, or off by a little.
-    var tries = [ans + q.t, ans - q.t, ans + q.n, ans - q.n, ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10];
-    tries.sort(function () { return Math.random() - 0.5; });
-    tries.forEach(function (v) { if (opts.length < world.opts && v > 0 && opts.indexOf(v) === -1) opts.push(v); });
-    while (opts.length < world.opts) { var v = ans + rnd(-9, 9); if (v > 0 && opts.indexOf(v) === -1) opts.push(v); }
-    opts.sort(function (m, n) { return m - n; });
-    return { a: a, b: b, ans: ans, opts: opts, key: factKey(a, b) };
-  }
 
   /* ---------- the map ---------- */
   var onClose = null;
@@ -210,13 +173,12 @@
       w.querySelector(".adv-me-bear").innerHTML = P.teddySVG(stageOf(player.id), pet);
       w.querySelector(".adv-me-stats").innerHTML =
         '<div><b>❤️ ' + k.hp + '</b> health</div><div><b>💪 ' + k.dmg + '</b> per hit</div>' +
-        (k.extra >= 0.5 ? '<div><b>⚡ +' + k.extra.toFixed(1) + 's</b> on timers</div>' : '') +
-        (k.fade >= 0.05 ? '<div><b>🧠 ' + Math.round(k.fade * 100) + '%</b> hint chance</div>' : '');
+        '<div><b>⚡ ' + Math.round(k.dodge * 100) + '%</b> dodge</div><div><b>✨ ' + Math.round(k.dmg * k.sup) + '</b> super hit</div>';
       var foes = w.querySelector(".adv-foes"); foes.innerHTML = "";
       W.monsters.forEach(function (M) {
         var b = el('<button type="button" class="adv-foe"><span class="adv-face"></span><span class="adv-fname"></span><span class="adv-fsub"></span></button>');
         txt(b, ".adv-face", M.face); txt(b, ".adv-fname", M.name);
-        txt(b, ".adv-fsub", "❤️ " + M.hp + " · hits " + M.hit + (M.timer ? " · ⏱️" : ""));
+        txt(b, ".adv-fsub", "❤️ " + M.hp + " · hits " + M.hit);
         b.addEventListener("click", function () { fight(player, W, M, false, function () { draw(); if (redrawMap) redrawMap(); }); });
         foes.appendChild(b);
       });
@@ -225,7 +187,7 @@
       var bf = bt.querySelector(".adv-bface"); bf.textContent = B.face; if (B.ice) bf.classList.add("icy"); if (B.crown) bf.classList.add("crowned");
       txt(bt, ".adv-bname", B.name + " " + new Array(B.level + 1).join("💀"));
       txt(bt, ".adv-bpow", "⚠️ " + B.power + (B.rage ? " · big attack every " + B.rage + " turns" : ""));
-      txt(bt, ".adv-bstat", "❤️ " + B.hp + " · hits " + B.hit + (B.timer ? " · ⏱️ " + B.timer + "s" : " · no timer"));
+      txt(bt, ".adv-bstat", "❤️ " + B.hp + " · hits " + B.hit);
       txt(bt, ".adv-bloot", beat ? "🏆 Beaten " + beat + (beat === 1 ? " time" : " times") + ". Again: 🍇 5 + 🎟️ 2 (once a day)" : "First win: 🍇 " + B.loot.grapes + " + 🎟️ " + B.loot.tokens + " + a trophy!");
       bt.addEventListener("click", function () { fight(player, W, B, true, function () { draw(); if (redrawMap) redrawMap(); }); });
       bb.appendChild(bt);
@@ -241,25 +203,30 @@
   function fight(player, W, F, isBoss, after) {
     var pet = P.load(player.id), k = kit(pet);
     var me = { hp: k.hp, max: k.hp }, foe = { hp: F.hp, max: F.hp };
-    var turn = 0, streak = 0, lastKey = null, busy = false, timerRAF = null, over = false, rightN = 0, wrongN = 0;
+    var turn = 0, charge = 0, busy = true, over = false, frozen = false, hits = 0, dodges = 0;
     var w = overlay("g-battle-wrap adv-fight sky-" + W.sky);
     w.innerHTML =
       '<div class="arena">' +
       '<div class="ar-hp"><div class="hpbox a"><b></b><span class="hp"><span></span></span><em></em></div><div class="vs">VS</div><div class="hpbox b"><b></b><span class="hp"><span></span></span><em></em></div></div>' +
       '<div class="adv-floor"><div class="fighter a"></div><div class="adv-enemy"><span class="adv-eface"></span></div><div class="ar-call" aria-live="polite"></div></div>' +
-      '<div class="adv-panel"><div class="adv-warn" hidden></div><div class="adv-timer" hidden><span></span></div><div class="adv-q"></div><div class="adv-help"></div><div class="adv-opts"></div><div class="adv-streak"></div></div>' +
+      '<div class="adv-panel"><div class="adv-warn" hidden></div><div class="adv-moves">' +
+      '<button type="button" class="block c-berry adv-move" data-m="attack"><span class="adv-mi">⚔️</span><span class="adv-ml">Attack</span></button>' +
+      '<button type="button" class="block c-sky adv-move" data-m="block"><span class="adv-mi">🛡️</span><span class="adv-ml">Block</span></button>' +
+      '<button type="button" class="block c-sun adv-move" data-m="super"><span class="adv-mi">✨</span><span class="adv-ml">Super</span><span class="adv-charge"></span></button>' +
+      '</div></div>' +
       '<button class="round small adv-flee" type="button" aria-label="Run away">🏳️</button>' +
       '<div class="ar-end" hidden></div>' +
       "</div>";
     var fa = w.querySelector(".fighter.a"), fe = w.querySelector(".adv-enemy"), face = w.querySelector(".adv-eface"), call = w.querySelector(".ar-call");
-    var qEl = w.querySelector(".adv-q"), opts = w.querySelector(".adv-opts"), help = w.querySelector(".adv-help"), tbar = w.querySelector(".adv-timer"), warn = w.querySelector(".adv-warn"), streakEl = w.querySelector(".adv-streak");
+    var warn = w.querySelector(".adv-warn"), moves = w.querySelectorAll(".adv-move"), supBtn = w.querySelector('[data-m="super"]'), chargeEl = w.querySelector(".adv-charge");
+    var teddy = pet.name || "Teddy";
     fa.innerHTML = P.teddySVG(stageOf(player.id), pet);
     face.textContent = F.face;
     if (isBoss) fe.classList.add("boss");
     if (F.ice) face.classList.add("icy");
     if (F.crown) fe.classList.add("crowned");
-    txt(w, ".hpbox.a b", pet.name || "Teddy"); txt(w, ".hpbox.b b", F.name);
-    function hp(side, v, max) { var box = w.querySelector(".hpbox." + side); box.querySelector(".hp span").style.width = Math.max(0, v / max * 100) + "%"; box.querySelector("em").textContent = Math.max(0, v) + " / " + max; box.classList.toggle("low", v / max < 0.3); }
+    txt(w, ".hpbox.a b", teddy); txt(w, ".hpbox.b b", F.name);
+    function hp(side, v, max) { var box = w.querySelector(".hpbox." + side); box.querySelector(".hp span").style.width = Math.max(0, v / max * 100) + "%"; box.querySelector("em").textContent = Math.max(0, Math.round(v)) + " / " + max; box.classList.toggle("low", v / max < 0.3); }
     hp("a", me.hp, me.max); hp("b", foe.hp, foe.max);
     function say(t) { call.textContent = t; call.classList.remove("pop"); void call.offsetWidth; call.classList.add("pop"); }
     function pop(target, text, cls) {
@@ -269,143 +236,107 @@
       document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1100);
     }
     function anim(node, cls, ms) { node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls); setTimeout(function () { node.classList.remove(cls); }, ms || 600); }
-    function stopTimer() { if (timerRAF) cancelAnimationFrame(timerRAF); timerRAF = null; }
+    function wobble() { return 0.85 + Math.random() * 0.3; }
+    // A boss's big attack lands on every rage-th turn; the warning shows the turn before.
+    function rageOn(t) { return isBoss && F.rage && t % F.rage === 0; }
+
+    function setMoves(on) {
+      busy = !on;
+      moves.forEach(function (b) { b.disabled = !on; });
+      var ready = charge >= 3;
+      supBtn.classList.toggle("ready", ready);
+      if (!ready) supBtn.disabled = true;
+      chargeEl.textContent = ready ? "READY!" : new Array(charge + 1).join("●") + new Array(3 - charge + 1).join("○");
+    }
 
     w.querySelector(".adv-flee").addEventListener("click", function () {
       if (over) return;
-      over = true; stopTimer(); w.remove(); K.say("Phew! We ran away. Let's get stronger!"); after();
+      over = true; w.remove(); K.say("Phew! We ran away. Let's get stronger!"); after();
     });
+    moves.forEach(function (b) { b.addEventListener("click", function () { if (!busy && !over && !b.disabled) act(b.getAttribute("data-m")); }); });
 
     say(isBoss ? F.name + "!" : "A wild " + F.name + "!");
     if (isBoss) { roar(); anim(fe, "boss-in", 1200); }
-    K.say(isBoss ? F.taunt : "A wild " + F.name + " appears! Answer the sums to attack!");
-    opts.innerHTML = "";
-    setTimeout(next, isBoss ? 2200 : 1400);
+    K.say(isBoss ? F.taunt : "A wild " + F.name + " appears!");
+    setMoves(false);
+    setTimeout(startTurn, isBoss ? 2000 : 1200);
 
-    var q = null, asked = 0, rage = false, limit = 0;
-    function next() {
+    function startTurn() {
       if (over) return;
       turn++;
-      rage = isBoss && F.rage && turn % F.rage === 0;
-      q = question(player.id, W, lastKey); lastKey = q.key; asked = performance.now();
-      limit = F.timer ? (F.timer + k.extra) * (rage ? 0.7 : 1) : 0;
-      warn.hidden = !rage;
-      if (rage) {
-        warn.textContent = F.fire ? "🔥 FIRE BREATH coming! Answer FAST to block it!" : "⚠️ BIG ATTACK coming! Answer FAST to block it!";
+      if (frozen) {
+        frozen = false; setMoves(false);
+        say("❄️ Frozen! Can't move!"); K.say(teddy + " is frozen!");
+        setTimeout(function () { foeTurn(false); }, 1100);
+        return;
+      }
+      var big = rageOn(turn);
+      warn.hidden = !big;
+      if (big) {
+        warn.textContent = (F.fire ? "🔥 " + F.name + " is about to breathe FIRE!" : "⚠️ " + F.name + " is getting ready for a BIG attack!") + " Block it!";
         anim(fe, "charge", 900); roar();
-      }
-      qEl.textContent = q.a + " × " + q.b + " = ?";
-      K.say((rage ? "Quick! " : "") + q.a + " times " + q.b);
-      // grape picture helper on the first two lands, for counting it out
-      help.innerHTML = "";
-      if ((W.id === "island" || W.id === "forest") && q.ans <= 30) {
-        var hb = el('<button type="button" class="adv-hint">🍇 Show me</button>');
-        hb.addEventListener("click", function () {
-          hb.remove();
-          var g = el('<div class="adv-grid" aria-label="' + q.a + ' rows of ' + q.b + '"></div>');
-          for (var r = 0; r < q.a; r++) { var row = document.createElement("div"); row.textContent = new Array(q.b + 1).join("🍇"); g.appendChild(row); }
-          help.appendChild(g); q.helped = true;
-        });
-        help.appendChild(hb);
-      }
-      opts.innerHTML = ""; opts.className = "adv-opts n" + q.opts.length;
-      var colors = ["grape", "sky", "tang", "leaf"], wrongs = q.opts.filter(function (v) { return v !== q.ans; });
-      var faded = Math.random() < k.fade ? pick(wrongs) : null;
-      q.opts.forEach(function (v, i) {
-        var b = el('<button type="button" class="block c-' + colors[i % 4] + '"></button>'); b.textContent = v;
-        if (v === faded) { b.classList.add("faded"); b.disabled = true; b.setAttribute("aria-hidden", "true"); }
-        b.addEventListener("click", function () { answer(v, b); });
-        opts.appendChild(b);
-      });
-      busy = false;
-      if (limit) {
-        tbar.hidden = false; var bar = tbar.querySelector("span");
-        (function tick() {
-          var left = limit * 1000 - (performance.now() - asked);
-          bar.style.width = Math.max(0, left / (limit * 1000) * 100) + "%";
-          tbar.classList.toggle("hurry", left < limit * 1000 * 0.3);
-          if (left <= 0) { timerRAF = null; if (!busy && !over) timeout(); return; }
-          timerRAF = requestAnimationFrame(tick);
-        })();
-      } else tbar.hidden = true;
+        K.say("Watch out! Big attack coming. Block it!");
+      } else if (charge >= 3) K.say("Super is ready!");
+      setMoves(true);
     }
 
-    function lockOpts(chosen) {
-      opts.querySelectorAll("button").forEach(function (b) {
-        b.disabled = true;
-        if (Number(b.textContent) === q.ans) b.classList.add("right");
-        else if (b === chosen) b.classList.add("wrong");
-      });
-    }
-
-    function answer(v, btn) {
-      if (busy || over) return;
-      busy = true; stopTimer();
-      var secs = (performance.now() - asked) / 1000, right = v === q.ans;
-      lockOpts(btn);
-      noteFact(player.id, q.a, q.b, right);
-      K.recordAnswer(LESSON, right, right ? null : { q: q.a + " × " + q.b, given: v, answer: q.ans });
-      if (right) {
-        rightN++; streak++;
-        // fast = within 45% of the timer, or within 4 seconds when there's no timer
-        var fast = !q.helped && (limit ? secs <= limit * 0.45 : secs <= 4);
-        var mult = (fast ? 1.5 : 1) * (streak % 3 === 0 ? 1.5 : 1) * (0.88 + Math.random() * 0.24);
-        var dmg = Math.max(1, Math.round(k.dmg * mult));
-        ding();
-        anim(fa, "lunge-r", 500);
-        setTimeout(function () {
+    function act(m) {
+      setMoves(false);
+      var blocking = m === "block";
+      if (blocking) {
+        charge = Math.min(3, charge + 1);
+        say("🛡️ " + teddy + " blocks!"); anim(fa, "glow", 700); tone(700, 0, 0.1, "sine", 0.06);
+        setTimeout(function () { foeTurn(true); }, 700);
+        return;
+      }
+      var isSuper = m === "super";
+      if (isSuper) charge = 0; else charge = Math.min(3, charge + 1);
+      var crit = !isSuper && Math.random() < 0.15;
+      var dmg = Math.max(1, Math.round(k.dmg * (isSuper ? k.sup : 1) * (crit ? 1.5 : 1) * wobble()));
+      anim(fa, "lunge-r", 500);
+      setTimeout(function () {
+        if (F.evade && Math.random() < 0.25) {
+          anim(fe, "dodge-e", 600); pop(fe, "Missed!", "miss"); say(F.name + " dodges!"); tone(900, 0, 0.08, "sine", 0.05);
+        } else {
+          hits++;
           foe.hp = Math.max(0, foe.hp - dmg); hp("b", foe.hp, foe.max);
-          anim(fe, "hit", 500); (fast || streak % 3 === 0) ? zap() : bonk();
-          pop(fe, "-" + dmg, fast || streak % 3 === 0 ? "big" : "");
-          say(streak % 3 === 0 ? "🔥 COMBO x" + streak + "!" : fast ? "⚡ SUPER HIT!" : pick(["Bonk!", "Pow!", "Wham!", "Thwack!", "Boom!"]));
-          if (fast || streak % 3 === 0) anim(fa, "glow", 900);
-          streakEl.textContent = streak >= 2 ? "🔥 " + streak + " in a row!" : "";
-          if (foe.hp <= 0) return setTimeout(function () { end(true); }, 700);
-          // a big attack is blocked only by a fast right answer
-          if (rage) {
-            if (fast) setTimeout(function () { say("🛡️ BLOCKED!"); pop(fa, "Blocked!", "miss"); tone(1500, 0, 0.1, "sine", 0.06); setTimeout(next, 1100); }, 600);
-            else setTimeout(function () { enemyHits(1.5, "Too slow to block!"); }, 650);
-          } else setTimeout(next, 900);
-        }, 300);
-      } else {
-        wrongN++; streak = 0; streakEl.textContent = "";
-        buzz();
-        qEl.textContent = q.a + " × " + q.b + " = " + q.ans;
-        K.say(q.a + " times " + q.b + " is " + q.ans);
-        setTimeout(function () { enemyHits(rage ? 1.6 : 1, null); }, 900);
-      }
+          anim(fe, "hit", 500); isSuper || crit ? zap() : bonk();
+          pop(fe, "-" + dmg, isSuper || crit ? "big" : "");
+          say(isSuper ? "✨ SUPER " + pick(["SMASH", "BLAST", "BEAR HUG", "PUNCH"]) + "!" : crit ? "⚡ CRITICAL HIT!" : pick(["Bonk!", "Pow!", "Wham!", "Thwack!", "Boom!"]));
+          if (isSuper) { anim(fa, "glow", 900); K.celebrate(fe, ["✨", "⭐", "💥"]); }
+        }
+        if (foe.hp <= 0) return setTimeout(function () { end(true); }, 700);
+        setTimeout(function () { foeTurn(false); }, 800);
+      }, 300);
     }
 
-    function timeout() {
-      busy = true; streak = 0; streakEl.textContent = "";
-      lockOpts(null);
-      noteFact(player.id, q.a, q.b, false);
-      K.recordAnswer(LESSON, false, { q: q.a + " × " + q.b, given: "too slow", answer: q.ans });
-      qEl.textContent = q.a + " × " + q.b + " = " + q.ans;
-      say("⏱️ Too slow!"); buzz();
-      K.say("Too slow! " + q.a + " times " + q.b + " is " + q.ans);
-      setTimeout(function () { enemyHits(rage ? 1.6 : 1, null); }, 900);
-    }
-
-    function enemyHits(mult, line, again) {
+    function foeTurn(blocked) {
       if (over) return;
-      var dmg = Math.max(1, Math.round(F.hit * mult * (0.85 + Math.random() * 0.3)));
+      var big = rageOn(turn);
+      warn.hidden = true;
+      // a normal attack can be dodged (Speed); a big attack can only be blocked
+      if (!big && !blocked && Math.random() < k.dodge) {
+        anim(fe, "lunge-l", 500);
+        setTimeout(function () { dodges++; anim(fa, "dodge", 600); pop(fa, "Dodged!", "miss"); say(teddy + " dodges!"); tone(900, 0, 0.08, "sine", 0.05); setTimeout(startTurn, 1000); }, 300);
+        return;
+      }
+      var mult = big ? (blocked ? 0.25 : 2) : (blocked ? 0.25 : 1);
+      var dmg = Math.max(1, Math.round(F.hit * mult * wobble()));
       anim(fe, "lunge-l", 500);
       setTimeout(function () {
         me.hp = Math.max(0, me.hp - dmg); hp("a", me.hp, me.max);
-        anim(fa, "hit", 500); mult > 1.2 ? zap() : bonk();
-        if (F.fire && mult > 1.2) fireBurst(fa);
-        pop(fa, "-" + dmg, mult > 1.2 ? "big" : "");
-        say(line || (mult > 1.2 ? (F.fire ? "🔥 FIRE BREATH!" : "💥 BIG ATTACK!") : pick(["Ouch!", "Oof!", "Bonk!"])));
+        anim(fa, "hit", 500); big && !blocked ? zap() : bonk();
+        if (F.fire && big && !blocked) fireBurst(fa);
+        pop(fa, "-" + dmg, big && !blocked ? "big" : "");
+        if (blocked) say(big ? "🛡️ BLOCKED the big attack!" : "🛡️ Blocked!");
+        else say(big ? (F.fire ? "🔥 FIRE BREATH!" : "💥 BIG ATTACK!") : pick(["Ouch!", "Oof!", "Bonk!"]));
         if (me.hp <= 0) return setTimeout(function () { end(false); }, 800);
-        // the Ice Giant freezes you on a wrong answer: he gets a second hit
-        if (F.freeze && !again && !line) {
-          setTimeout(function () { say("❄️ FROZEN!"); fa.classList.add("frozen"); setTimeout(function () { fa.classList.remove("frozen"); enemyHits(0.6, "❄️ Ice punch!", true); }, 900); }, 700);
-          return;
-        }
-        setTimeout(next, 1100);
+        // the Ice Giant's unblocked big attack freezes you for a turn
+        if (F.freeze && big && !blocked) { frozen = true; fa.classList.add("frozen"); setTimeout(function () { fa.classList.remove("frozen"); }, 2600); }
+        setTimeout(startTurn, 1000);
       }, 300);
     }
+
     function fireBurst(target) {
       if (reduce) return;
       var r = target.getBoundingClientRect();
@@ -418,11 +349,10 @@
     }
 
     function end(won) {
-      if (over) return; over = true; stopTimer();
+      if (over) return; over = true;
       w.querySelector(".adv-panel").style.visibility = "hidden";
       var winSide = won ? fa : fe, loseSide = won ? fe : fa;
       loseSide.classList.add("ko"); winSide.classList.add("victory");
-      // rewards
       var p2 = P.load(player.id), adv = advOf(p2), d = today(), lines = [], gGain = 0, tGain = 0;
       if (won) {
         adv.wins++;
@@ -452,14 +382,13 @@
       var box = w.querySelector(".ar-end");
       setTimeout(function () {
         box.hidden = false;
-        box.innerHTML = '<div class="card"><div class="big"></div><h2></h2><p class="adv-score"></p><p class="fine"></p><div class="rowb"><button type="button" class="block c-sun adv-again">⚔️ Fight again</button><button type="button" class="block c-leaf adv-done">Back</button></div></div>';
+        box.innerHTML = '<div class="card"><div class="big"></div><h2></h2><p class="fine"></p><div class="rowb"><button type="button" class="block c-sun adv-again">⚔️ Fight again</button><button type="button" class="block c-leaf adv-done">Back</button></div></div>';
         txt(box, ".big", won ? (isBoss ? "🏆" : "⭐") : "💪");
         txt(box, "h2", won ? "You beat the " + F.name + "!" : F.name + " was too strong!");
-        txt(box, ".adv-score", "✅ " + rightN + " right · ❌ " + wrongN + " wrong");
         var prize = gGain || tGain ? "You won 🍇 " + gGain + " and 🎟️ " + tGain + ". " : "";
-        txt(box, ".fine", won ? prize + lines.join(" ") : "No prize this time. Win monster fights and lessons for tokens, train in the gym, then come back stronger!");
+        txt(box, ".fine", won ? prize + lines.join(" ") : "No prize this time. Do lessons for tokens, train in the gym, then come back stronger!");
         K.say(won ? (isBoss ? "You beat the " + F.name + "! Amazing!" : "You won! ") + (gGain ? "You get " + gGain + (gGain === 1 ? " grape" : " grapes") + " and " + tGain + (tGain === 1 ? " token!" : " tokens!") : "")
-          : "The " + F.name + " was too strong this time. Train in the gym and come back!");
+          : "The " + F.name + " was too strong this time. Do some lessons, train in the gym, and come back!");
         box.querySelector(".adv-again").addEventListener("click", function () { w.remove(); fight(player, W, F, isBoss, after); });
         box.querySelector(".adv-done").addEventListener("click", function () { w.remove(); after(); });
       }, 1300);

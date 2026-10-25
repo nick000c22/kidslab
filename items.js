@@ -1,7 +1,7 @@
 /* Math Teddy's things: fur colours, star prizes and shop items, each with its drawing.
    Drawings use the teddy's own coordinates (viewBox 0 -20 200 260): head centre (100,84) r51,
    eyes at y78, nose (100,95), neck y≈132, body centre (100,178), right paw ≈(159,194), feet at y≈222.
-   slot: hat | face | neck | back | hand | feet.  Star prizes have `stars`; shop items have `price` (grapes). */
+   slot: hat | face | neck | back | hand | feet.  Star prizes have `stars`; shop items have `price` (grapes); `gift` items are free for everyone. */
 (function () {
   function flower(x, y, petal, r) {
     r = r || 6;
@@ -59,7 +59,10 @@
     sky: { name: "Sky", fur: "#7DB6E8", dark: "#5E99CF", light: "#D6EAFA" },
     gold: { name: "Gold", fur: "#E8B923", dark: "#C99A12", light: "#FBE7A1", price: 100, sparkle: true },
     glitter: { name: "Glitter pink", fur: "#F9A8D4", dark: "#EC4899", light: "#FCE7F3", price: 80, sparkle: true },
-    rainbow: { name: "Rainbow", fur: "rainbow", dark: "#8A5FCB", light: "#FFFFFF", price: 150, sparkle: true }
+    rainbow: { name: "Rainbow", fur: "rainbow", dark: "#8A5FCB", light: "#FFFFFF", price: 150, sparkle: true },
+    // Halloween furs: free for everyone
+    pumpkin: { name: "Pumpkin", fur: "#F28C28", dark: "#D9731A", light: "#FCD9A8" },
+    midnight: { name: "Black cat", fur: "#3A3644", dark: "#28252F", light: "#8B8597" }
   };
 
   var ITEMS = [
@@ -214,6 +217,42 @@
     { id: "footyboots", slot: "feet", style: "boy", name: "Footy boots", icon: "🥾", price: 15, svg: footyBoot + mirror(footyBoot) },
     { id: "skateboard", slot: "feet", style: "boy", name: "Skateboard", icon: "🛹", price: 25,
       svg: '<rect x="36" y="232" width="128" height="9" rx="4.5" fill="#F97316"/><path d="M40 236 Q36 230 42 228 M160 236 Q164 230 158 228" stroke="#F97316" stroke-width="6" stroke-linecap="round"/><circle cx="58" cy="246" r="6" fill="#1F2937"/><circle cx="142" cy="246" r="6" fill="#1F2937"/><path d="M60 236 H140" stroke="#FDBA74" stroke-width="2"/>' }
+  );
+
+  /* ---- 🎃 Halloween: `gift` items are free and in everyone's cupboard ---- */
+  var witchBoot = '<path d="M54 198 H88 V218 Q100 218 108 206 Q110 232 92 234 H50 Q45 224 54 220 Z" fill="#1F1B2E"/><rect x="60" y="210" width="15" height="9" rx="1.5" fill="none" stroke="#F97316" stroke-width="2.5"/>';
+  var batWing = '<path d="M68 150 Q40 108 4 112 Q18 124 14 140 Q28 132 32 148 Q44 138 50 156 Q58 150 66 172 Z" fill="#1F1B2E" stroke="#000" stroke-width="2" stroke-linejoin="round"/><path d="M66 154 L18 122 M64 162 L34 142" stroke="#3B3550" stroke-width="2"/>';
+  ITEMS.push(
+    { id: "witchhat", slot: "hat", gift: "halloween", name: "Witch hat", icon: "🧙‍♀️",
+      svg: '<ellipse cx="100" cy="40" rx="64" ry="11" fill="#2A1B3D"/><path d="M70 40 Q88 18 94 -10 Q100 -36 128 -40 Q112 -20 116 4 Q122 24 130 40 Z" fill="#3B2754"/><path d="M72 33 Q100 39 128 33 L130 40 Q100 46 70 40 Z" fill="#F97316"/><rect x="93" y="30" width="14" height="12" rx="2" fill="none" stroke="#FBBF24" stroke-width="3"/>' },
+    { id: "pumpkinhat", slot: "hat", gift: "halloween", name: "Pumpkin hat", icon: "🎃",
+      svg: '<text x="100" y="12" text-anchor="middle" dominant-baseline="central" font-size="66">🎃</text>' },
+    { id: "devilhorns", slot: "hat", gift: "halloween", name: "Devil horns", icon: "😈",
+      svg: '<path d="M68 46 Q54 26 60 2 Q72 26 86 38 Z M132 46 Q146 26 140 2 Q128 26 114 38 Z" fill="#DC2626" stroke="#991B1B" stroke-width="2.5" stroke-linejoin="round"/>' },
+    { id: "catears", slot: "hat", gift: "halloween", name: "Cat ears", icon: "🐈‍⬛",
+      svg: '<path d="M56 50 Q100 22 144 50" stroke="#111" stroke-width="6" fill="none"/><path d="M62 46 L64 4 L94 34 Z M138 46 L136 4 L106 34 Z" fill="#111"/><path d="M68 38 L69 18 L84 33 Z M132 38 L131 18 L116 33 Z" fill="#F472B6"/>' },
+    { id: "fangs", slot: "face", gift: "halloween", name: "Vampire fangs", icon: "🧛",
+      svg: '<path d="M89 105 L93 120 L98 105 Z M102 105 L107 120 L111 105 Z" fill="#FFFFFF" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round"/>' },
+    { id: "spookymask", slot: "face", gift: "halloween", name: "Spooky mask", icon: "🎭",
+      svg: '<path fill="#F97316" stroke="#7C2D12" stroke-width="2" fill-rule="evenodd" d="M56 72 Q100 56 144 72 L140 90 Q120 94 104 86 L100 88 L96 86 Q80 94 60 90 Z M72 79 L82 70 L92 79 L82 86 Z M108 79 L118 70 L128 79 L118 86 Z"/>' },
+    { id: "bolts", slot: "neck", gift: "halloween", name: "Monster bolts", icon: "🔩",
+      svg: '<rect x="50" y="125" width="22" height="11" rx="3" fill="#9CA3AF" stroke="#4B5563" stroke-width="2"/><rect x="128" y="125" width="22" height="11" rx="3" fill="#9CA3AF" stroke="#4B5563" stroke-width="2"/><path d="M84 134 H116 M88 129 V139 M100 129 V139 M112 129 V139" stroke="#1F2937" stroke-width="2.5" stroke-linecap="round"/>' },
+    { id: "spidernecklace", slot: "neck", gift: "halloween", name: "Spider necklace", icon: "🕷️",
+      svg: '<path d="M64 130 Q100 152 136 130" stroke="#6B7280" stroke-width="1.5" fill="none"/><text x="100" y="152" text-anchor="middle" dominant-baseline="central" font-size="24">🕷️</text>' },
+    { id: "skeleton", slot: "body", gift: "halloween", name: "Skeleton suit", icon: "💀",
+      svg: '<path d="M58 142 Q100 128 142 142 L152 206 Q100 222 48 206 Z" fill="#111827"/><path d="M100 146 V200" stroke="#F3F4F6" stroke-width="5" stroke-linecap="round"/><g stroke="#F3F4F6" stroke-width="4" stroke-linecap="round" fill="none"><path d="M100 156 Q86 151 74 160 M100 156 Q114 151 126 160 M100 169 Q84 164 72 173 M100 169 Q116 164 128 173 M100 182 Q86 177 76 186 M100 182 Q114 177 124 186"/></g><ellipse cx="100" cy="204" rx="16" ry="6" fill="#F3F4F6"/>' },
+    { id: "pumpkinsuit", slot: "body", gift: "halloween", name: "Pumpkin costume", icon: "🎃",
+      svg: '<ellipse cx="100" cy="180" rx="56" ry="42" fill="#F97316" stroke="#C2410C" stroke-width="3"/><path d="M78 142 Q66 180 78 218 M122 142 Q134 180 122 218 M100 138 V222" stroke="#C2410C" stroke-width="2.5" fill="none"/><path d="M78 172 L88 160 L98 172 Z M102 172 L112 160 L122 172 Z" fill="#1F1B2E"/><path d="M76 188 Q100 208 124 188 L116 192 L109 185 L100 194 L91 185 L84 192 Z" fill="#1F1B2E"/>' },
+    { id: "ghostsheet", slot: "body", gift: "halloween", name: "Ghost sheet", icon: "👻",
+      svg: '<path d="M52 150 Q100 120 148 150 L156 222 Q144 214 134 224 Q122 214 110 224 Q100 214 90 224 Q78 214 66 224 Q56 214 44 222 Z" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2.5" stroke-linejoin="round"/><ellipse cx="86" cy="176" rx="6" ry="9" fill="#1F2937"/><ellipse cx="114" cy="176" rx="6" ry="9" fill="#1F2937"/><ellipse cx="100" cy="196" rx="7" ry="8" fill="#1F2937"/>' },
+    { id: "vampcape", slot: "back", gift: "halloween", name: "Vampire cape", icon: "🧛",
+      svg: '<path d="M64 128 Q100 120 136 128 L166 222 Q100 236 34 222 Z" fill="#111827"/><path d="M70 134 Q100 128 130 134 L152 214 Q100 226 48 214 Z" fill="#B91C1C"/><path d="M60 132 L38 92 L82 122 Z M140 132 L162 92 L118 122 Z" fill="#111827" stroke="#B91C1C" stroke-width="2" stroke-linejoin="round"/>' },
+    { id: "batwings", slot: "back", gift: "halloween", name: "Bat wings", icon: "🦇", svg: batWing + mirror(batWing) },
+    { id: "candybucket", slot: "hand", gift: "halloween", name: "Treat bucket", icon: "🎃", svg: held("🎃", 42, 2, -2) },
+    { id: "broom", slot: "hand", gift: "halloween", name: "Broomstick", icon: "🧹", svg: held("🧹", 50, 4, -14) },
+    { id: "ghostbuddy", slot: "hand", gift: "halloween", name: "Ghost buddy", icon: "👻", svg: held("👻", 44, 6, -18) },
+    { id: "candy", slot: "hand", gift: "halloween", name: "Candy", icon: "🍬", svg: held("🍬", 36, 2, -2) },
+    { id: "witchboots", slot: "feet", gift: "halloween", name: "Witch boots", icon: "👢", svg: witchBoot + mirror(witchBoot) }
   );
 
   var BY_ID = {};
