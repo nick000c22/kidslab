@@ -1,0 +1,33 @@
+/* Learning stats under the Maths / Science buttons (progress.js). Uses the hub's colour tokens. */
+.kid-stats { width: min(980px, 100%); margin: 6px auto 26px; display: flex; flex-direction: column; gap: 14px; }
+.ks-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.ks-title { font-family: var(--display); font-weight: 800; font-size: clamp(1.5rem, 3.6vw, 2rem); margin: 0 auto 0 0; }
+.ks-tabs { display: flex; gap: 8px; }
+.ks-tab { border: 0; border-radius: 999px; background: var(--card); color: var(--ink); font-family: var(--display); font-weight: 800; font-size: 1.05rem;
+  padding: 8px 16px; cursor: pointer; box-shadow: 0 4px 0 var(--shadow); touch-action: manipulation; }
+.ks-tab.on { background: var(--grape); color: #fff; }
+.ks-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.ks-card { background: var(--card); border-radius: 22px; padding: 16px 18px; box-shadow: 0 6px 0 var(--shadow); min-width: 0; }
+.ks-card.wide { grid-column: 1 / -1; }
+.ks-card h3 { margin: 0 0 6px; font-family: var(--display); font-weight: 800; font-size: 1.3rem; }
+.ks-sub { margin: 0 0 10px; color: var(--muted); font-size: .9rem; font-weight: 700; }
+.ks-none { margin: 0; color: var(--muted); font-weight: 700; }
+.ks-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ks-tile { background: var(--bg); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; }
+.ks-tile b { font-family: var(--display); font-size: 1.8rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ks-tile span { color: var(--muted); font-size: .85rem; font-weight: 700; }
+.ks-tile em { font-style: normal; font-weight: 800; font-size: .8rem; color: var(--muted); }
+.ks-tile em.up { color: var(--leaf); } .ks-tile em.down { color: var(--berry); }
+.ks-row { display: grid; grid-template-columns: minmax(0, 140px) minmax(0, 1fr) 48px; gap: 4px 10px; align-items: center; padding: 4px 0; }
+.ks-rn { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ks-track { height: 14px; border-radius: 7px; background: var(--bg-2); position: relative; overflow: hidden; }
+.ks-fill { position: absolute; inset: 0 auto 0 0; border-radius: 7px; }
+.ks-rv { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ks-rd { grid-column: 2 / -1; color: var(--muted); font-size: .8rem; font-weight: 700; margin-top: -2px; }
+.ks-key { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: .82rem; color: var(--muted); font-weight: 700; }
+.ks-key i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.ks-mist { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
+.ks-mrow { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-radius: 12px; background: var(--bg); min-width: 0; }
+.ks-mq { font-family: var(--display); font-weight: 800; font-size: 1.15rem; overflow-wrap: anywhere; }
+.ks-ma { font-weight: 700; } .ks-ma s { color: var(--berry); } .ks-ma b { color: var(--leaf); }
+.ks-ml { color: var(--muted); font-size: .8rem; font-weight: 700; }

@@ -10,6 +10,7 @@ Home-screen learning games for the family iPads. Hosted on Netlify, deployed fro
 - `lessons/`: one self-contained HTML file per lesson. `_template.html` is a starting point.
 - `netlify/functions/scores.mjs`: the family leaderboard API at `/api/scores` (scores stored in Netlify Blobs).
 - `adventure.js`, `adventure.css`: Teddy Adventure, the world map (the 🗺️ Explore button on each teddy). Five lands, monsters and bosses; fights use Attack / Block / Super and gym stats (no sums). Boss stats and rewards are at the top of `adventure.js`.
+- `progress.js`, `progress.css`: "How I'm going" learning stats under the Maths / Science buttons on each kid's home screen.
 - `sw.js`, `manifest.webmanifest`, `icons/`: make it installable and work offline.
 
 ## Putting it on an iPad (once per iPad)
