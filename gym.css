@@ -149,3 +149,19 @@
 .ar-floor { background: radial-gradient(ellipse 70% 14% at 50% 94%, rgba(255,255,255,.2) 0 60%, transparent 61%); }
 .g-cost { font-size: 1.1rem; letter-spacing: -1px; text-shadow: none; }
 .g-next { font-family: var(--body); font-size: .75rem; opacity: .85; text-shadow: none; }
+
+/* Battle energy bar + Gain battle strength */
+.g-energy { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; background: var(--card, #fff); border-radius: 22px; padding: 10px 16px; box-shadow: 0 5px 0 rgba(0,0,0,.12); }
+.g-energy b { font-family: var(--display, inherit); font-size: 1.3rem; }
+.g-energy em { font-style: normal; font-weight: 800; color: var(--muted); }
+.g-cells { display: flex; flex-wrap: wrap; gap: 4px; }
+.g-cells span { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 1.3rem; background: #E7E2F0; filter: grayscale(1); opacity: .45; }
+.g-cells span.on { background: #FFD84D; filter: none; opacity: 1; box-shadow: inset 0 -3px 0 rgba(0,0,0,.12); }
+.g-energy.empty em { color: var(--berry); }
+.g-fight-row { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; }
+.g-strength { min-height: 130px; }
+.g-strength .emoji { font-size: 48px; }
+.g-strength .label { font-size: 1.35rem; line-height: 1.1; }
+.g-battle.tired { filter: saturate(.4); opacity: .75; }
+.g-out .g-strength { width: 100%; margin: 6px 0 4px; }
+@media (max-width: 600px) { .g-fight-row { grid-template-columns: 1fr; } }

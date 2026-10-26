@@ -390,6 +390,9 @@
           : "The " + F.name + " was too strong this time. Do some lessons, train in the gym, and come back!");
         box.querySelector(".adv-again").addEventListener("click", function () { w.remove(); fight(player, W, F, isBoss, after); });
         box.querySelector(".adv-done").addEventListener("click", function () { w.remove(); after(); });
+        if (!isBoss && window.KidsGym && KidsGym.strengthButton && KidsGym.fightsLeft(player.id) <= 0) {
+          var sb = KidsGym.strengthButton("⚡ +1 energy"); sb.classList.add("adv-again"); box.querySelector(".adv-again").replaceWith(sb);
+        }
       }, 1300);
     }
   }

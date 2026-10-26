@@ -34,25 +34,46 @@
   function total(f) { return (f.str || 0) + (f.end || 0) + (f.spd || 0) + (f.brn || 0); }
   function today() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 
-  /* ---------- daily fights (Adventure monsters + cousin battles share them; boss fights are free) ----------
-     10 a day, plus 1 more for every 200 Endurance (so 15 at 1000). Starting a fight uses one. */
-  var FIGHTS_BASE = 10, FIGHTS_PER = 200;
-  function fightsMax(p) { return FIGHTS_BASE + Math.floor(((p.fit && p.fit.end) || 0) / FIGHTS_PER); }
+  /* ---------- battle energy (Adventure monsters + cousin battles share it; boss fights are free) ----------
+     5 a day, plus 1 more for every 200 Endurance (so 10 at 1000). Starting a fight uses one.
+     "Gain battle strength" (a 5-question quiz on the kid's weak spots) adds STRENGTH_GAIN more for today. */
+  var FIGHTS_BASE = 5, FIGHTS_PER = 200, STRENGTH_GAIN = 1;
+  function fightsBonus(p) { return p.fights && p.fights.d === today() ? Number(p.fights.bonus) || 0 : 0; }
+  function fightsMax(p) { return FIGHTS_BASE + Math.floor(((p.fit && p.fit.end) || 0) / FIGHTS_PER) + fightsBonus(p); }
   function fightsUsed(p) { return p.fights && p.fights.d === today() ? Number(p.fights.n) || 0 : 0; }
   function fightsLeft(id) { var p = P.load(id); return Math.max(0, fightsMax(p) - fightsUsed(p)); }
   function nextFightAt(p) { var e = (p.fit && p.fit.end) || 0, n = (Math.floor(e / FIGHTS_PER) + 1) * FIGHTS_PER; return n <= 1000 ? n : null; }
   function fightsLine(id) {
     var p = P.load(id), left = fightsLeft(id), max = fightsMax(p), nx = nextFightAt(p);
-    return "⚔️ " + left + " of " + max + " fights left today (bosses are free)." + (nx ? " Train ❤️ Endurance to " + nx + " for another fight a day!" : "");
+    return "⚡ " + left + " of " + max + " energy left today (bosses are free)." + (nx ? " Train ❤️ Endurance to " + nx + " for more energy every day!" : "");
+  }
+  // The energy bar: one bolt per fight, lit while it's still there to use.
+  function energyBar(id) {
+    var p = P.load(id), left = fightsLeft(id), max = fightsMax(p), cells = "";
+    for (var i = 0; i < max; i++) cells += '<span class="' + (i < left ? "on" : "") + '">⚡</span>';
+    return '<div class="g-energy' + (left ? "" : " empty") + '" role="img" aria-label="' + left + " of " + max + ' energy left">' +
+      '<b>Energy</b><span class="g-cells">' + cells + '</span><em>' + left + " / " + max + "</em></div>";
+  }
+  // Off to a 5-question quiz on the things this kid finds tricky. Finishing it adds energy, then comes back to the gym.
+  function gainStrength() {
+    try { sessionStorage.setItem("kidslab.visit", "1"); sessionStorage.setItem("kidslab.reopen", "gym"); } catch (e) {}
+    K.say("Let's gain battle strength! Get five right.");
+    setTimeout(function () { location.href = "lessons/basics.html?l=strength"; }, 300);
+  }
+  function strengthButton(label) {
+    var b = el('<button type="button" class="block c-leaf g-strength"><span class="emoji">💪</span><span class="label">Gain battle strength</span><span class="g-sub"></span></button>');
+    txt(b, ".g-sub", label || "5 tricky questions = ⚡ +" + STRENGTH_GAIN + " energy");
+    b.addEventListener("click", gainStrength);
+    return b;
   }
   // Uses up one fight. Returns false (and says so) when there are none left.
   function useFight(id) {
     var p = P.load(id);
     if (fightsMax(p) - fightsUsed(p) <= 0) {
-      K.say("No fights left today! Do your lessons to win tokens, then train Endurance in the gym to get more fights.");
+      K.say("Out of energy! Tap Gain battle strength and get five questions right for more.");
       return false;
     }
-    p.fights = { d: today(), n: fightsUsed(p) + 1 };
+    p.fights = { d: today(), n: fightsUsed(p) + 1, bonus: fightsBonus(p) };
     P.save(id, p);
     return true;
   }
@@ -104,7 +125,8 @@
       '<div class="g-hero"><div class="g-bear"></div><div class="g-side"><div class="g-stats"></div><div class="g-power"></div><p class="g-tip"></p></div></div>' +
       '<h3 class="ward-h">Train (finish a quiz to win 🎟️ 2. The stronger a stat gets, the more tokens it costs)</h3>' +
       '<div class="g-train"></div>' +
-      '<button class="block c-berry g-battle" type="button"><span class="emoji">⚔️</span><span class="label">Battle!</span><span class="g-sub">Challenge a cousin\'s teddy</span></button>' +
+      '<div class="g-energy-box"></div>' +
+      '<div class="g-fight-row"><button class="block c-berry g-battle" type="button"><span class="emoji">⚔️</span><span class="label">Battle!</span><span class="g-sub">Challenge a cousin\'s teddy</span></button></div>' +
       '<div class="g-record"></div>' +
       "</div>";
     function draw() {
@@ -116,6 +138,11 @@
       w.querySelector(".g-tip").textContent = total(p2.fit) >= c2 * 4 ? "Maxed out! Earn stars so " + p2.name + " grows bigger and can train more." : "Stats can go up to " + c2 + " while " + p2.name + " is a " + P.STAGES[Math.max(1, P.stageFor(K.stars(player.id))) - 1].name.toLowerCase() + ".";
       var rec = record(player.id);
       w.querySelector(".g-record").textContent = "Battles: " + rec.w + " won, " + rec.l + " lost. " + fightsLine(player.id);
+      w.querySelector(".g-energy-box").innerHTML = energyBar(player.id);
+      var row = w.querySelector(".g-fight-row"), old = row.querySelector(".g-strength");
+      if (old) old.remove();
+      row.appendChild(strengthButton());
+      w.querySelector(".g-battle").classList.toggle("tired", fightsLeft(player.id) <= 0);
       var tr = w.querySelector(".g-train"); tr.innerHTML = "";
       STATS.forEach(function (S) {
         var full = (p2.fit[S.id] || 0) >= c2;
@@ -290,7 +317,8 @@
 
   function chooseOpponent(player, after) {
     var list = opponents(player), w = overlay();
-    w.innerHTML = '<div class="gym"><div class="g-top"><button class="round small g-back" type="button" aria-label="Back">⬅️</button><h2>⚔️ Who will you battle?</h2></div><div class="g-opps"></div><p class="g-tip"></p></div>';
+    w.innerHTML = '<div class="gym"><div class="g-top"><button class="round small g-back" type="button" aria-label="Back">⬅️</button><h2>⚔️ Who will you battle?</h2></div>' + energyBar(player.id) + '<div class="g-out"></div><div class="g-opps"></div><p class="g-tip"></p></div>';
+    if (fightsLeft(player.id) <= 0) w.querySelector(".g-out").appendChild(strengthButton("Out of energy! 5 tricky questions = ⚡ +" + STRENGTH_GAIN));
     var box = w.querySelector(".g-opps");
     if (!list.length) box.innerHTML = '<p class="g-tip">No other teddies have hatched yet. Check back soon!</p>';
     list.forEach(function (o) {
@@ -446,5 +474,5 @@
     w.querySelector(".block").addEventListener("click", function () { w.remove(); });
   }
 
-  window.KidsGym = { useFight: useFight, fightsLeft: fightsLeft, fightsLine: fightsLine, open: open, notices: notices, unseen: unseen, winChance: winChance, script: script, total: total };
+  window.KidsGym = { useFight: useFight, fightsLeft: fightsLeft, fightsLine: fightsLine, energyBar: energyBar, gainStrength: gainStrength, strengthButton: strengthButton, open: open, notices: notices, unseen: unseen, winChance: winChance, script: script, total: total };
 })();

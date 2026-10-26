@@ -33,6 +33,9 @@ window.KIDSLAB_CONFIG = {
   // A tick shows on a tile once that kid has completed its quiz.
   // Subjects: after picking a name, kids choose a subject, then see its sections.
   // Basics quizzes give grapes. Concepts quizzes give grapes and a spin of the prize wheel.
+  // A finished Basics quiz locks that lesson for this many days, so kids move on to harder ones.
+  // A grown-up's 🎯 practise flag (or "Clear tick") opens it again.
+  basicsLockDays: 2,
   subjects: [
     { id: "maths",   title: "Maths",   emoji: "🔢", color: "grape", sections: ["Basics", "Concepts", "Special"] },
     { id: "science", title: "Science", emoji: "🔬", color: "leaf",  sections: ["Basics", "Concepts", "Special"] }

@@ -442,6 +442,7 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       reset.disabled = pet.done.indexOf(l.id) === -1;
       reset.addEventListener("click", function () {
         pet.done = pet.done.filter(function (x) { return x !== l.id; });
+        if (pet.locks) delete pet.locks[l.id];
         r.dirty.pet = true; if (r.tr) r.tr.classList.add("dirty"); updateSave(); renderReport();
       });
       tr.appendChild(td(reset));

@@ -315,6 +315,49 @@
     set("pet." + id, d);
     if (URL_) pushPet(id, d);
   }
+  /* ---------- Basics lock: a finished Basics quiz rests for a couple of days so kids move on to harder lessons.
+     A grown-up's 🎯 practise flag overrides the lock. ---------- */
+  function lockLesson(lessonId) {
+    var id = playerId(); if (!id || !lessonId) return;
+    var d = JSON.parse(JSON.stringify(petDoc(id))), now = Date.now(), days = Number(cfg.basicsLockDays) || 2;
+    d.locks = d.locks && typeof d.locks === "object" ? d.locks : {};
+    Object.keys(d.locks).forEach(function (k) { if (d.locks[k] < now) delete d.locks[k]; });
+    d.locks[lessonId] = now + days * 864e5;
+    d.updatedAt = new Date().toISOString();
+    set("pet." + id, d);
+    if (URL_) pushPet(id, d);
+  }
+  // When the lesson opens again (ms timestamp), or 0 if it's open now.
+  function lockedUntil(lessonId, id) {
+    id = id || playerId();
+    if (isPractice(lessonId, id)) return 0;
+    var d = petDoc(id), t = d.locks && Number(d.locks[lessonId]) || 0;
+    return t > Date.now() ? t : 0;
+  }
+
+  /* ---------- battle energy: extra fights won with "Gain battle strength" quizzes (today only) ---------- */
+  function fightDay() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  function addFightBonus(n) {
+    var id = playerId(); if (!id) return;
+    var d = JSON.parse(JSON.stringify(petDoc(id))), t = fightDay(), f = d.fights && d.fights.d === t ? d.fights : { d: t, n: 0, bonus: 0 };
+    d.fights = { d: t, n: Number(f.n) || 0, bonus: (Number(f.bonus) || 0) + n };
+    d.updatedAt = new Date().toISOString();
+    set("pet." + id, d);
+    if (URL_) pushPet(id, d);
+  }
+  // Where this kid is struggling: { lessonId: weight }. Recent mistakes count most, then low accuracy, then 🎯 flags.
+  function weakLessons(id) {
+    var d = petDoc(id || playerId()), w = {}, ms = Array.isArray(d.mistakes) ? d.mistakes : [];
+    ms.forEach(function (m, i) { if (m && m.l) w[m.l] = (w[m.l] || 0) + 1 + i / ms.length; });
+    var st = d.stats || {};
+    Object.keys(st).forEach(function (k) {
+      var r = st[k].r || 0, t = r + (st[k].w || 0);
+      if (t >= 3 && r / t < 0.85) w[k] = (w[k] || 0) + (1 - r / t) * 4;
+    });
+    (Array.isArray(d.practice) ? d.practice : []).forEach(function (k) { w[k] = (w[k] || 0) + 2; });
+    return w;
+  }
+
   // Lessons a grown-up has flagged for this kid to practise.
   function isPractice(lessonId, id) {
     var d = petDoc(id || playerId());
@@ -381,7 +424,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress, gender: gender,
-    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, addTokens: addTokens, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, pushPet: pushPet, visiblePlayers: visiblePlayers,
+    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, addTokens: addTokens, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, lockLesson: lockLesson, lockedUntil: lockedUntil, addFightBonus: addFightBonus, weakLessons: weakLessons, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

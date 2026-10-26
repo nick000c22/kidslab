@@ -63,6 +63,8 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 .hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.4rem, 7vw, 4rem); line-height: 1; margin: 0; text-wrap: balance; }
 .hero p { margin: 0; color: var(--muted); font-size: 1.2rem; max-width: 36ch; text-wrap: balance; }
 .done-tag { background: var(--leaf); color: #fff; border-radius: 999px; padding: 4px 14px; font-size: 1rem; }
+.done-tag.lock-tag { background: var(--berry); font-size: 1.15rem; padding: 6px 18px; }
+.block.off { opacity: .4; filter: grayscale(.7); pointer-events: none; }
 .modes { width: min(720px, 100%); display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); margin-top: 10px; }
 .mode { min-height: 190px; }
 .mode .m-emoji { font-size: 60px; line-height: 1.1; text-shadow: none; }
@@ -967,14 +969,23 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 
   /* ---------- lesson setup ---------- */
   var id = (location.search.match(/[?&]l=([a-z0-9-]+)/) || [])[1] || "counting";
+  var STRENGTH = id === "strength";
+  if (STRENGTH) LESSONS.strength = strengthLesson();
   var L = LESSONS[id] || LESSONS.counting;
   var LESSON_ID = id;
   var CFG = ((window.KIDSLAB_CONFIG || {}).lessons || []).filter(function (x) { return x.id === id; })[0] || {};
   var SPIN = CFG.section && CFG.section !== "Basics";   // Basics give grapes; Concepts and Special also get a spin
+  var BASICS = CFG.section === "Basics";
   var QUIZ_N = L.quizN || 5;
   document.title = L.title;
   $("m-emoji").textContent = L.emoji; $("m-title").textContent = L.title; $("m-intro").textContent = L.intro;
   $("quiz-sub").textContent = "Get " + QUIZ_N + " right: 🍇 5 grapes" + (SPIN ? " + a spin!" : " for your teddy!");
+  if (STRENGTH) {
+    $("go-practice").hidden = true;
+    $("go-quiz").querySelector(".m-emoji").textContent = "💪⚡";
+    $("go-quiz").querySelector("span:nth-child(2)").textContent = "Start!";
+    $("quiz-sub").textContent = "Get 5 right: ⚡ +1 battle energy";
+  }
   if (L.parts) {
     // Big lessons: one practice button per part; the quiz mixes them all.
     $("go-practice").hidden = true; $("parts").hidden = false;
@@ -988,9 +999,61 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     });
   }
 
+  /* ---------- Gain battle strength: 5 questions from the lessons this kid finds tricky. Wins battle energy, no grapes. ---------- */
+  function strengthLesson() {
+    var allowed = {};
+    ((window.KIDSLAB_CONFIG || {}).lessons || []).forEach(function (c) {
+      if (c.status === "ready" && (!c.players || c.players.indexOf(me.id) !== -1)) allowed[c.id] = c;
+    });
+    function playable(k) { var X = LESSONS[k]; return allowed[k] && X && (X.gen || X.parts); }
+    var w = K.weakLessons ? K.weakLessons() : {}, pool = [];
+    Object.keys(w).forEach(function (k) { if (playable(k)) pool.push({ id: k, w: w[k] }); });
+    var kind = "tricky";
+    if (!pool.length) { // nothing tricky yet: lessons they've done, else the first few Basics
+      kind = "done";
+      Object.keys(allowed).forEach(function (k) { if (playable(k) && K.isDone(k)) pool.push({ id: k, w: 1 }); });
+    }
+    if (!pool.length) {
+      kind = "start";
+      Object.keys(allowed).filter(function (k) { return playable(k) && allowed[k].section === "Basics" && (allowed[k].subject || "maths") === "maths"; })
+        .slice(0, 4).forEach(function (k) { pool.push({ id: k, w: 1 }); });
+    }
+    var last = null;
+    function pickLesson() {
+      var opts = pool.length > 1 ? pool.filter(function (p) { return p.id !== last; }) : pool;
+      var tot = opts.reduce(function (a, p) { return a + p.w; }, 0), r = Math.random() * tot;
+      for (var i = 0; i < opts.length; i++) { r -= opts[i].w; if (r <= 0) return opts[i].id; }
+      return opts[opts.length - 1].id;
+    }
+    return {
+      title: "Gain battle strength", emoji: "💪", quizN: 5,
+      intro: kind === "tricky" ? "Five questions from the things you find tricky. Get 5 right and your teddy gets ⚡ more battle energy!"
+        : "Five questions from your lessons. Get 5 right and your teddy gets ⚡ more battle energy!",
+      gen: function () {
+        var lid = last = pickLesson(), S = LESSONS[lid];
+        LESSON_ID = lid; // right and wrong answers still count for that lesson
+        var q = S.parts ? pickOne(S.parts).gen(true) : S.gen(true);
+        q.from = S.title;
+        return q;
+      }
+    };
+  }
+  function nextDay(t) { return new Date(t).toLocaleDateString("en-NZ", { weekday: "long" }); }
+  function lockCheck() {
+    var until = BASICS && K.lockedUntil ? K.lockedUntil(LESSON_ID) : 0;
+    if (!until) return false;
+    var tag = $("m-done"); tag.hidden = false; tag.classList.add("lock-tag");
+    tag.textContent = "🔒 Resting until " + nextDay(until) + ". Try the next level!";
+    ["go-practice", "go-quiz"].forEach(function (k) { $(k).disabled = true; $(k).classList.add("off"); });
+    $("parts").querySelectorAll("button").forEach(function (b) { b.disabled = true; b.classList.add("off"); });
+    return true;
+  }
+
   function refreshChips() {
     document.querySelectorAll(".star-count").forEach(function (e) { e.textContent = K.stars(); });
     document.querySelectorAll(".grape-count").forEach(function (e) { e.textContent = K.grapes(); });
+    if (STRENGTH) { $("m-done").hidden = true; return; }
+    if (lockCheck()) return;
     $("m-done").hidden = !K.isDone(LESSON_ID);
   }
   function show(which) { $("menu").hidden = which !== "menu"; $("game").hidden = which !== "game"; window.scrollTo(0, 0); }
@@ -1045,6 +1108,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     locked = false;
     Q = generate();
     window.__lessonQ = Q; // lets the automated checks read the current question
+    if (STRENGTH) $("tag").textContent = "💪 Gain battle strength  ·  " + Q.from;
     $("prompt").textContent = Q.prompt;
     $("sum").hidden = !Q.sum; $("sum").textContent = Q.sum || "";
     $("visual").className = "visual";
@@ -1127,6 +1191,8 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 
   /* ---------- quiz complete: grapes, tick, fireworks, spin ---------- */
   function quizDone() {
+    if (STRENGTH) return strengthDone();
+    if (BASICS && K.lockLesson) K.lockLesson(LESSON_ID);
     K.addGrapes(5); K.addTokens(2); K.markDone(LESSON_ID); K.addStars(3, LESSON_ID); K.record("quiz_done", LESSON_ID);
     refreshChips();
     $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". Your teddy gets 5 grapes and 2 gym tokens!" + (SPIN ? " And you get a spin!" : "");
@@ -1137,7 +1203,21 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     if (SPIN) K.record("test_passed", LESSON_ID);
   }
   // Basics give grapes only. Concepts and Special lessons also get the prize wheel.
-  $("r-ok").addEventListener("click", function () { $("reward").hidden = true; backToMenu(); });
+  function strengthDone() {
+    K.addFightBonus(1); K.record("strength_done", LESSON_ID);
+    refreshChips();
+    $("reward").querySelector(".big").textContent = "💪";
+    $("r-text").textContent = "Super strong, " + me.name + "! Your teddy gets ⚡ 1 more battle energy. Go and win that battle!";
+    $("r-spin").hidden = true; $("r-ok").hidden = false; $("r-ok").textContent = "⚔️ Back to the gym";
+    $("reward").hidden = false;
+    fireworks(2500);
+    K.say("Super strong! Your teddy has one more battle energy. Go and win!");
+  }
+  $("r-ok").addEventListener("click", function () {
+    $("reward").hidden = true;
+    if (STRENGTH) { try { sessionStorage.setItem("kidslab.visit", "1"); sessionStorage.setItem("kidslab.reopen", "gym"); } catch (e) {} K.home(); return; }
+    backToMenu();
+  });
   $("r-spin").addEventListener("click", function () { $("reward").hidden = true; openWheel(); });
 
   function fireworks(ms) {
