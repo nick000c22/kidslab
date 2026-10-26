@@ -13,12 +13,13 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="pet.css">
 <link rel="stylesheet" href="gym.css">
+<link rel="stylesheet" href="garage.css">
 <link rel="stylesheet" href="adventure.css">
 <link rel="stylesheet" href="progress.css">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
 <style>
 /* Layout: a toy-box. Chunky "pressable block" tiles on a sky-wash ground; one screen at a time, no scrolling on iPad. */
 :root {
@@ -406,6 +407,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 <script src="items.js"></script>
 <script src="pet.js"></script>
 <script src="gym.js"></script>
+<script src="garage.js"></script>
 <script src="adventure.js"></script>
 <script src="progress.js"></script>
 <script>
@@ -519,6 +521,14 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       b.addEventListener("click", function () { K.say(sub.title + "!"); setSubject(sub.id); });
       wrap.appendChild(b);
     });
+    // The Garage sits with the subjects: it runs on English quizzes.
+    if (window.KidsGarage) {
+      var g = KidsGarage.homeTile(p), gb = block({ emoji: g.emoji, label: g.title, color: "berry" });
+      gb.classList.add("subject", "garage-tile"); gb.style.animationDelay = (subjects().length * 70) + "ms";
+      var gm = document.createElement("span"); gm.className = "subject-meta"; gm.textContent = g.sub; gb.appendChild(gm);
+      gb.addEventListener("click", function () { K.say("Garage!"); KidsGarage.open(p, function () { renderHome(); }); });
+      wrap.appendChild(gb);
+    }
   }
   var folderId = null;
   try { folderId = sessionStorage.getItem("kidslab.folder"); } catch (e) {}
@@ -569,7 +579,8 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         var b = block({ emoji: F.emoji || "📁", label: sec, color: F.color || "grape" });
         b.classList.add("folder"); b.style.animationDelay = (i * 70) + "ms";
         var meta = document.createElement("span"); meta.className = "subject-meta"; meta.textContent = done + " of " + inF.length + " done"; b.appendChild(meta);
-        if (F.note) { var nt = document.createElement("span"); nt.className = "folder-note"; nt.textContent = F.note; b.appendChild(nt); }
+        var noteTxt = (subj.notes && subj.notes[sec]) || F.note;
+        if (noteTxt) { F = { note: noteTxt }; var nt = document.createElement("span"); nt.className = "folder-note"; nt.textContent = F.note; b.appendChild(nt); }
         var toPractise = inF.filter(function (l) { return K.isPractice && K.isPractice(l.id, p.id); }).length;
         if (toPractise) { b.classList.add("practise"); var pt = document.createElement("span"); pt.className = "practise-tag"; pt.style.top = "10px"; pt.style.bottom = "auto"; pt.textContent = "🎯 " + toPractise + " to practise"; b.appendChild(pt); }
         b.addEventListener("click", function () { K.say(sec + "!"); setFolder(sec); });
@@ -832,6 +843,9 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   // Back from "Gain battle strength": straight back into the teddy's gym.
   var reopen = null;
   try { reopen = sessionStorage.getItem("kidslab.reopen"); sessionStorage.removeItem("kidslab.reopen"); } catch (e) {}
+  if (reopen === "garage" && inVisit && K.player() && window.KidsGarage) {
+    setTimeout(function () { KidsGarage.open(K.player(), function () { renderHome(); }); }, 250);
+  }
   if (reopen === "gym" && inVisit && K.player() && window.KidsPet && window.KidsGym) {
     setTimeout(function () {
       KidsPet.openRoom();

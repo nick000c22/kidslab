@@ -163,6 +163,7 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
             <th class="g-score" colspan="3">Scores</th>
             <th class="g-teddy" colspan="21">Math Teddy</th>
             <th class="g-score" colspan="6">Gym</th>
+            <th class="g-teddy" colspan="2">Garage</th>
           </tr>
           <tr>
             <th class="sticky">Kid</th>
@@ -171,13 +172,13 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
             <th></th><th>Hatched</th><th>Teddy name</th><th>Fur</th><th>Badge</th>
             <th>Hat</th><th>Face</th><th>Neck</th><th>Outfit</th><th>Back</th><th>Paw</th><th>Feet</th><th>Everything free</th><th>Bought</th>
             <th>Grapes</th><th>Tummy</th><th>Happy</th><th>Weight kg</th><th>Eaten</th><th>Hatch date</th><th>Asleep</th>
-            <th>💪 Str</th><th>❤️ End</th><th>⚡ Spd</th><th>🧠 Brn</th><th>🎟️ Tokens</th><th>Battles</th>
+            <th>💪 Str</th><th>❤️ End</th><th>⚡ Spd</th><th>🧠 Brn</th><th>🎟️ Tokens</th><th>Battles</th><th>🔧 Parts</th><th>Races</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
-    <p class="hint">Gym stats go up to 250 for a baby teddy, 500 little, 1000 big (you can set any value up to 1000 here). Gym tokens: 2 per completed quiz, 1 per workout. "Girl / boy" sets the voice (female or male) and which shop items show first. Grapes are earned 5 at a time by finishing the prime test, and spent on feeding and the shop. Hover "Bought" to see what a kid owns. "Everything free" lets that teddy wear every item and fur without buying. Hidden kids (untick "Show" in the Kid column) disappear from the iPads but keep their scores and teddy. Untick "Hatched" to turn a teddy back into an egg. Tummy and Happy are hearts out of 4.</p>
+    <p class="hint">Gym stats go up to 250 for a baby teddy, 500 little, 1000 big (you can set any value up to 1000 here). Gym tokens: 2 per completed Maths or Science quiz; workouts cost more as a stat grows. Car parts: 5 per English quiz, 3 for winning a race, 1 for losing; new cars unlock from English quizzes finished, not parts. "Girl / boy" sets the voice (female or male) and which shop items show first. Grapes are earned 5 at a time by finishing the prime test, and spent on feeding and the shop. Hover "Bought" to see what a kid owns. "Everything free" lets that teddy wear every item and fur without buying. Hidden kids (untick "Show" in the Kid column) disappear from the iPads but keep their scores and teddy. Untick "Hatched" to turn a teddy back into an egg. Tummy and Happy are hearts out of 4.</p>
 
     <div class="add">
       <strong>Add a kid:</strong>
@@ -389,6 +390,9 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       var bw = 0, bl = 0, seenB = {};
       (battleLog || []).forEach(function (b) { if (seenB[b.id]) return; seenB[b.id] = 1; if (b.a === r.p.id || b.b === r.p.id) { if (b.winner === r.p.id) bw++; else bl++; } });
       tr.appendChild(td(el("span", { text: bw + " won, " + bl + " lost" })));
+      // Garage: car parts (from English quizzes).
+      var pt = num((pet.car && pet.car.parts) || 0, petChange(function (v) { pet.car = pet.car && typeof pet.car === "object" ? pet.car : {}; pet.car.parts = Math.max(0, v || 0); })); pt.style.width = "64px"; tr.appendChild(td(pt));
+      tr.appendChild(td(el("span", { text: pet.car ? (pet.car.w || 0) + " won, " + (pet.car.l || 0) + " lost" : "–" })));
 
       if (r.p.hidden) tr.classList.add("hidden-kid");
       if (r.dirty.kid || r.dirty.pet || r.dirty.sc) tr.classList.add("dirty");

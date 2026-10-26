@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
 <style>
 /* Layout: one lesson at a time. Question on top, grapes in the middle to count or move, big answer buttons at the bottom. */
 :root {
@@ -246,6 +246,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 <script src="../items.js"></script>
 <script src="../pet.js"></script>
 <script src="science.js"></script>
+<script src="english.js"></script>
 <script>
 (function () {
   var K = window.KidsLab;
@@ -817,6 +818,11 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     var SCI = window.makeScienceLessons({ K: K, rnd: rnd, pickOne: pickOne, shuffle: shuffle, options: options, grapes: grapes, blip: blip, reduce: reduce });
     for (var sk in SCI) LESSONS[sk] = SCI[sk];
   }
+  // English lessons live in english.js.
+  if (window.makeEnglishLessons) {
+    var ENG = window.makeEnglishLessons({ K: K, rnd: rnd, pickOne: pickOne, shuffle: shuffle, options: options, blip: blip, reduce: reduce });
+    for (var ek in ENG) LESSONS[ek] = ENG[ek];
+  }
   window.__lessons = LESSONS; // lets the automated checks run every question generator
 
 
@@ -970,21 +976,25 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   /* ---------- lesson setup ---------- */
   var id = (location.search.match(/[?&]l=([a-z0-9-]+)/) || [])[1] || "counting";
   var STRENGTH = id === "strength";
+  // ?s=english: a reading quiz that fills the car with fuel instead of giving battle energy.
+  var FUEL = STRENGTH && /[?&]s=english/.test(location.search);
   if (STRENGTH) LESSONS.strength = strengthLesson();
   var L = LESSONS[id] || LESSONS.counting;
   var LESSON_ID = id;
   var CFG = ((window.KIDSLAB_CONFIG || {}).lessons || []).filter(function (x) { return x.id === id; })[0] || {};
   var SPIN = CFG.section && CFG.section !== "Basics";   // Basics give grapes; Concepts and Special also get a spin
   var BASICS = CFG.section === "Basics";
+  var ENGLISH = CFG.subject === "english";   // English quizzes give 🔧 car parts for the garage instead of grapes and tokens
   var QUIZ_N = L.quizN || 5;
   document.title = L.title;
   $("m-emoji").textContent = L.emoji; $("m-title").textContent = L.title; $("m-intro").textContent = L.intro;
-  $("quiz-sub").textContent = "Get " + QUIZ_N + " right: 🍇 5 grapes" + (SPIN ? " + a spin!" : " for your teddy!");
+  $("quiz-sub").textContent = "Get " + QUIZ_N + " right: " + (ENGLISH ? "🔧 5 car parts" + (SPIN ? " + a spin!" : " for your garage!") : "🍇 5 grapes" + (SPIN ? " + a spin!" : " for your teddy!"));
   if (STRENGTH) {
     $("go-practice").hidden = true;
     $("go-quiz").querySelector(".m-emoji").textContent = "💪⚡";
     $("go-quiz").querySelector("span:nth-child(2)").textContent = "Start!";
-    $("quiz-sub").textContent = "Get 5 right: ⚡ +1 battle energy";
+    $("quiz-sub").textContent = FUEL ? "Get 5 right: ⛽ +1 race" : "Get 5 right: ⚡ +1 battle energy";
+    if (FUEL) $("go-quiz").querySelector(".m-emoji").textContent = "⛽🏎️";
   }
   if (L.parts) {
     // Big lessons: one practice button per part; the quiz mixes them all.
@@ -1003,12 +1013,16 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function strengthLesson() {
     var allowed = {};
     ((window.KIDSLAB_CONFIG || {}).lessons || []).forEach(function (c) {
-      if (c.status === "ready" && (!c.players || c.players.indexOf(me.id) !== -1)) allowed[c.id] = c;
+      if (c.status === "ready" && (!c.players || c.players.indexOf(me.id) !== -1) && ((c.subject === "english") === FUEL)) allowed[c.id] = c;
     });
     function playable(k) { var X = LESSONS[k]; return allowed[k] && X && (X.gen || X.parts); }
     var w = K.weakLessons ? K.weakLessons() : {}, pool = [];
     Object.keys(w).forEach(function (k) { if (playable(k)) pool.push({ id: k, w: w[k] }); });
     var kind = "tricky";
+    // Only one or two weak spots: mix in lessons they've done (less often) so it isn't the same question five times.
+    if (pool.length && pool.length < 3) Object.keys(allowed).forEach(function (k) {
+      if (playable(k) && K.isDone(k) && !pool.some(function (p) { return p.id === k; })) pool.push({ id: k, w: 0.4 });
+    });
     if (!pool.length) { // nothing tricky yet: lessons they've done, else the first few Basics
       kind = "done";
       Object.keys(allowed).forEach(function (k) { if (playable(k) && K.isDone(k)) pool.push({ id: k, w: 1 }); });
@@ -1016,6 +1030,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     if (!pool.length) {
       kind = "start";
       Object.keys(allowed).filter(function (k) { return playable(k) && allowed[k].section === "Basics" && (allowed[k].subject || "maths") === "maths"; })
+        .concat(Object.keys(allowed).filter(function (k) { return playable(k) && allowed[k].section === "Basics" && allowed[k].subject === "english"; }))
         .slice(0, 4).forEach(function (k) { pool.push({ id: k, w: 1 }); });
     }
     var last = null;
@@ -1026,8 +1041,9 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       return opts[opts.length - 1].id;
     }
     return {
-      title: "Gain battle strength", emoji: "💪", quizN: 5,
-      intro: kind === "tricky" ? "Five questions from the things you find tricky. Get 5 right and your teddy gets ⚡ more battle energy!"
+      title: FUEL ? "Fill up with fuel" : "Gain battle strength", emoji: FUEL ? "⛽" : "💪", quizN: 5,
+      intro: FUEL ? (kind === "tricky" ? "Five reading questions from the things you find tricky. Get 5 right to fill up your car!" : "Five reading questions. Get 5 right to fill up your car!")
+        : kind === "tricky" ? "Five questions from the things you find tricky. Get 5 right and your teddy gets ⚡ more battle energy!"
         : "Five questions from your lessons. Get 5 right and your teddy gets ⚡ more battle energy!",
       gen: function () {
         var lid = last = pickLesson(), S = LESSONS[lid];
@@ -1108,7 +1124,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     locked = false;
     Q = generate();
     window.__lessonQ = Q; // lets the automated checks read the current question
-    if (STRENGTH) $("tag").textContent = "💪 Gain battle strength  ·  " + Q.from;
+    if (STRENGTH) $("tag").textContent = (FUEL ? "⛽ Fill up  ·  " : "💪 Gain battle strength  ·  ") + Q.from;
     $("prompt").textContent = Q.prompt;
     $("sum").hidden = !Q.sum; $("sum").textContent = Q.sum || "";
     $("visual").className = "visual";
@@ -1119,14 +1135,46 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     var c = $("choices"); c.innerHTML = "";
     var colors = ["grape", "sky", "tang", "leaf"];
     var longest = Q.choices ? Math.max.apply(null, Q.choices.map(function (v) { return String(v).length; })) : 0;
-    c.className = "choices" + (Q.input ? " pad-mode" : longest > 14 ? " long" : longest > 5 ? " wordy" : "");
-    if (Q.input) { keypad(c); }
+    c.className = "choices" + (Q.input === "tiles" ? " tile-mode" : Q.input ? " pad-mode" : longest > 14 ? " long" : longest > 5 ? " wordy" : "");
+    if (Q.cls) Q.cls.split(" ").forEach(function (k) { if (k && !(k === "big" && longest > 3)) c.classList.add(k); });
+    if (Q.input === "tiles") { tilePad(c); }
+    else if (Q.input) { keypad(c); }
     else Q.choices.forEach(function (v, i) {
       var b = document.createElement("button"); b.type = "button"; b.className = "block c-" + colors[i % 4]; b.textContent = v;
       b.addEventListener("click", function () { choose(v, b); });
       c.appendChild(b);
     });
     K.say(Q.speak || (Q.prompt + (Q.sum ? " " + Q.sum.replace("?", "what").replace("−", "minus").replace("×", "times").replace("÷", "divided by") : "")));
+  }
+
+  // Building a word or sentence: tap the tiles in order. Checks itself once enough tiles are in.
+  function tilePad(c) {
+    var built = [], words = Q.joiner === " ", need = Q.need || String(Q.answer).length;
+    var pad = document.createElement("div"); pad.className = "tpad";
+    pad.innerHTML = '<div class="tp-show' + (words ? " words" : "") + '"></div><div class="tp-tiles' + (words ? " words" : "") + '"></div><div class="tp-ctl"><button type="button" class="tp-del">⌫ Undo</button><button type="button" class="tp-ok">✓ Check</button></div>';
+    var showEl = pad.querySelector(".tp-show"), box = pad.querySelector(".tp-tiles"), btns = [];
+    function draw() {
+      showEl.innerHTML = "";
+      for (var i = 0; i < need; i++) {
+        var s = document.createElement("span");
+        if (built[i]) s.textContent = built[i].t; else s.className = "gap";
+        showEl.appendChild(s);
+      }
+    }
+    function check() { if (built.length) choose(built.map(function (b) { return b.t; }).join(Q.joiner || ""), showEl); }
+    Q.tiles.forEach(function (t) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = t;
+      b.addEventListener("click", function () {
+        if (locked || b.classList.contains("used") || built.length >= need) return;
+        built.push({ t: t, b: b }); b.classList.add("used"); blip(built.length); draw();
+        if (built.length === need) setTimeout(check, 250);
+      });
+      box.appendChild(b); btns.push(b);
+    });
+    pad.querySelector(".tp-del").addEventListener("click", function () { if (locked) return; var x = built.pop(); if (x) x.b.classList.remove("used"); draw(); });
+    pad.querySelector(".tp-ok").addEventListener("click", function () { if (!locked) check(); });
+    pad._clear = function () { built.forEach(function (x) { x.b.classList.remove("used"); }); built = []; draw(); };
+    draw(); c.appendChild(pad); c._pad = pad;
   }
 
   // Writing a number: tap digits, then the tick.
@@ -1193,29 +1241,31 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function quizDone() {
     if (STRENGTH) return strengthDone();
     if (BASICS && K.lockLesson) K.lockLesson(LESSON_ID);
-    K.addGrapes(5); K.addTokens(2); K.markDone(LESSON_ID); K.addStars(3, LESSON_ID); K.record("quiz_done", LESSON_ID);
+    if (ENGLISH) K.addParts(5); else { K.addGrapes(5); K.addTokens(2); }
+    K.markDone(LESSON_ID); K.addStars(3, LESSON_ID); K.record("quiz_done", LESSON_ID);
     refreshChips();
-    $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". Your teddy gets 5 grapes and 2 gym tokens!" + (SPIN ? " And you get a spin!" : "");
+    $("r-text").textContent = "Well done, " + me.name + "! You finished " + L.title + ". " + (ENGLISH ? "You get 🔧 5 car parts for your garage!" : "Your teddy gets 5 grapes and 2 gym tokens!") + (SPIN ? " And you get a spin!" : "");
     $("r-spin").hidden = !SPIN; $("r-ok").hidden = !!SPIN;
     $("reward").hidden = false;
     fireworks(4000);
-    K.say("Quiz complete! Well done " + me.name + "! Five grapes and two gym tokens for your teddy!" + (SPIN ? " Now spin the wheel!" : ""));
+    K.say("Quiz complete! Well done " + me.name + "! " + (ENGLISH ? "Five car parts for your garage!" : "Five grapes and two gym tokens for your teddy!") + (SPIN ? " Now spin the wheel!" : ""));
     if (SPIN) K.record("test_passed", LESSON_ID);
   }
   // Basics give grapes only. Concepts and Special lessons also get the prize wheel.
   function strengthDone() {
-    K.addFightBonus(1); K.record("strength_done", LESSON_ID);
+    if (FUEL) K.addFuelBonus(1); else K.addFightBonus(1);
+    K.record(FUEL ? "fuel_done" : "strength_done", LESSON_ID);
     refreshChips();
-    $("reward").querySelector(".big").textContent = "💪";
-    $("r-text").textContent = "Super strong, " + me.name + "! Your teddy gets ⚡ 1 more battle energy. Go and win that battle!";
-    $("r-spin").hidden = true; $("r-ok").hidden = false; $("r-ok").textContent = "⚔️ Back to the gym";
+    $("reward").querySelector(".big").textContent = FUEL ? "⛽" : "💪";
+    $("r-text").textContent = FUEL ? "Great reading, " + me.name + "! Your car is filled up for ⛽ 1 more race. Vroom!" : "Super strong, " + me.name + "! Your teddy gets ⚡ 1 more battle energy. Go and win that battle!";
+    $("r-spin").hidden = true; $("r-ok").hidden = false; $("r-ok").textContent = FUEL ? "🏎️ Back to the garage" : "⚔️ Back to the gym";
     $("reward").hidden = false;
     fireworks(2500);
-    K.say("Super strong! Your teddy has one more battle energy. Go and win!");
+    K.say(FUEL ? "Great reading! Your car has fuel for one more race!" : "Super strong! Your teddy has one more battle energy. Go and win!");
   }
   $("r-ok").addEventListener("click", function () {
     $("reward").hidden = true;
-    if (STRENGTH) { try { sessionStorage.setItem("kidslab.visit", "1"); sessionStorage.setItem("kidslab.reopen", "gym"); } catch (e) {} K.home(); return; }
+    if (STRENGTH) { try { sessionStorage.setItem("kidslab.visit", "1"); sessionStorage.setItem("kidslab.reopen", FUEL ? "garage" : "gym"); } catch (e) {} K.home(); return; }
     backToMenu();
   });
   $("r-spin").addEventListener("click", function () { $("reward").hidden = true; openWheel(); });
@@ -1306,7 +1356,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 
   /* ---------- start ---------- */
   if (L.explore) {
-    $("go-practice").innerHTML = '<span class="m-emoji">🔬</span><span>Explore</span><span class="m-sub">Hands-on. Try things and see what happens!</span>';
+    $("go-practice").innerHTML = '<span class="m-emoji">' + (ENGLISH ? "✋" : "🔬") + '</span><span>Explore</span><span class="m-sub">Hands-on. Try things and see what happens!</span>';
   }
   $("go-practice").addEventListener("click", function () { start("practice"); });
   $("go-quiz").addEventListener("click", function () { start("quiz"); });

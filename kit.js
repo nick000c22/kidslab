@@ -345,6 +345,22 @@
     set("pet." + id, d);
     if (URL_) pushPet(id, d);
   }
+  /* ---------- garage: English quizzes give car parts; reading quizzes fill up fuel (today only) ---------- */
+  function carDoc(d) { var c = d.car && typeof d.car === "object" ? d.car : {}; c.parts = Math.max(0, Number(c.parts) || 0); return c; }
+  function saveCarDoc(id, d) { d.updatedAt = new Date().toISOString(); set("pet." + id, d); if (URL_) pushPet(id, d); }
+  function addParts(n) {
+    var id = playerId(); if (!id) return 0;
+    var d = JSON.parse(JSON.stringify(petDoc(id))), c = carDoc(d);
+    c.parts += n; d.car = c; saveCarDoc(id, d);
+    return c.parts;
+  }
+  function addFuelBonus(n) {
+    var id = playerId(); if (!id) return;
+    var d = JSON.parse(JSON.stringify(petDoc(id))), c = carDoc(d), t = fightDay(), f = c.fuel && c.fuel.d === t ? c.fuel : { d: t, n: 0, bonus: 0 };
+    c.fuel = { d: t, n: Number(f.n) || 0, bonus: (Number(f.bonus) || 0) + n };
+    d.car = c; saveCarDoc(id, d);
+  }
+
   // Where this kid is struggling: { lessonId: weight }. Recent mistakes count most, then low accuracy, then 🎯 flags.
   function weakLessons(id) {
     var d = petDoc(id || playerId()), w = {}, ms = Array.isArray(d.mistakes) ? d.mistakes : [];
@@ -424,7 +440,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress, gender: gender,
-    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, addTokens: addTokens, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, lockLesson: lockLesson, lockedUntil: lockedUntil, addFightBonus: addFightBonus, weakLessons: weakLessons, pushPet: pushPet, visiblePlayers: visiblePlayers,
+    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, addTokens: addTokens, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, lockLesson: lockLesson, lockedUntil: lockedUntil, addFightBonus: addFightBonus, addParts: addParts, addFuelBonus: addFuelBonus, fightDay: fightDay, weakLessons: weakLessons, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

@@ -38,7 +38,10 @@ window.KIDSLAB_CONFIG = {
   basicsLockDays: 2,
   subjects: [
     { id: "maths",   title: "Maths",   emoji: "🔢", color: "grape", sections: ["Basics", "Concepts", "Special"] },
-    { id: "science", title: "Science", emoji: "🔬", color: "leaf",  sections: ["Basics", "Concepts", "Special"] }
+    { id: "science", title: "Science", emoji: "🔬", color: "leaf",  sections: ["Basics", "Concepts", "Special"] },
+    // English quizzes give 🔧 car parts for the Garage instead of grapes.
+    { id: "english", title: "English", emoji: "📖", color: "tang",  sections: ["Basics", "Concepts", "Special"],
+      notes: { Basics: "Quizzes give 🔧 5 car parts", Concepts: "Quizzes give 🔧 5 parts + a spin", Special: "Big lessons. 🔧 5 parts + a spin" } }
   ],
   // Topics inside the Basics folder, in the order they appear. Lessons inside a topic go easiest to hardest.
   topics: [
@@ -56,7 +59,14 @@ window.KIDSLAB_CONFIG = {
     { id: "biology",   title: "Biology",          emoji: "🌿", color: "leaf" },
     { id: "chemistry", title: "Chemistry",        emoji: "🧪", color: "grape" },
     { id: "physics",   title: "Physics",          emoji: "⚡", color: "sun" },
-    { id: "space",     title: "Earth and Space",  emoji: "🪐", color: "sky" }
+    { id: "space",     title: "Earth and Space",  emoji: "🪐", color: "sky" },
+    // English topics
+    { id: "abc",       title: "Alphabet",         emoji: "🔤", color: "grape" },
+    { id: "sounds",    title: "Sounds and Rhymes", emoji: "🎵", color: "berry" },
+    { id: "words",     title: "Reading Words",    emoji: "👀", color: "sky" },
+    { id: "spelling",  title: "Spelling",         emoji: "🧩", color: "leaf" },
+    { id: "sentences", title: "Sentences",        emoji: "✏️", color: "tang" },
+    { id: "stories",   title: "Stories",          emoji: "📚", color: "sun" }
   ],
   // Folders inside each subject. Special lessons usually list `players` so only that kid sees them.
   folders: {
@@ -140,6 +150,34 @@ window.KIDSLAB_CONFIG = {
     // ---- science: space ----
     { id: "daynight", subject: "science", section: "Basics", topic: "space", title: "Day and Night", emoji: "🌗", color: "grape", href: "lessons/basics.html?l=daynight", status: "ready" },
     { id: "planets", subject: "science", section: "Basics", topic: "space", title: "The Planets", emoji: "🪐", color: "sky", href: "lessons/basics.html?l=planets", status: "ready" },
+    // ---- English (english.js). Quizzes give 🔧 car parts. ----
+    { id: "abc-am", subject: "english", section: "Basics", topic: "abc", title: "Letters A to M", emoji: "🅰️", color: "grape", href: "lessons/basics.html?l=abc-am", status: "ready" },
+    { id: "abc-nz", subject: "english", section: "Basics", topic: "abc", title: "Letters N to Z", emoji: "🔤", color: "sky", href: "lessons/basics.html?l=abc-nz", status: "ready" },
+    { id: "abc-trace", subject: "english", section: "Basics", topic: "abc", title: "Trace the Letters", emoji: "✍️", color: "leaf", href: "lessons/basics.html?l=abc-trace", status: "ready" },
+    { id: "abc-bigsmall", subject: "english", section: "Basics", topic: "abc", title: "Big and Small", emoji: "🔠", color: "tang", href: "lessons/basics.html?l=abc-bigsmall", status: "ready" },
+    { id: "abc-small", subject: "english", section: "Basics", topic: "abc", title: "Small Letters", emoji: "🔡", color: "berry", href: "lessons/basics.html?l=abc-small", status: "ready" },
+    { id: "abc-order", subject: "english", section: "Basics", topic: "abc", title: "ABC Order", emoji: "🚂", color: "sun", href: "lessons/basics.html?l=abc-order", status: "ready" },
+    { id: "first-letter", subject: "english", section: "Basics", topic: "sounds", title: "First Letter", emoji: "🐍", color: "leaf", href: "lessons/basics.html?l=first-letter", status: "ready" },
+    { id: "rhyme", subject: "english", section: "Basics", topic: "sounds", title: "Rhyme Time", emoji: "🎵", color: "berry", href: "lessons/basics.html?l=rhyme", status: "ready" },
+    { id: "blends", subject: "english", section: "Basics", topic: "sounds", title: "sh, ch, th...", emoji: "🐑", color: "sky", href: "lessons/basics.html?l=blends", status: "ready" },
+    { id: "cvc", subject: "english", section: "Basics", topic: "words", title: "Picture Words", emoji: "🐱", color: "tang", href: "lessons/basics.html?l=cvc", status: "ready" },
+    { id: "sight1", subject: "english", section: "Basics", topic: "words", title: "Sight Words 1", emoji: "👀", color: "grape", href: "lessons/basics.html?l=sight1", status: "ready" },
+    { id: "families", subject: "english", section: "Basics", topic: "words", title: "Word Families", emoji: "👨‍👩‍👧", color: "leaf", href: "lessons/basics.html?l=families", status: "ready" },
+    { id: "sight2", subject: "english", section: "Basics", topic: "words", title: "Sight Words 2", emoji: "🧐", color: "berry", href: "lessons/basics.html?l=sight2", status: "ready" },
+    { id: "spell-cvc", subject: "english", section: "Basics", topic: "spelling", title: "Spell It", emoji: "🧩", color: "sky", href: "lessons/basics.html?l=spell-cvc", status: "ready" },
+    { id: "spell-bee", subject: "english", section: "Basics", topic: "spelling", title: "Spelling Bee", emoji: "🐝", color: "sun", href: "lessons/basics.html?l=spell-bee", status: "ready" },
+    { id: "missing", subject: "english", section: "Basics", topic: "sentences", title: "Missing Word", emoji: "🕳️", color: "grape", href: "lessons/basics.html?l=missing", status: "ready" },
+    { id: "capitals", subject: "english", section: "Basics", topic: "sentences", title: "Capitals and Full Stops", emoji: "✏️", color: "tang", href: "lessons/basics.html?l=capitals", status: "ready" },
+    { id: "plurals", subject: "english", section: "Basics", topic: "sentences", title: "More Than One", emoji: "🐑", color: "leaf", href: "lessons/basics.html?l=plurals", status: "ready" },
+    { id: "past", subject: "english", section: "Basics", topic: "sentences", title: "Yesterday", emoji: "⏪", color: "sky", href: "lessons/basics.html?l=past", status: "ready" },
+    { id: "opposites", subject: "english", section: "Basics", topic: "sentences", title: "Opposites", emoji: "↔️", color: "berry", href: "lessons/basics.html?l=opposites", status: "ready" },
+    { id: "wordtypes", subject: "english", section: "Basics", topic: "sentences", title: "Word Types", emoji: "🏷️", color: "sun", href: "lessons/basics.html?l=wordtypes", status: "ready" },
+    { id: "riddles", subject: "english", section: "Basics", topic: "stories", title: "Riddles", emoji: "🤔", color: "grape", href: "lessons/basics.html?l=riddles", status: "ready" },
+    { id: "stories", subject: "english", section: "Basics", topic: "stories", title: "Story Time", emoji: "📚", color: "tang", href: "lessons/basics.html?l=stories", status: "ready" },
+    { id: "make-sentence", subject: "english", section: "Concepts", title: "Make a Sentence", emoji: "🧱", color: "sky", href: "lessons/basics.html?l=make-sentence", status: "ready" },
+    { id: "detective", subject: "english", section: "Concepts", title: "Reading Detective", emoji: "🔎", color: "grape", href: "lessons/basics.html?l=detective", status: "ready" },
+    { id: "jack-abc", subject: "english", section: "Special", players: ["jack"], title: "Jack's ABC Adventure", say: "Jack's A B C adventure!", emoji: "🦖", color: "leaf", href: "lessons/basics.html?l=jack-abc", status: "ready" },
+    { id: "alice-reading", subject: "english", section: "Special", players: ["alice"], title: "Alice's Reading Challenge", emoji: "🦄", color: "berry", href: "lessons/basics.html?l=alice-reading", status: "ready" },
     { id: "n1000", subject: "maths", section: "Special", players: ["alice"], title: "Numbers to 1000", say: "Numbers to one thousand!", emoji: "🏰", color: "grape", href: "lessons/basics.html?l=n1000", status: "ready" },
     { id: "prime-grapes", subject: "maths", section: "Concepts", title: "Prime Grapes", say: "Prime grapes! Can you make a rectangle?", emoji: "🍇", color: "grape", href: "lessons/prime-grapes.html", status: "ready" }
   ]
