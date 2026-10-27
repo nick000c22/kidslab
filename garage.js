@@ -15,10 +15,10 @@
     { id: "kart",    name: "Go-Kart",       need: 0 },
     { id: "buggy",   name: "Beach Buggy",   need: 3 },
     { id: "rally",   name: "Rally Car",     need: 7 },
-    { id: "monster", name: "Monster Truck", need: 12 },
-    { id: "racer",   name: "Race Car",      need: 17 },
-    { id: "storm",   name: "Storm GT",      need: 22 },   // low, sharp wedge supercar
-    { id: "rosso",   name: "Rosso GT",      need: 28 },   // sleek Italian-style GT
+    { id: "storm",   name: "Storm GT",      need: 10, sup: true },   // the showpiece wedge supercar: big wing, glowing wheels, flame boosts, its own roar
+    { id: "monster", name: "Monster Truck", need: 14 },
+    { id: "racer",   name: "Race Car",      need: 19 },
+    { id: "rosso",   name: "Rosso GT",      need: 27, sup: true },   // sleek Italian-style GT
     { id: "rocket",  name: "Rocket Car",    need: 36 }
   ];
   var UPS = [
@@ -101,7 +101,7 @@
   function carSVG(tier, c, F, opts) {
     opts = opts || {};
     var paint = byId(PAINTS, c.paint).c, st = byId(STICKERS, c.sticker).e, up = c.up, out = paint === "#F4F4F6" ? "#C9CCD6" : "rgba(0,0,0,.28)";
-    var pipes = 1 + Math.floor(up.eng / 2), body = "", wheels = "", sx = 120, sy = 80, ss = 22, extra = "", driver = "", inWindow = false;
+    var pipes = 1 + Math.floor(up.eng / 2), body = "", wheels = "", sx = 120, sy = 80, ss = 22, extra = "", driver = "", inWindow = false, flame = "";
     var spoiler = up.turbo >= 1 ? '<path d="M12 ' + (opts.spY || 58) + ' l' + (14 + up.turbo * 3) + ' 0 l-3 7 l-' + (8 + up.turbo * 3) + ' 0 z" fill="#2B2B36"/><rect x="18" y="' + ((opts.spY || 58) + 6) + '" width="4" height="10" fill="#2B2B36"/>' : "";
     var kind = (CARS[tier] || CARS[0]).id;
     if (kind === "kart") { // go-kart
@@ -139,7 +139,13 @@
         '<path d="M102 62 L138 57 L156 68 L106 70 Z" fill="#BFE6FF" stroke="#2B2B36" stroke-width="2"/>' +
         '<path d="M156 80 L184 77 L176 91 L156 91 Z" fill="#2B2B36" opacity=".8"/><path d="M60 84 L96 82" stroke="#2B2B36" stroke-width="3" opacity=".5"/>' +
         '<path d="M212 80 L232 85" stroke="#FFF6C9" stroke-width="4" stroke-linecap="round"/><rect x="0" y="58" width="44" height="7" rx="2" fill="#2B2B36"/><rect x="16" y="64" width="6" height="16" fill="#2B2B36"/>';
-      wheels = wheel(56, 98, 19, up.tyre) + wheel(196, 98, 19, up.tyre); sx = 118; sy = 84; ss = 15; inWindow = true; spoiler = "";
+      // Huge rear wing, glowing wheels and a big triple flame for boosts.
+      body += '<rect x="10" y="50" width="8" height="30" rx="2" fill="#2B2B36"/><rect x="32" y="52" width="8" height="28" rx="2" fill="#2B2B36"/>' +
+        '<path d="M-6 40 L60 36 L58 48 L-4 50 Z" fill="#2B2B36"/><path d="M-6 40 L60 36" stroke="' + paint + '" stroke-width="3"/><rect x="-8" y="34" width="6" height="18" rx="2" fill="#2B2B36"/><rect x="56" y="31" width="6" height="18" rx="2" fill="#2B2B36"/>';
+      wheels = '<g class="neon">' + wheel(56, 98, 19, up.tyre) + wheel(196, 98, 19, up.tyre) +
+        '<circle cx="56" cy="98" r="13" fill="none" stroke="#5CF2FF" stroke-width="2.5"/><circle cx="196" cy="98" r="13" fill="none" stroke="#5CF2FF" stroke-width="2.5"/></g>';
+      sx = 118; sy = 84; ss = 15; inWindow = true; spoiler = "";
+      flame = '<g class="boost-flame"><path d="M8 88 Q-58 84 8 76 Z" fill="#FF4D1A"/><path d="M8 86 Q-40 82 8 78 Z" fill="#FF9A1A"/><path d="M8 84 Q-20 82 8 80 Z" fill="#FFF066"/></g>';
       extra = '<clipPath id="swin' + (opts.uid || "") + '"><path d="M102 62 L138 57 L156 68 L106 70 Z"/></clipPath>';
       driver = '<g clip-path="url(#swin' + (opts.uid || "") + ')">' + teddy(126, 68, .62, F, null) + "</g>";
     } else if (kind === "rosso") { // curvy Italian-style GT
@@ -161,9 +167,9 @@
     // Exhaust pipes (engine) and boost flame (turbo), at the back.
     var exh = "";
     if (kind !== "rocket") for (var i = 0; i < pipes; i++) exh += '<rect x="' + (kind === "kart" ? 14 : 6) + '" y="' + (90 - i * 6) + '" width="14" height="4" rx="2" fill="#8C8F99"/>';
-    var flame = '<g class="boost-flame"><path d="M8 88 Q-30 86 8 80 Z" fill="#FF7A1A"/><path d="M8 86 Q-14 84 8 82 Z" fill="#FFE066"/></g>';
+    if (!flame) flame = '<g class="boost-flame"><path d="M8 88 Q-30 86 8 80 Z" fill="#FF7A1A"/><path d="M8 86 Q-14 84 8 82 Z" fill="#FFE066"/></g>';
     var sticker = st ? '<text x="' + sx + '" y="' + sy + '" font-size="' + ss + '" text-anchor="middle" dominant-baseline="middle">' + st + "</text>" : "";
-    return '<svg class="car-svg' + (opts.cls ? " " + opts.cls : "") + '" viewBox="-30 20 270 112" aria-hidden="true">' +
+    return '<svg class="car-svg' + (CARS[tier] && CARS[tier].sup ? " super" : "") + (opts.cls ? " " + opts.cls : "") + '" viewBox="-30 20 270 112" aria-hidden="true">' +
       '<defs><linearGradient id="rbw" x1="0" x2="1"><stop offset="0" stop-color="#FF5E5E"/><stop offset=".25" stop-color="#FFC94D"/><stop offset=".5" stop-color="#5ED17A"/><stop offset=".75" stop-color="#4DA6FF"/><stop offset="1" stop-color="#A66BFF"/></linearGradient>' + extra + "</defs>" +
       '<ellipse cx="120" cy="' + (kind === "monster" ? 128 : 120) + '" rx="110" ry="6" fill="rgba(0,0,0,.12)"/>' +
       flame + exh + spoiler + (inWindow ? body + driver : driver + body) + sticker + wheels + "</svg>";
@@ -193,7 +199,7 @@
       var pet = P.load(pid), c = car(pet), maxT = tierFor(pid), tier = driving(pid, c), F = furOf(pet), done = englishDone(pid);
       w.querySelector(".gr-parts").textContent = c.parts;
       w.querySelector(".gr-stage").innerHTML = carSVG(tier, c, F, { uid: "h", cls: "idle" });
-      w.querySelector(".gr-name").textContent = CARS[tier].name;
+      w.querySelector(".gr-name").innerHTML = esc(CARS[tier].name) + (CARS[tier].sup ? ' <span class="gr-super">⭐ SUPERCAR</span>' : "");
       w.querySelector(".gr-power").textContent = "Power " + power(tier, c);
       var nx = CARS[maxT + 1];
       w.querySelector(".gr-next").textContent = nx ? "Finish " + (nx.need - done) + " more English " + (nx.need - done === 1 ? "quiz" : "quizzes") + " to unlock the " + nx.name + "!" : "You've unlocked every car. Legend!";
@@ -229,6 +235,7 @@
         var locked = t > maxT, b = el('<button type="button" class="gr-car' + (t === tier ? " on" : "") + (locked ? " locked" : "") + '"><span class="gr-car-art"></span><span class="gr-car-name"></span><span class="gr-car-sub"></span></button>');
         b.querySelector(".gr-car-art").innerHTML = locked ? '<span class="gr-lock">🔒</span>' + carSVG(t, car({}), F, { uid: "c" + t, cls: "shadow" }) : carSVG(t, c, F, { uid: "c" + t });
         b.querySelector(".gr-car-name").textContent = Cr.name;
+        if (Cr.sup) { var sb = document.createElement("span"); sb.className = "gr-super corner"; sb.textContent = "⭐ SUPERCAR"; b.appendChild(sb); }
         b.querySelector(".gr-car-sub").textContent = locked ? "Finish " + Cr.need + " English quizzes" : t === tier ? "Driving" : "Tap to drive";
         b.addEventListener("click", function () {
           if (locked) { K.say("The " + Cr.name + " unlocks when you've finished " + Cr.need + " English quizzes. You've done " + done + "."); return; }
@@ -344,6 +351,11 @@
     } catch (e) {}
   }
   function vroom() { tone(70, 0, 0.5, "sawtooth", 0.06); tone(90, 0.35, 0.6, "sawtooth", 0.05); }
+  // Supercar start: a deep growl that screams up, then pops and crackles.
+  function roar() {
+    tone(55, 0, 0.35, "sawtooth", 0.08); tone(80, 0.3, 0.7, "sawtooth", 0.08); tone(160, 0.9, 0.5, "square", 0.05);
+    [1.4, 1.5, 1.62, 1.7].forEach(function (t) { tone(90 + Math.random() * 60, t, 0.05, "square", 0.06); });
+  }
   function beep(f) { tone(f, 0, 0.12, "square", 0.05); }
 
   function stats(tier, c) {
@@ -442,7 +454,7 @@
       if (!w.isConnected) return;
       cnt.textContent = n > 0 ? n : "GO!"; cnt.classList.remove("pop"); void cnt.offsetWidth; cnt.classList.add("pop");
       if (n > 0) { beep(440); K.say(String(n)); n--; setTimeout(count, 900); }
-      else { beep(880); vroom(); K.say("Go!"); started = true; setTimeout(function () { cnt.textContent = ""; }, 700); }
+      else { beep(880); if (CARS[myTier].sup) roar(); else vroom(); K.say("Go!"); started = true; setTimeout(function () { cnt.textContent = ""; }, 700); }
     })();
     requestAnimationFrame(frame);
   }
