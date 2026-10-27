@@ -327,6 +327,11 @@
     set("pet." + id, d);
     if (URL_) pushPet(id, d);
   }
+  // Lessons a grown-up has locked for this kid (on the grown-ups page) so they move on to harder ones.
+  function isBlocked(lessonId, id) {
+    var d = petDoc(id || playerId());
+    return Array.isArray(d.blocked) && d.blocked.indexOf(lessonId) !== -1;
+  }
   // When the lesson opens again (ms timestamp), or 0 if it's open now.
   function lockedUntil(lessonId, id) {
     id = id || playerId();
@@ -440,7 +445,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress, gender: gender,
-    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, addTokens: addTokens, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, lockLesson: lockLesson, lockedUntil: lockedUntil, addFightBonus: addFightBonus, addParts: addParts, addFuelBonus: addFuelBonus, fightDay: fightDay, weakLessons: weakLessons, pushPet: pushPet, visiblePlayers: visiblePlayers,
+    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, addTokens: addTokens, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, lockLesson: lockLesson, lockedUntil: lockedUntil, isBlocked: isBlocked, addFightBonus: addFightBonus, addParts: addParts, addFuelBonus: addFuelBonus, fightDay: fightDay, weakLessons: weakLessons, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

@@ -604,6 +604,8 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         var b = block({ emoji: t.emoji, label: t.title, color: t.color });
         b.classList.add("folder"); b.style.animationDelay = (Math.min(i, 8) * 50) + "ms";
         var meta = document.createElement("span"); meta.className = "subject-meta"; meta.textContent = done + " of " + inT.length + " done"; b.appendChild(meta);
+        var nB = inT.filter(function (l) { return K.isBlocked && K.isBlocked(l.id, p.id); }).length;
+        if (nB && nB === inT.length) { b.classList.add("locked"); var lk = document.createElement("span"); lk.className = "badge"; lk.textContent = "🔒 Locked"; b.appendChild(lk); }
         if (done === inT.length && inT.length) { var tk = document.createElement("span"); tk.className = "tick"; tk.textContent = "✓"; b.appendChild(tk); }
         var pr = inT.filter(function (l) { return K.isPractice && K.isPractice(l.id, p.id); }).length;
         if (pr) { b.classList.add("practise"); var pt = document.createElement("span"); pt.className = "practise-tag"; pt.style.top = "10px"; pt.style.bottom = "auto"; pt.textContent = "🎯 " + pr + " to practise"; b.appendChild(pt); }
@@ -621,14 +623,15 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     var g0 = document.createElement("div"); g0.className = "lesson-grid"; wrap.appendChild(g0); grids[folder] = g0;
     list.forEach(function (l, i) {
       var soon = l.status !== "ready";
-      var rest = !soon && l.section === "Basics" && K.lockedUntil ? K.lockedUntil(l.id, p.id) : 0;
+      var blocked = !soon && K.isBlocked && K.isBlocked(l.id, p.id);
+      var rest = !soon && !blocked && l.section === "Basics" && K.lockedUntil ? K.lockedUntil(l.id, p.id) : 0;
       var restDay = rest ? new Date(rest).toLocaleDateString("en-NZ", { weekday: "short" }) : "";
-      var b = block({ emoji: l.emoji, label: l.title, color: l.color, locked: soon || !!rest, badge: soon ? "Soon" : rest ? "🔒 Back " + restDay : "" });
-      if (!soon && !rest && K.isDone && K.isDone(l.id, p.id)) {
+      var b = block({ emoji: l.emoji, label: l.title, color: l.color, locked: soon || !!rest || blocked, badge: soon ? "Soon" : blocked ? "🔒 Locked" : rest ? "🔒 Back " + restDay : "" });
+      if (!soon && !rest && !blocked && K.isDone && K.isDone(l.id, p.id)) {
         var tick = document.createElement("span"); tick.className = "tick"; tick.textContent = "✓"; tick.setAttribute("aria-label", "Quiz done"); b.appendChild(tick);
         var again = document.createElement("span"); again.className = "again"; again.textContent = "Do it again"; b.appendChild(again);
       }
-      if (!soon && K.isPractice && K.isPractice(l.id, p.id)) {
+      if (!soon && !blocked && K.isPractice && K.isPractice(l.id, p.id)) {
         b.classList.add("practise");
         var pr = document.createElement("span"); pr.className = "practise-tag"; pr.textContent = "🎯 Practise!"; b.appendChild(pr);
       }
@@ -640,6 +643,11 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         if (soon) {
           b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
           K.say(l.title + ". Coming soon!");
+          return;
+        }
+        if (blocked) {
+          b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
+          K.say("You've got this one! It's locked so you can try harder lessons.");
           return;
         }
         if (rest) {

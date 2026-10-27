@@ -89,6 +89,11 @@ a.btn { text-decoration: none; display: inline-block; }
 .weak td { background: color-mix(in srgb, var(--berry) 10%, transparent); }
 .pr-btn { border: 0; border-radius: 10px; padding: 6px 12px; cursor: pointer; font: 800 .9rem var(--body); background: var(--head); color: var(--ink); }
 .pr-btn.on { background: var(--sun); color: #2a1a00; }
+.pr-btn.lock-on { background: #3B3F55; color: #fff; }
+.rep-table tr.blocked td { opacity: .5; }
+.rep-table tr.blocked td:nth-last-child(1), .rep-table tr.blocked td:nth-last-child(2) { opacity: 1; }
+.rep-table tr.topic-row td { background: var(--head); font-weight: 800; padding-top: 10px; }
+.rep-table tr.topic-row .btn { margin-left: 8px; }
 
 /* gate */
 .gate { max-width: 380px; margin: 12vh auto 0; background: var(--card); border-radius: 22px; padding: 26px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.08); }
@@ -193,13 +198,15 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
       <div class="report-head">
         <label for="rep-kid">Kid</label>
         <select id="rep-kid"></select>
+        <button class="btn small" id="block-done" type="button">🔒 Lock every lesson they've finished</button>
+        <button class="btn small" id="block-none" type="button">Unlock all</button>
       </div>
       <div class="report-head">
         <h2>Lesson report</h2>
-        <span class="sub">Tap 🎯 to flag a lesson for practice. It glows on that kid's home screen. Remember to Save.</span>
+        <span class="sub">Tap 🎯 to flag a lesson for practice. It glows on that kid's home screen. Tap 🔒 to lock a lesson so they move on to harder ones (it shows as locked on their iPad). Each topic has "Lock topic". Remember to Save.</span>
       </div>
       <div class="sheet-scroll"><table class="rep-table">
-        <thead><tr><th>#</th><th>Lesson</th><th>Folder</th><th>Quiz done</th><th>Right</th><th>Wrong</th><th>Accuracy</th><th>Last played</th><th>Practise</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>Lesson</th><th>Folder</th><th>Quiz done</th><th>Right</th><th>Wrong</th><th>Accuracy</th><th>Last played</th><th>Practise</th><th>Lock</th><th></th></tr></thead>
         <tbody id="rep-rows"></tbody>
       </table></div>
     </section>
@@ -413,10 +420,33 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
     if (!r) return;
     var pet = r.pet; pet.stats = pet.stats || {}; pet.practice = Array.isArray(pet.practice) ? pet.practice : []; pet.done = Array.isArray(pet.done) ? pet.done : [];
     var lessons = (window.KIDSLAB_CONFIG.lessons || []).filter(function (l) { return l.status === "ready" && (!l.players || l.players.indexOf(r.p.id) !== -1); });
-    var n = 0, lastTopic = null;
+    pet.blocked = Array.isArray(pet.blocked) ? pet.blocked : [];
+    function changed() { r.dirty.pet = true; if (r.tr) r.tr.classList.add("dirty"); updateSave(); renderReport(); }
+    function setBlocked(ids, on) {
+      ids.forEach(function (id) { var i = pet.blocked.indexOf(id); if (on && i === -1) pet.blocked.push(id); if (!on && i !== -1) pet.blocked.splice(i, 1); });
+      changed();
+    }
+    $("block-done").onclick = function () { setBlocked(lessons.filter(function (l) { return pet.done.indexOf(l.id) !== -1; }).map(function (l) { return l.id; }), true); };
+    $("block-none").onclick = function () { pet.blocked = []; changed(); };
+    var n = 0, lastTopic = null, lastGroup = null;
     lessons.forEach(function (l) {
+      // A header row for each subject + topic, with lock/unlock for the whole group.
+      var group = (l.subject || "maths") + "|" + (l.section || "") + "|" + (l.topic || "");
+      if (group !== lastGroup) {
+        lastGroup = group;
+        var inG = lessons.filter(function (x) { return (x.subject || "maths") + "|" + (x.section || "") + "|" + (x.topic || "") === group; }).map(function (x) { return x.id; });
+        var subj = ((window.KIDSLAB_CONFIG.subjects || []).filter(function (s) { return s.id === (l.subject || "maths"); })[0] || { title: "Maths", emoji: "" });
+        var tname = l.topic ? ((window.KIDSLAB_CONFIG.topics || []).filter(function (t) { return t.id === l.topic; })[0] || { title: l.topic }).title : l.section;
+        var hr = el("tr", { class: "topic-row" }), hc = el("td"); hc.colSpan = 11;
+        hc.appendChild(el("span", { text: subj.emoji + " " + subj.title + " · " + tname }));
+        var allB = inG.every(function (id) { return pet.blocked.indexOf(id) !== -1; });
+        var gb = el("button", { type: "button", class: "btn small", text: allB ? "Unlock topic" : "🔒 Lock topic" });
+        gb.addEventListener("click", function () { setBlocked(inG, !allB); });
+        hc.appendChild(gb); hr.appendChild(hc); body.appendChild(hr);
+      }
       var st = pet.stats[l.id] || { r: 0, w: 0 }, tot = st.r + st.w, acc = tot ? Math.round(st.r / tot * 100) : null;
       var tr = el("tr"); if (acc !== null && tot >= 4 && acc < 70) tr.className = "weak";
+      var isB = pet.blocked.indexOf(l.id) !== -1; if (isB) tr.classList.add("blocked");
       var topicName = l.topic ? ((window.KIDSLAB_CONFIG.topics || []).filter(function (t) { return t.id === l.topic; })[0] || { title: l.topic }).title : "";
       if (l.topic !== lastTopic) { n = 0; lastTopic = l.topic; }
       tr.appendChild(td(el("span", { text: l.topic ? "L" + (++n) : "" })));
@@ -442,6 +472,9 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
         r.dirty.pet = true; if (r.tr) r.tr.classList.add("dirty"); updateSave(); renderReport();
       });
       tr.appendChild(td(pb));
+      var lb = el("button", { type: "button", class: "pr-btn" + (isB ? " lock-on" : ""), text: isB ? "🔒 Locked" : "🔒" });
+      lb.addEventListener("click", function () { setBlocked([l.id], !isB); });
+      tr.appendChild(td(lb));
       var reset = el("button", { type: "button", class: "btn small", text: "Clear tick" });
       reset.disabled = pet.done.indexOf(l.id) === -1;
       reset.addEventListener("click", function () {

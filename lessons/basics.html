@@ -1015,7 +1015,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     ((window.KIDSLAB_CONFIG || {}).lessons || []).forEach(function (c) {
       if (c.status === "ready" && (!c.players || c.players.indexOf(me.id) !== -1) && ((c.subject === "english") === FUEL)) allowed[c.id] = c;
     });
-    function playable(k) { var X = LESSONS[k]; return allowed[k] && X && (X.gen || X.parts); }
+    function playable(k) { var X = LESSONS[k]; return allowed[k] && X && (X.gen || X.parts) && !(K.isBlocked && K.isBlocked(k)); }
     var w = K.weakLessons ? K.weakLessons() : {}, pool = [];
     Object.keys(w).forEach(function (k) { if (playable(k)) pool.push({ id: k, w: w[k] }); });
     var kind = "tricky";
@@ -1056,6 +1056,13 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   }
   function nextDay(t) { return new Date(t).toLocaleDateString("en-NZ", { weekday: "long" }); }
   function lockCheck() {
+    if (!STRENGTH && K.isBlocked && K.isBlocked(LESSON_ID)) {
+      var t0 = $("m-done"); t0.hidden = false; t0.classList.add("lock-tag");
+      t0.textContent = "🔒 A grown-up has locked this one. Try a harder lesson!";
+      ["go-practice", "go-quiz"].forEach(function (k) { $(k).disabled = true; $(k).classList.add("off"); });
+      $("parts").querySelectorAll("button").forEach(function (b) { b.disabled = true; b.classList.add("off"); });
+      return true;
+    }
     var until = BASICS && K.lockedUntil ? K.lockedUntil(LESSON_ID) : 0;
     if (!until) return false;
     var tag = $("m-done"); tag.hidden = false; tag.classList.add("lock-tag");
