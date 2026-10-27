@@ -1151,7 +1151,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function tilePad(c) {
     var built = [], words = Q.joiner === " ", need = Q.need || String(Q.answer).length;
     var pad = document.createElement("div"); pad.className = "tpad";
-    pad.innerHTML = '<div class="tp-show' + (words ? " words" : "") + '"></div><div class="tp-tiles' + (words ? " words" : "") + '"></div><div class="tp-ctl"><button type="button" class="tp-del">⌫ Undo</button><button type="button" class="tp-ok">✓ Check</button></div>';
+    pad.innerHTML = '<div class="tp-show' + (words ? " words" : Q.pieces ? " chunks" : "") + '"></div><div class="tp-tiles' + (words ? " words" : "") + '"></div><div class="tp-ctl"><button type="button" class="tp-del">⌫ Undo</button><button type="button" class="tp-ok">✓ Check</button></div>';
     var showEl = pad.querySelector(".tp-show"), box = pad.querySelector(".tp-tiles"), btns = [];
     function draw() {
       showEl.innerHTML = "";

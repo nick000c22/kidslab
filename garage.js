@@ -16,8 +16,10 @@
     { id: "buggy",   name: "Beach Buggy",   need: 3 },
     { id: "rally",   name: "Rally Car",     need: 7 },
     { id: "monster", name: "Monster Truck", need: 12 },
-    { id: "racer",   name: "Race Car",      need: 18 },
-    { id: "rocket",  name: "Rocket Car",    need: 24 }
+    { id: "racer",   name: "Race Car",      need: 17 },
+    { id: "storm",   name: "Storm GT",      need: 22 },   // low, sharp wedge supercar
+    { id: "rosso",   name: "Rosso GT",      need: 28 },   // sleek Italian-style GT
+    { id: "rocket",  name: "Rocket Car",    need: 36 }
   ];
   var UPS = [
     { id: "eng",   name: "Engine", icon: "⚙️", what: "Faster top speed", color: "berry" },
@@ -101,36 +103,53 @@
     var paint = byId(PAINTS, c.paint).c, st = byId(STICKERS, c.sticker).e, up = c.up, out = paint === "#F4F4F6" ? "#C9CCD6" : "rgba(0,0,0,.28)";
     var pipes = 1 + Math.floor(up.eng / 2), body = "", wheels = "", sx = 120, sy = 80, ss = 22, extra = "", driver = "", inWindow = false;
     var spoiler = up.turbo >= 1 ? '<path d="M12 ' + (opts.spY || 58) + ' l' + (14 + up.turbo * 3) + ' 0 l-3 7 l-' + (8 + up.turbo * 3) + ' 0 z" fill="#2B2B36"/><rect x="18" y="' + ((opts.spY || 58) + 6) + '" width="4" height="10" fill="#2B2B36"/>' : "";
-    if (tier === 0) { // go-kart
+    var kind = (CARS[tier] || CARS[0]).id;
+    if (kind === "kart") { // go-kart
       body = '<path d="M22 100 L30 88 L200 88 Q214 90 216 100 Z" fill="' + paint + '" stroke="' + out + '" stroke-width="2"/>' +
         '<path d="M150 88 L162 64" stroke="#2B2B36" stroke-width="5" stroke-linecap="round"/><ellipse cx="164" cy="62" rx="10" ry="4" fill="#2B2B36"/>';
       wheels = wheel(56, 100, 19, up.tyre) + wheel(186, 104, 14, up.tyre); sx = 140; sy = 95; ss = 14; inWindow = true;
       driver = '<rect x="72" y="56" width="16" height="34" rx="6" fill="#2B2B36"/>' + teddy(104, 64, 1, F, null) + '<path d="M88 86 L120 86" stroke="#2B2B36" stroke-width="8" stroke-linecap="round"/>';
       spoiler = up.turbo >= 1 ? '<path d="M14 70 l26 0 l-2 6 l-22 0 z" fill="#2B2B36"/><rect x="24" y="74" width="4" height="16" fill="#2B2B36"/>' : "";
-    } else if (tier === 1) { // beach buggy
+    } else if (kind === "buggy") { // beach buggy
       body = '<path d="M20 98 Q24 74 60 72 L180 72 Q214 74 222 98 Z" fill="' + paint + '" stroke="' + out + '" stroke-width="2"/>' +
         '<path d="M80 72 L96 36 L158 36 L176 72" fill="none" stroke="#3A3A46" stroke-width="6" stroke-linejoin="round"/><path d="M128 36 L128 72" stroke="#3A3A46" stroke-width="4"/>';
       wheels = wheel(60, 100, 23, up.tyre) + wheel(188, 100, 23, up.tyre); driver = teddy(108, 58, .95, F, null); sx = 150; sy = 86; ss = 18;
-    } else if (tier === 2) { // rally car
+    } else if (kind === "rally") { // rally car
       body = '<path d="M16 98 L16 72 Q18 62 34 60 L62 38 Q68 33 80 33 L132 33 Q142 33 150 40 L174 60 L206 64 Q222 68 224 82 L224 98 Z" fill="' + paint + '" stroke="' + out + '" stroke-width="2"/>' +
         '<path d="M68 58 L84 40 L104 40 L104 58 Z M112 40 L132 40 Q138 40 142 44 L158 58 L112 58 Z" fill="#BFE6FF" stroke="#2B2B36" stroke-width="2"/>' +
         '<rect x="196" y="72" width="22" height="7" rx="3" fill="#FFE27A"/>';
       wheels = wheel(62, 100, 20, up.tyre) + wheel(184, 100, 20, up.tyre); driver = teddy(128, 51, .62, F, null); sx = 104; sy = 79; ss = 20;
       extra = '<clipPath id="rwin' + (opts.uid || "") + '"><path d="M112 40 L132 40 Q138 40 142 44 L158 58 L112 58 Z"/></clipPath>';
       driver = '<g clip-path="url(#rwin' + (opts.uid || "") + ')">' + driver + "</g>"; inWindow = true;
-    } else if (tier === 3) { // monster truck
+    } else if (kind === "monster") { // monster truck
       body = '<path d="M18 84 L18 54 L104 54 L114 30 L160 30 L178 54 L218 58 Q228 62 228 72 L228 84 Z" fill="' + paint + '" stroke="' + out + '" stroke-width="2"/>' +
         '<path d="M120 36 L156 36 L170 54 L120 54 Z" fill="#BFE6FF" stroke="#2B2B36" stroke-width="2"/>' +
         '<path d="M58 84 L58 96 M186 84 L186 96" stroke="#555" stroke-width="7"/><path d="M48 86 L70 86 M176 86 L198 86" stroke="#888" stroke-width="3" stroke-dasharray="3 3"/>';
       wheels = wheel(60, 98, 30, up.tyre) + wheel(186, 98, 30, up.tyre); driver = '<g clip-path="url(#mwin' + (opts.uid || "") + ')">' + teddy(140, 50, .6, F, null) + "</g>"; sx = 122; sy = 70; ss = 22;
       extra = '<clipPath id="mwin' + (opts.uid || "") + '"><path d="M120 36 L156 36 L170 54 L120 54 Z"/></clipPath>'; inWindow = true;
       spoiler = up.turbo >= 1 ? '<path d="M10 44 l' + (16 + up.turbo * 3) + ' 0 l-3 6 l-' + (10 + up.turbo * 3) + ' 0 z" fill="#2B2B36"/><rect x="16" y="48" width="4" height="8" fill="#2B2B36"/>' : "";
-    } else if (tier === 4) { // race car
+    } else if (kind === "racer") { // race car
       body = '<path d="M14 96 L14 80 L58 76 Q74 62 96 62 L120 64 Q132 74 150 78 L228 88 L228 96 Z" fill="' + paint + '" stroke="' + out + '" stroke-width="2"/>' +
         '<rect x="206" y="94" width="30" height="7" rx="2" fill="#2B2B36"/><rect x="4" y="44" width="40" height="9" rx="2" fill="#2B2B36"/><rect x="20" y="52" width="6" height="26" fill="#2B2B36"/>' +
         '<path d="M150 78 L196 84" stroke="#fff" stroke-width="3" opacity=".6"/>';
       wheels = wheel(54, 98, 18, up.tyre) + wheel(192, 98, 18, up.tyre); driver = teddy(100, 58, .8, F, byId(PAINTS, c.paint === "white" ? "black" : "white").c); sx = 160; sy = 86; ss = 14;
       spoiler = "";
+    } else if (kind === "storm") { // wedge supercar
+      body = '<path d="M8 96 L8 84 L44 78 L98 58 L140 54 L200 72 L234 82 L234 96 Z" fill="' + paint + '" stroke="' + out + '" stroke-width="2"/>' +
+        '<path d="M102 62 L138 57 L156 68 L106 70 Z" fill="#BFE6FF" stroke="#2B2B36" stroke-width="2"/>' +
+        '<path d="M156 80 L184 77 L176 91 L156 91 Z" fill="#2B2B36" opacity=".8"/><path d="M60 84 L96 82" stroke="#2B2B36" stroke-width="3" opacity=".5"/>' +
+        '<path d="M212 80 L232 85" stroke="#FFF6C9" stroke-width="4" stroke-linecap="round"/><rect x="0" y="58" width="44" height="7" rx="2" fill="#2B2B36"/><rect x="16" y="64" width="6" height="16" fill="#2B2B36"/>';
+      wheels = wheel(56, 98, 19, up.tyre) + wheel(196, 98, 19, up.tyre); sx = 118; sy = 84; ss = 15; inWindow = true; spoiler = "";
+      extra = '<clipPath id="swin' + (opts.uid || "") + '"><path d="M102 62 L138 57 L156 68 L106 70 Z"/></clipPath>';
+      driver = '<g clip-path="url(#swin' + (opts.uid || "") + ')">' + teddy(126, 68, .62, F, null) + "</g>";
+    } else if (kind === "rosso") { // curvy Italian-style GT
+      body = '<path d="M8 96 Q6 80 26 77 L66 72 Q96 50 136 50 Q164 52 182 68 L218 76 Q236 80 234 96 Z" fill="' + paint + '" stroke="' + out + '" stroke-width="2"/>' +
+        '<path d="M90 68 Q104 55 132 55 Q150 57 162 69 Z" fill="#BFE6FF" stroke="#2B2B36" stroke-width="2"/>' +
+        '<path d="M106 82 Q128 76 152 82 Q130 88 108 88 Z" fill="#2B2B36" opacity=".75"/><circle cx="14" cy="84" r="4" fill="#FF6B6B"/><circle cx="24" cy="84" r="4" fill="#FF6B6B"/>' +
+        '<path d="M214 80 Q224 80 230 86" stroke="#FFF6C9" stroke-width="4" fill="none" stroke-linecap="round"/>';
+      wheels = wheel(54, 98, 19, up.tyre) + wheel(194, 98, 19, up.tyre); sx = 186; sy = 84; ss = 14; inWindow = true; spoiler = "";
+      extra = '<clipPath id="gwin' + (opts.uid || "") + '"><path d="M90 68 Q104 55 132 55 Q150 57 162 69 Z"/></clipPath>';
+      driver = '<g clip-path="url(#gwin' + (opts.uid || "") + ')">' + teddy(128, 68, .66, F, null) + "</g>";
     } else { // rocket car
       body = '<path d="M14 92 Q18 70 70 66 L150 60 Q196 58 226 76 Q236 84 226 92 Z" fill="' + paint + '" stroke="' + out + '" stroke-width="2"/>' +
         '<path d="M36 68 L22 40 L52 66 Z" fill="#2B2B36"/><rect x="0" y="72" width="18" height="16" rx="4" fill="#6B7280"/>' +
@@ -141,12 +160,12 @@
     }
     // Exhaust pipes (engine) and boost flame (turbo), at the back.
     var exh = "";
-    if (tier !== 5) for (var i = 0; i < pipes; i++) exh += '<rect x="' + (tier === 0 ? 14 : 6) + '" y="' + (90 - i * 6) + '" width="14" height="4" rx="2" fill="#8C8F99"/>';
+    if (kind !== "rocket") for (var i = 0; i < pipes; i++) exh += '<rect x="' + (kind === "kart" ? 14 : 6) + '" y="' + (90 - i * 6) + '" width="14" height="4" rx="2" fill="#8C8F99"/>';
     var flame = '<g class="boost-flame"><path d="M8 88 Q-30 86 8 80 Z" fill="#FF7A1A"/><path d="M8 86 Q-14 84 8 82 Z" fill="#FFE066"/></g>';
     var sticker = st ? '<text x="' + sx + '" y="' + sy + '" font-size="' + ss + '" text-anchor="middle" dominant-baseline="middle">' + st + "</text>" : "";
     return '<svg class="car-svg' + (opts.cls ? " " + opts.cls : "") + '" viewBox="-30 20 270 112" aria-hidden="true">' +
       '<defs><linearGradient id="rbw" x1="0" x2="1"><stop offset="0" stop-color="#FF5E5E"/><stop offset=".25" stop-color="#FFC94D"/><stop offset=".5" stop-color="#5ED17A"/><stop offset=".75" stop-color="#4DA6FF"/><stop offset="1" stop-color="#A66BFF"/></linearGradient>' + extra + "</defs>" +
-      '<ellipse cx="120" cy="' + (tier === 3 ? 128 : 120) + '" rx="110" ry="6" fill="rgba(0,0,0,.12)"/>' +
+      '<ellipse cx="120" cy="' + (kind === "monster" ? 128 : 120) + '" rx="110" ry="6" fill="rgba(0,0,0,.12)"/>' +
       flame + exh + spoiler + (inWindow ? body + driver : driver + body) + sticker + wheels + "</svg>";
   }
 

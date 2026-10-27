@@ -51,6 +51,7 @@ window.makeEnglishLessons = function (H) {
       ".tp-show.words { font-size: clamp(1.4rem, 4vw, 2rem); }",
       ".tp-show .gap { width: 46px; height: 58px; border-bottom: 5px solid var(--rim); }",
       ".tp-show.words .gap { width: 70px; height: 40px; }",
+      ".tp-show.chunks .gap { width: 90px; }",
       ".tp-show.empty { color: var(--muted); font-size: 1.3rem; font-family: var(--body); }",
       ".tp-tiles { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }",
       ".tp-tiles button { border: 0; border-radius: 16px; min-width: 70px; min-height: 74px; padding: 0 14px; background: var(--grape); color: #fff; font-size: 2.3rem; font-weight: 700; box-shadow: 0 6px 0 color-mix(in srgb, var(--grape) 60%, #000); cursor: pointer; }",
@@ -526,6 +527,219 @@ window.makeEnglishLessons = function (H) {
       hint: "Which word has the capital letter? Start with that one.", explain: s });
   }
 
+  /* ================= MORE LESSONS: blends, sounds, words, spelling, sentences ================= */
+  // Blends: two letters at the start that you say together. [blend, word, picture]
+  var SBL = [["sn", "snake", "🐍"], ["sn", "snail", "🐌"], ["sn", "snowman", "⛄"], ["sn", "sneeze", "🤧"], ["sl", "sled", "🛷"], ["sl", "sloth", "🦥"], ["sl", "slipper", "🥿"],
+    ["sp", "spider", "🕷️"], ["sp", "spoon", "🥄"], ["sp", "spaghetti", "🍝"], ["st", "star", "⭐"], ["st", "stop sign", "🛑"], ["sw", "swan", "🦢"], ["sw", "swim", "🏊"], ["sw", "sweets", "🍬"],
+    ["sm", "smile", "😊"], ["sm", "smoke", "💨"], ["sk", "skate", "⛸️"], ["sk", "skunk", "🦨"], ["sk", "skull", "💀"], ["sc", "scarf", "🧣"], ["sc", "scooter", "🛴"]];
+  var LBL = [["bl", "blue", "🔵"], ["bl", "blueberries", "🫐"], ["cl", "clock", "🕰️"], ["cl", "cloud", "☁️"], ["cl", "clown", "🤡"], ["cl", "clap", "👏"], ["fl", "flag", "🚩"], ["fl", "flower", "🌸"],
+    ["fl", "fly", "🪰"], ["fl", "flamingo", "🦩"], ["gl", "glasses", "👓"], ["gl", "glove", "🧤"], ["gl", "globe", "🌍"], ["pl", "plane", "✈️"], ["pl", "plate", "🍽️"], ["pl", "plant", "🪴"], ["pl", "plug", "🔌"],
+    ["sl", "sled", "🛷"], ["sl", "sloth", "🦥"]];
+  var RBL = [["br", "bread", "🍞"], ["br", "brush", "🖌️"], ["br", "broccoli", "🥦"], ["br", "bridge", "🌉"], ["cr", "crab", "🦀"], ["cr", "crown", "👑"], ["cr", "crocodile", "🐊"], ["cr", "crayon", "🖍️"],
+    ["dr", "drum", "🥁"], ["dr", "dragon", "🐉"], ["dr", "dress", "👗"], ["dr", "drop", "💧"], ["fr", "frog", "🐸"], ["fr", "fries", "🍟"], ["gr", "grapes", "🍇"], ["gr", "grandma", "👵"],
+    ["pr", "present", "🎁"], ["pr", "prince", "🤴"], ["pr", "pretzel", "🥨"], ["tr", "train", "🚂"], ["tr", "tree", "🌳"], ["tr", "truck", "🚚"], ["tr", "tractor", "🚜"]];
+  var SAME_SOUND = { sc: "sk", sk: "sc" };
+  function blendQ(bank, quiz) {
+    var x = pick(bank), sets = bank.map(function (b) { return b[0]; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+    var avoid = [x[0], SAME_SOUND[x[0]]];
+    if (quiz && Math.random() < .35) {
+      // Blend → which picture starts with it
+      var pics = [x].concat(shuffle(bank.filter(function (b) { return avoid.indexOf(b[0]) === -1; })).slice(0, 3));
+      var lab = function (p) { return p[2] + " " + p[1]; };
+      return Q({ prompt: "Which one starts with " + x[0] + "?", visual: '<div class="en-word">' + x[0] + "</div>", speak: "Which one starts with " + x[0].split("").join(" ") + "?",
+        answer: lab(x), choices: shuffle(pics.map(lab)), explain: x[1] + " starts with " + x[0] + ". " + x[0] + ", " + x[1] + "!" });
+    }
+    var opts = [x[0], x[0][0]].concat(others(x[0], sets.filter(function (s) { return avoid.indexOf(s) === -1; }), 2));
+    return Q({ prompt: "How does " + x[1] + " start?", visual: '<div class="en-row"><span class="en-pic">' + x[2] + "</span>" + hear(x[1]) + "</div>",
+      speak: x[1] + ". How does " + x[1] + " start?", answer: x[0], choices: shuffle(opts), cls: "en big",
+      hint: "Say it slowly. Listen for two sounds at the start.",
+      explain: x[1] + " starts with " + x[0] + ", not just " + x[0][0] + ". Say both: " + x[0].split("").join("-") + ", " + x[1] + "." });
+  }
+  // Build a word from a blend and its ending: sn + ail = snail
+  var BUILD = [["sn", "ail", "🐌"], ["sn", "ake", "🐍"], ["sp", "oon", "🥄"], ["st", "ar", "⭐"], ["sw", "an", "🦢"], ["sm", "ile", "😊"], ["sk", "unk", "🦨"], ["sl", "ed", "🛷"],
+    ["fl", "ag", "🚩"], ["cl", "ock", "🕰️"], ["cl", "own", "🤡"], ["gl", "ove", "🧤"], ["pl", "ane", "✈️"], ["pl", "ug", "🔌"], ["cr", "ab", "🦀"], ["cr", "own", "👑"],
+    ["dr", "um", "🥁"], ["dr", "ess", "👗"], ["fr", "og", "🐸"], ["gr", "apes", "🍇"], ["tr", "ain", "🚂"], ["tr", "ee", "🌳"], ["tr", "uck", "🚚"], ["br", "ush", "🖌️"], ["br", "ead", "🍞"]];
+  function blendBuild() {
+    var x = pick(BUILD), word = x[0] + x[1], ons = BUILD.map(function (b) { return b[0]; }).filter(function (v, i, a) { return a.indexOf(v) === i && v !== x[0]; });
+    var rimes = BUILD.map(function (b) { return b[1]; }).filter(function (v) { return v !== x[1]; });
+    return Q({ prompt: "Build the word", visual: '<div class="en-row"><span class="en-pic">' + x[2] + "</span>" + hear(word) + "</div>", speak: "Build the word " + word + ". " + x[0].split("").join(" ") + ", " + x[1] + ".",
+      input: "tiles", tiles: shuffle([x[0], x[1]].concat(shuffle(ons).slice(0, 2), shuffle(rimes).slice(0, 1))), need: 2, joiner: "", pieces: [x[0], x[1]], answer: word, cls: "en",
+      hint: "First the blend at the start, then the end.", explain: x[0] + " + " + x[1] + " = " + word + "!" });
+  }
+  // Words with blends to read and spell (frog, crab, tent, hand...)
+  var BLENDWORDS = [["frog", "🐸"], ["crab", "🦀"], ["drum", "🥁"], ["flag", "🚩"], ["swim", "🏊"], ["stop", "🛑"], ["sled", "🛷"], ["clap", "👏"], ["plug", "🔌"], ["tent", "⛺"],
+    ["hand", "✋"], ["milk", "🥛"], ["lamp", "💡"], ["gift", "🎁"], ["duck", "🦆"], ["sock", "🧦"], ["fish", "🐟"], ["ship", "🚢"], ["chick", "🐥"], ["mask", "🎭"], ["bell", "🔔"], ["snap", "🫰"]];
+  function blendRead(quiz) {
+    var w = pick(BLENDWORDS), pool = BLENDWORDS.map(function (b) { return b[0]; });
+    var near = pool.filter(function (x) { return x !== w[0] && (x[0] === w[0][0] || x.slice(-1) === w[0].slice(-1) || x[1] === w[0][1]); });
+    var wrong = others(w[0], near, 3); if (wrong.length < 3) wrong = wrong.concat(others(w[0], pool.filter(function (x) { return wrong.indexOf(x) === -1; }), 3 - wrong.length));
+    if (!quiz || Math.random() < .6) return Q({ prompt: "Which word is this?", visual: '<div class="en-pic">' + w[1] + "</div>", speak: "Which word matches the picture?",
+      answer: w[0], choices: shuffle([w[0]].concat(wrong)), cls: "en", explain: "It's " + w[0] + ". " + w[0].split("").join(", ") + ", " + w[0] + "!" });
+    var pics = [w].concat(BLENDWORDS.filter(function (b) { return wrong.indexOf(b[0]) !== -1; }));
+    return Q({ prompt: "Read the word. Tap the picture.", visual: '<div class="en-word">' + w[0] + "</div>", speak: "Read the word, then tap the picture.",
+      answer: w[1], choices: shuffle(pics.map(function (p) { return p[1]; })), cls: "en big", explain: "It says " + w[0] + ". " + w[1] });
+  }
+  function spellBlend() {
+    var w = pick(BLENDWORDS);
+    return Q({ prompt: "Spell the word", visual: '<div class="en-row"><span class="en-pic">' + w[1] + "</span>" + hear(w[0]) + "</div>", speak: "Spell " + w[0] + ".",
+      input: "tiles", tiles: letterTiles(w[0], 3), need: w[0].length, joiner: "", answer: w[0], cls: "en",
+      hint: "Say it slowly: " + w[0].split("").join(", ") + ".", explain: w[0].split("").join(", ") + " spells " + w[0] + "." });
+  }
+  // Last letter and middle sound of short words
+  function lastLetter() {
+    var w = pick(CVC.concat(BLENDWORDS.filter(function (b) { return !/ck$|sh$|ll$/.test(b[0]); }))), L = w[0].slice(-1).toUpperCase();
+    return Q({ prompt: "What letter does " + w[0] + " end with?", visual: '<div class="en-row"><span class="en-pic">' + w[1] + "</span>" + hear(w[0]) + "</div>",
+      speak: w[0] + ". What letter does " + w[0] + " end with?", answer: L.toLowerCase(), choices: letterChoices(L, "BDGKLMNPSTX".split("").concat([L]), true), cls: "en big",
+      hint: "Listen to the very end of the word.", explain: w[0] + " ends with " + L.toLowerCase() + ". " + w[0].split("").join(", ") + "." });
+  }
+  function middleSound() {
+    var w = pick(CVC), v = w[0][1];
+    return Q({ prompt: "What is the middle sound in " + w[0] + "?", visual: '<div class="en-row"><span class="en-pic">' + w[1] + "</span>" + hear(w[0]) + "</div>",
+      speak: w[0] + ". What letter is in the middle of " + w[0] + "?", answer: v, choices: shuffle([v].concat(others(v, ["a", "e", "i", "o", "u"], 3))), cls: "en big",
+      hint: "The middle of a short word is usually a, e, i, o or u.", explain: w[0][0] + ", " + v + ", " + w[0][2] + ". The middle is " + v + "." });
+  }
+  // Clap the syllables
+  var SYL = [["cat", 1, "🐱"], ["dog", 1, "🐶"], ["sun", 1, "☀️"], ["fish", 1, "🐟"], ["tree", 1, "🌳"], ["monkey", 2, "🐵"], ["rabbit", 2, "🐰"], ["pizza", 2, "🍕"], ["rocket", 2, "🚀"],
+    ["tiger", 2, "🐯"], ["apple", 2, "🍎"], ["teddy", 2, "🧸"], ["banana", 3, "🍌"], ["elephant", 3, "🐘"], ["butterfly", 3, "🦋"], ["dinosaur", 3, "🦕"], ["kangaroo", 3, "🦘"],
+    ["octopus", 3, "🐙"], ["caterpillar", 4, "🐛"], ["watermelon", 4, "🍉"], ["helicopter", 4, "🚁"], ["alligator", 4, "🐊"]];
+  function syllables() {
+    var x = pick(SYL), lab = function (n) { return new Array(n + 1).join("👏") + " " + n; };
+    var parts = { monkey: "mon-key", rabbit: "rab-bit", pizza: "piz-za", rocket: "rock-et", tiger: "ti-ger", apple: "ap-ple", teddy: "ted-dy", banana: "ba-na-na", elephant: "el-e-phant",
+      butterfly: "but-ter-fly", dinosaur: "di-no-saur", kangaroo: "kan-ga-roo", octopus: "oc-to-pus", caterpillar: "cat-er-pil-lar", watermelon: "wa-ter-mel-on", helicopter: "hel-i-cop-ter", alligator: "al-li-ga-tor" };
+    return Q({ prompt: "Clap it! How many claps in " + x[0] + "?", visual: '<div class="en-row"><span class="en-pic">' + x[2] + "</span>" + hear(x[0]) + "</div>",
+      speak: x[0] + ". Clap it out. How many claps in " + x[0] + "?", answer: lab(x[1]), choices: [1, 2, 3, 4].map(lab), cls: "en",
+      explain: (parts[x[0]] || x[0]) + ". That's " + x[1] + (x[1] === 1 ? " clap." : " claps.") });
+  }
+  // Magic e: kit → kite
+  var MAGIC = [["kit", "kite", "🪁"], ["cap", "cape", "🦸"], ["cub", "cube", "🧊"], ["pin", "pine", "🌲"], ["plan", "plane", "✈️"], ["not", "note", "🎵"], ["cut", "cute", "🥰"],
+    ["hop", "hope", "🤞"], ["tap", "tape", "📼"], ["bit", "bite", "😬"], ["rob", "robe", "🥋"], ["man", "mane", "🦁"], ["can", "cane", "🦯"]];
+  var MAGIC_PIC = [["cake", "🎂"], ["bike", "🚲"], ["bone", "🦴"], ["cone", "🍦"], ["rose", "🌹"], ["five", "5️⃣"], ["nine", "9️⃣"], ["kite", "🪁"], ["plane", "✈️"], ["cube", "🧊"], ["smile", "😊"], ["snake", "🐍"]];
+  function magicE(quiz) {
+    if (!quiz || Math.random() < .5) {
+      var x = pick(MAGIC), y = pick(MAGIC.filter(function (m) { return m !== x; }));
+      return Q({ prompt: "Add a magic e to " + x[0] + ". What does it say now?", visual: '<div class="en-row"><span class="en-word">' + x[0] + '</span><span class="en-word" style="color:var(--muted)">+ e ➜</span><span class="en-word">' + x[0] + '<span style="color:var(--berry)">e</span></span></div>',
+        speak: "Add a magic e to " + x[0] + ". What does it say now?", answer: x[1], choices: shuffle([x[1], x[0], y[1], y[0]]), cls: "en",
+        explain: "The magic e makes the vowel say its name. " + x[0] + " becomes " + x[1] + " " + x[2] });
+    }
+    var w = pick(MAGIC_PIC), short = w[0].replace(/e$/, ""), z = pick(MAGIC_PIC.filter(function (m) { return m !== w; }));
+    return Q({ prompt: "Which word is this?", visual: '<div class="en-pic">' + w[1] + "</div>", speak: "Which word matches the picture?",
+      answer: w[0], choices: shuffle([w[0], short, z[0], z[0].replace(/e$/, "")].filter(function (v, i, a) { return a.indexOf(v) === i; })), cls: "en", explain: "It's " + w[0] + ". The e at the end is magic: it's quiet, but it makes the vowel say its name." });
+  }
+  // Vowel teams: ee, oa, ai, oo, ar, igh
+  var TEAMS = [["tree", "🌳", ["trea", "trie", "tre"]], ["boat", "⛵", ["bote", "bowt", "boet"]], ["rain", "🌧️", ["rane", "rayn", "rian"]], ["moon", "🌙", ["mune", "mon", "moun"]],
+    ["train", "🚂", ["trane", "trian", "trayn"]], ["sheep", "🐑", ["sheap", "shep", "sheip"]], ["goat", "🐐", ["gote", "gowt", "goet"]], ["star", "⭐", ["starr", "stor", "stahr"]],
+    ["car", "🚗", ["kar", "carr", "cor"]], ["book", "📖", ["buk", "boock", "bok"]], ["light", "💡", ["lite", "lyt", "ligt"]], ["night", "🌃", ["nite", "nyte", "niht"]],
+    ["snail", "🐌", ["snale", "snayl", "snal"]], ["bee", "🐝", ["bea", "bey", "be"]], ["coat", "🧥", ["cote", "kote", "coet"]], ["spoon", "🥄", ["spune", "spon", "spoun"]],
+    ["feet", "🦶", ["fete", "fet", "fiet"]], ["shark", "🦈", ["sharc", "shak", "shork"]]];
+  function vowelTeam() {
+    var x = pick(TEAMS);
+    return Q({ prompt: "Which one is spelt the right way?", visual: '<div class="en-row"><span class="en-pic">' + x[1] + "</span>" + hear(x[0]) + "</div>", speak: x[0] + ". Which one is spelt the right way?",
+      answer: x[0], choices: shuffle([x[0]].concat(x[2])), cls: "en", explain: x[0] + " is spelt " + x[0].split("").join(", ") + "." });
+  }
+  // Compound words: sun + flower = sunflower
+  var COMPOUND = [["sun", "flower", "🌻"], ["rain", "bow", "🌈"], ["foot", "ball", "⚽"], ["cup", "cake", "🧁"], ["butter", "fly", "🦋"], ["snow", "man", "⛄"], ["pop", "corn", "🍿"],
+    ["pan", "cake", "🥞"], ["cow", "boy", "🤠"], ["sun", "glasses", "🕶️"], ["lady", "bird", "🐞"], ["straw", "berry", "🍓"], ["snow", "flake", "❄️"], ["tea", "pot", "🫖"],
+    ["water", "melon", "🍉"], ["earth", "worm", "🪱"], ["sail", "boat", "⛵"], ["hot", "dog", "🌭"], ["pine", "apple", "🍍"], ["rain", "drop", "💧"], ["foot", "print", "👣"]];
+  function compound(quiz) {
+    var x = pick(COMPOUND), word = x[0] + x[1];
+    if (quiz && Math.random() < .5) {
+      var parts = COMPOUND.map(function (c) { return c[0]; }).concat(COMPOUND.map(function (c) { return c[1]; })).filter(function (v) { return v !== x[0] && v !== x[1]; });
+      return Q({ prompt: "Make the word from two little words", visual: '<div class="en-row"><span class="en-pic">' + x[2] + "</span>" + hear(word) + "</div>", speak: "Make the word " + word + " from two little words.",
+        input: "tiles", tiles: shuffle([x[0], x[1]].concat(shuffle(parts).slice(0, 3))), need: 2, joiner: "", pieces: [x[0], x[1]], answer: word, cls: "en",
+        hint: "Say it slowly. What's the first little word?", explain: x[0] + " + " + x[1] + " = " + word + " " + x[2] });
+    }
+    var y = shuffle(COMPOUND.filter(function (c) { return c !== x; })).slice(0, 3);
+    return Q({ prompt: x[0] + " + " + x[1] + " = ?", visual: '<div class="en-row"><span class="en-word">' + x[0] + '</span><span class="en-word" style="color:var(--muted)">+</span><span class="en-word">' + x[1] + "</span></div>",
+      speak: x[0] + " and " + x[1] + ". Put them together. What do you get?", answer: x[2] + " " + word, choices: shuffle([x].concat(y).map(function (c) { return c[2] + " " + c[0] + c[1]; })),
+      explain: x[0] + " + " + x[1] + " = " + word + "!" });
+  }
+  // Contractions: do not → don't
+  var SHORTEN = [["do not", "don't", ["dont'", "do'nt", "dn't"]], ["I am", "I'm", ["Im'", "I'am", "Ia'm"]], ["can not", "can't", ["cant'", "ca'nt", "cn't"]], ["it is", "it's", ["its'", "i'ts", "itis'"]],
+    ["we are", "we're", ["wer'e", "we'are", "were'"]], ["you are", "you're", ["your'e", "yo'ure", "youre'"]], ["is not", "isn't", ["is'nt", "isnt'", "i'snt"]], ["I will", "I'll", ["Il'l", "I'wll", "Ill'"]],
+    ["they are", "they're", ["the'yre", "theyr'e", "theyre'"]], ["he is", "he's", ["hes'", "h'es", "he'is"]], ["did not", "didn't", ["did'nt", "didnt'", "di'dnt"]], ["let us", "let's", ["lets'", "le'ts", "let'us"]]];
+  function contraction(quiz) {
+    var x = pick(SHORTEN);
+    if (quiz && Math.random() < .4) {
+      var y = shuffle(SHORTEN.filter(function (s) { return s !== x; })).slice(0, 3);
+      return Q({ prompt: "What is " + x[1] + " short for?", visual: '<div class="en-word">' + x[1] + "</div>", speak: "What is " + x[1] + " short for?", answer: x[0],
+        choices: shuffle([x].concat(y).map(function (s) { return s[0]; })), cls: "en", explain: x[1] + " is short for " + x[0] + "." });
+    }
+    return Q({ prompt: "Make it shorter: " + x[0], visual: '<div class="en-word">' + x[0] + "</div>", speak: "How do you write " + x[0] + " the short way?", answer: x[1],
+      choices: shuffle([x[1]].concat(x[2])), cls: "en", explain: x[0] + " becomes " + x[1] + ". The ' goes where the letters are missing." });
+  }
+  // Homophones: same sound, different spelling
+  var HOMO = [["I have ___ dogs.", "two", ["two", "to", "too"]], ["Can I come ___?", "too", ["too", "two", "to"]], ["We went ___ the park.", "to", ["to", "two", "too"]],
+    ["Look over ___!", "there", ["there", "their", "they're"]], ["They washed ___ hands.", "their", ["their", "there", "they're"]], ["I can ___ a bird.", "see", ["see", "sea"]],
+    ["Fish swim in the ___.", "sea", ["sea", "see"]], ["A ___ makes honey.", "bee", ["bee", "be"]], ["I will ___ home soon.", "be", ["be", "bee"]], ["The cat has ___ legs.", "four", ["four", "for"]],
+    ["This cake is ___ you.", "for", ["for", "four"]], ["Please ___ your name.", "write", ["write", "right"]], ["Turn ___ at the shop.", "right", ["right", "write"]],
+    ["The wind ___ hard.", "blew", ["blew", "blue"]], ["The sky is ___.", "blue", ["blue", "blew"]], ["I ___ the race!", "won", ["won", "one"]], ["I have ___ nose.", "one", ["one", "won"]],
+    ["Can you ___ the bell?", "hear", ["hear", "here"]], ["Come over ___.", "here", ["here", "hear"]], ["I ___ a new book.", "read", ["read", "red"]]];
+  // Pairs get a third, made-up spelling so it isn't a coin flip.
+  var HOMO_EXTRA = { see: "sie", sea: "sie", bee: "bea", be: "bea", four: "fower", for: "fower", write: "wrigt", right: "wrigt", blew: "bloo", blue: "bloo", won: "wun", one: "wun", hear: "heer", here: "heer", read: "redd" };
+  function homophone() {
+    var x = pick(HOMO);
+    if (x[2].length < 3) x = [x[0], x[1], x[2].concat([HOMO_EXTRA[x[1]] || x[1] + "e"])];
+    return Q({ prompt: "Which word fits?", visual: '<p class="en-sent">' + x[0].replace("___", "<u>&nbsp;?&nbsp;</u>") + "</p>", speak: x[0].replace("___", "blank") + " These words sound the same. Which one fits?",
+      answer: x[1], choices: shuffle(x[2]), cls: "en", explain: x[0].replace("___", x[1]) + " These words sound the same but mean different things." });
+  }
+  // Question words
+  var QW = [["___ is your name?", "What"], ["___ do you live?", "Where"], ["___ is at the door?", "Who"], ["___ is your birthday?", "When"], ["___ are you sad?", "Why"], ["___ old are you?", "How"],
+    ["___ did you put my hat?", "Where"], ["___ made this cake?", "Who"], ["___ does school start?", "When"], ["___ colour is the sky?", "What"], ["___ many dogs do you have?", "How"], ["___ is the baby crying?", "Why"]];
+  function questionWord() {
+    var x = pick(QW);
+    return Q({ prompt: "Which question word fits?", visual: '<p class="en-sent">' + x[0].replace("___", "<u>&nbsp;?&nbsp;</u>") + "</p>", speak: x[0].replace("___", "blank") + " Which question word fits?",
+      answer: x[1], choices: shuffle([x[1]].concat(others(x[1], ["Who", "What", "Where", "When", "Why", "How"], 3))), cls: "en", explain: x[0].replace("___", x[1]) });
+  }
+  // un- and re-
+  var PREFIX = [["The opposite of happy is ___", "unhappy", "happy"], ["The opposite of kind is ___", "unkind", "kind"], ["The opposite of lock is ___", "unlock", "lock"],
+    ["The opposite of tie is ___", "untie", "tie"], ["The opposite of pack is ___", "unpack", "pack"], ["The opposite of fair is ___", "unfair", "fair"],
+    ["To do it again is to ___", "redo", "do"], ["To play it again is to ___", "replay", "play"], ["To fill it again is to ___", "refill", "fill"],
+    ["To read it again is to ___", "reread", "read"], ["To build it again is to ___", "rebuild", "build"], ["To paint it again is to ___", "repaint", "paint"]];
+  function prefix() {
+    var x = pick(PREFIX), b = x[2];
+    return Q({ prompt: x[0].replace("___", "..."), visual: '<p class="en-sent">' + x[0].replace("___", "<u>&nbsp;?&nbsp;</u>") + "</p>", speak: x[0].replace("___", "what?"),
+      answer: x[1], choices: shuffle(["un" + b, "re" + b, "dis" + b, b + "un"]), cls: "en",
+      explain: x[1].indexOf("un") === 0 ? "un at the start means not, or the opposite. " + x[1] + "." : "re at the start means again. " + x[1] + "." });
+  }
+  // Dictionary order
+  var DICT = ["apple", "ball", "cat", "dog", "egg", "fish", "goat", "hat", "igloo", "jam", "kite", "lion", "moon", "nest", "owl", "pig", "queen", "rain", "sun", "tree", "umbrella", "van", "web", "yak", "zoo",
+    "bat", "bed", "bus", "can", "cup", "sad", "sock", "star", "tent", "top", "map", "milk", "frog", "fox"];
+  function dictOrder(quiz) {
+    var set;
+    if (quiz && Math.random() < .35) {
+      var L = pick(["b", "c", "s", "t", "m", "f"]), same = DICT.filter(function (w) { return w[0] === L; });
+      set = shuffle(same).slice(0, 3);
+      if (set.length < 3) set = shuffle(DICT).slice(0, 4);
+    } else {
+      set = []; shuffle(DICT).forEach(function (w) { if (set.length < 4 && !set.some(function (s) { return s[0] === w[0]; })) set.push(w); });
+    }
+    var first = set.slice().sort()[0];
+    return Q({ prompt: "Which word comes first in ABC order?", visual: '<div class="en-pic">🔤</div>', speak: "Which word comes first in A B C order?",
+      answer: first, choices: shuffle(set), cls: "en", explain: "In ABC order: " + set.slice().sort().join(", ") + "." + (first[0] === set.slice().sort()[1][0] ? " They start the same, so look at the next letter." : "") });
+  }
+  // Little stories with short, sound-it-out words
+  var LITTLE = [
+    { t: "Sam the Cat", s: "Sam is a cat. Sam sat on a mat. A big dog ran in. Sam ran up a tree!", q: [
+      ["Who is Sam?", "a cat", ["a cat", "a dog", "a boy", "a pig"]], ["What did Sam sit on?", "a mat", ["a mat", "a log", "a bed", "a bus"]], ["Where did Sam run?", "up a tree", ["up a tree", "in a box", "to the shop", "in the mud"]]] },
+    { t: "The Red Hen", s: "A red hen had six eggs. The eggs sat in a nest. Pop! Six chicks got out.", q: [
+      ["What colour is the hen?", "red", ["red", "black", "pink", "green"]], ["How many eggs?", "six", ["six", "two", "ten", "one"]], ["What came out of the eggs?", "chicks", ["chicks", "frogs", "cats", "fish"]]] },
+    { t: "Big Pig", s: "The pig is big and pink. The pig got in the mud. Now the pig is not pink. It is brown!", q: [
+      ["What colour was the pig at the start?", "pink", ["pink", "brown", "red", "black"]], ["Where did the pig go?", "in the mud", ["in the mud", "in the bath", "up a hill", "on the bus"]], ["What colour is the pig now?", "brown", ["brown", "pink", "blue", "white"]]] },
+    { t: "The Bus", s: "Jack got on the bus. The bus was red. It went up the hill. Jack got off at the shop.", q: [
+      ["What did Jack get on?", "the bus", ["the bus", "a bike", "a boat", "a jet"]], ["What colour was the bus?", "red", ["red", "blue", "yellow", "green"]], ["Where did Jack get off?", "at the shop", ["at the shop", "at school", "at the beach", "at home"]]] },
+    { t: "Frog and Bug", s: "A frog sat on a log. A bug went past. Zap! The frog got the bug. Yum!", q: [
+      ["Where did the frog sit?", "on a log", ["on a log", "in a cup", "on a bed", "in a hat"]], ["What went past?", "a bug", ["a bug", "a bus", "a dog", "a cat"]], ["What did the frog do?", "got the bug", ["got the bug", "went to sleep", "ran home", "sat in a cup"]]] },
+    { t: "Fun in the Sun", s: "Mum and Ella went to the beach. Ella dug in the sand. Mum had a nap in the sun.", q: [
+      ["Who dug in the sand?", "Ella", ["Ella", "Mum", "Dad", "Jack"]], ["Who had a nap?", "Mum", ["Mum", "Ella", "the dog", "Nana"]], ["Where did they go?", "the beach", ["the beach", "the park", "the shop", "school"]]] },
+    { t: "The Fox and the Box", s: "A fox got in a box. The box was too small! The fox got stuck. Mum fox got him out.", q: [
+      ["What did the fox get in?", "a box", ["a box", "a bag", "a car", "a bed"]], ["Why did the fox get stuck?", "The box was too small.", ["The box was too small.", "It was dark.", "He was sleepy.", "It was wet."]], ["Who got him out?", "Mum fox", ["Mum fox", "a dog", "a frog", "Dad"]]] }
+  ];
+  function littleStory() {
+    var S = pick(LITTLE), qq = pick(S.q);
+    return Q({ prompt: qq[0], visual: '<div class="en-row" style="align-items:flex-start"><div class="en-story"><span class="st-title">' + S.t + "</span>" + S.s + "</div>" + hear(S.s, true) + "</div>",
+      speak: "Read the story. " + qq[0], answer: qq[1], choices: shuffle(qq[2]), cls: "en", explain: "The answer is " + qq[1].replace(/\.$/, "") + ". You can look back at the story to check!" });
+  }
+
   /* ================= THE LESSONS ================= */
   var AM = ABC.slice(0, 13), NZ = ABC.slice(13);
   return {
@@ -542,6 +756,26 @@ window.makeEnglishLessons = function (H) {
     "first-letter": { title: "First Letter", emoji: "🐍", intro: "Snake starts with s. What do other words start with?", gen: firstLetter },
     "rhyme": { title: "Rhyme Time", emoji: "🎵", intro: "Cat and hat rhyme. They sound the same at the end!", gen: rhyme },
     "blends": { title: "sh, ch, th...", emoji: "🐑", intro: "Some words start with two letters together, like sh in sheep.", gen: blend },
+    "last-letter": { title: "Last Letter", emoji: "🔚", intro: "Listen to the end of the word. Dog ends with g!", gen: lastLetter },
+    "middle-sound": { title: "Middle Sound", emoji: "🎯", intro: "Cat, pig, dog. What's the sound in the middle?", gen: middleSound },
+    "syllables": { title: "Clap It Out", emoji: "👏", intro: "Clap the beats in a word. Ba-na-na is 3 claps!", gen: syllables },
+    /* ---- Blends ---- */
+    "s-blends": { title: "S Blends", emoji: "🐍", intro: "sn, st, sp, sw, sl... Snake starts with sn. Say both sounds!", gen: function (q) { return blendQ(SBL, q); } },
+    "l-blends": { title: "L Blends", emoji: "🚩", intro: "bl, cl, fl, gl, pl... Flag starts with fl!", gen: function (q) { return blendQ(LBL, q); } },
+    "r-blends": { title: "R Blends", emoji: "🐸", intro: "br, cr, dr, fr, gr, tr... Frog starts with fr!", gen: function (q) { return blendQ(RBL, q); } },
+    "blend-build": { title: "Blend Builder", emoji: "🐌", intro: "Put the blend and the ending together. sn + ail = snail!", gen: blendBuild },
+    "blend-read": { title: "Blend Words", emoji: "🦀", intro: "Read words like frog, crab, drum and tent.", gen: blendRead },
+    /* ---- More words ---- */
+    "magic-e": { title: "Magic e", emoji: "🪄", intro: "Add an e to kit and it says kite! The e makes the vowel say its name.", gen: magicE },
+    "vowel-teams": { title: "Vowel Teams", emoji: "🚂", intro: "ee, oa, ai, oo... Two letters working together, like ai in train.", gen: vowelTeam },
+    "compound": { title: "Two Words in One", emoji: "🌻", intro: "Sun + flower = sunflower! Join little words to make big ones.", gen: compound },
+    "spell-blend": { title: "Spell Blends", emoji: "🧱", intro: "Spell words like frog, stop and tent.", gen: spellBlend },
+    "homophones": { title: "Sound-Alikes", emoji: "👂", intro: "Two, to and too sound the same but mean different things!", gen: homophone },
+    "question-words": { title: "Question Words", emoji: "❓", intro: "Who, what, where, when, why and how.", gen: questionWord },
+    "contractions": { title: "Short Words", emoji: "✂️", intro: "Do not becomes don't. The ' shows where letters went missing.", gen: contraction },
+    "prefixes": { title: "un- and re-", emoji: "🔁", intro: "un means not. re means again. Unhappy, replay!", gen: prefix },
+    "dict-order": { title: "Dictionary Order", emoji: "📕", intro: "Put words in ABC order, like a dictionary.", gen: dictOrder },
+    "little-stories": { title: "Little Stories", emoji: "🐷", intro: "Short stories with easy words. Read, then answer!", gen: littleStory },
     /* ---- Reading words ---- */
     "cvc": { title: "Picture Words", emoji: "🐱", intro: "Read short words like cat, dog and sun.", gen: cvcRead },
     "sight1": { title: "Sight Words 1", emoji: "👀", intro: "Words we see all the time: the, and, is, my...", gen: function () { return sight(SIGHT1); } },
@@ -569,7 +803,8 @@ window.makeEnglishLessons = function (H) {
         { name: "Find the letter", emoji: "🔤", gen: function () { return findLetter(ABC); } },
         { name: "Big and small", emoji: "🔠", gen: function () { return bigSmall(ABC); } },
         { name: "ABC order", emoji: "🚂", gen: abcOrder },
-        { name: "First letter", emoji: "🐍", gen: firstLetter }
+        { name: "First letter", emoji: "🐍", gen: firstLetter },
+        { name: "Blends", emoji: "🐌", gen: function (q) { return blendQ(SBL.concat(RBL), q); } }
       ] },
     "alice-reading": { title: "Alice's Reading Challenge", emoji: "🦄", quizN: 8, intro: "Spelling, tricky words and stories. Practise each part, then take the quiz!",
       parts: [

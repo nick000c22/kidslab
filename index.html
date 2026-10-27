@@ -521,14 +521,6 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       b.addEventListener("click", function () { K.say(sub.title + "!"); setSubject(sub.id); });
       wrap.appendChild(b);
     });
-    // The Garage sits with the subjects: it runs on English quizzes.
-    if (window.KidsGarage) {
-      var g = KidsGarage.homeTile(p), gb = block({ emoji: g.emoji, label: g.title, color: "berry" });
-      gb.classList.add("subject", "garage-tile"); gb.style.animationDelay = (subjects().length * 70) + "ms";
-      var gm = document.createElement("span"); gm.className = "subject-meta"; gm.textContent = g.sub; gb.appendChild(gm);
-      gb.addEventListener("click", function () { K.say("Garage!"); KidsGarage.open(p, function () { renderHome(); }); });
-      wrap.appendChild(gb);
-    }
   }
   var folderId = null;
   try { folderId = sessionStorage.getItem("kidslab.folder"); } catch (e) {}
@@ -586,6 +578,15 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         b.addEventListener("click", function () { K.say(sec + "!"); setFolder(sec); });
         fg.appendChild(b);
       });
+      // The Garage lives in English: it runs on English quizzes.
+      if (subj.id === "english" && window.KidsGarage) {
+        var g = KidsGarage.homeTile(p), gb = block({ emoji: g.emoji, label: g.title, color: "berry" });
+        gb.classList.add("folder", "garage-tile"); gb.style.animationDelay = (order.length * 70) + "ms";
+        var gm = document.createElement("span"); gm.className = "subject-meta"; gm.textContent = g.sub; gb.appendChild(gm);
+        var gn = document.createElement("span"); gn.className = "folder-note"; gn.textContent = "Spend your 🔧 parts and race!"; gb.appendChild(gn);
+        gb.addEventListener("click", function () { K.say("Garage!"); KidsGarage.open(p, function () { renderHome(); }); });
+        fg.appendChild(gb);
+      }
       return;
     }
     var FF = (C.folders || {})[folder] || {};
