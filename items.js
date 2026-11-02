@@ -255,13 +255,149 @@
     { id: "witchboots", slot: "feet", gift: "halloween", name: "Witch boots", icon: "👢", svg: witchBoot + mirror(witchBoot) }
   );
 
+  /* ---------- Mystery Box collection: animated items you can only find in a box ----------
+     rarity: rare | epic | legendary.  Animations are CSS classes (fx-*) in pet.css.
+     New slots: aura (glows behind the teddy) and buddy (a little friend beside the teddy). */
+  function flameT(x, base, h, w, fill, delay) {
+    return '<path class="fx-flicker" style="animation-delay:' + (delay || 0) + 's" d="M' + (x - w) + " " + base + " Q" + (x - w) + " " + (base - h * 0.55) + " " + x + " " + (base - h) +
+      " Q" + (x + w) + " " + (base - h * 0.55) + " " + (x + w) + " " + base + ' Z" fill="' + fill + '"/>';
+  }
+  function fireAura() {
+    var o = '<g opacity=".9">';
+    [[24, 232, 150, 16], [44, 232, 175, 15], [156, 232, 175, 15], [176, 232, 150, 16], [62, 70, 60, 14], [100, 56, 70, 16], [138, 70, 60, 14], [34, 120, 70, 12], [166, 120, 70, 12]].forEach(function (f, i) {
+      o += flameT(f[0], f[1], f[2], f[3], "#FF5A1F", -i * 0.13) + flameT(f[0], f[1], f[2] * 0.65, f[3] * 0.6, "#FFC23D", -i * 0.17);
+    });
+    return o + "</g>";
+  }
+  function ring(n, r, cx, cy, fn) { var o = ""; for (var i = 0; i < n; i++) { var a = i / n * Math.PI * 2; o += fn(cx + Math.cos(a) * r, cy + Math.sin(a) * r, i); } return o; }
+  function rising(n, fn) { var o = ""; for (var i = 0; i < n; i++) o += fn(Math.round(12 + ((i * 67) % 176)), i); return o; }
+  var BOX_SVG = {
+    fireaura: fireAura(),
+    lightningaura: '<ellipse cx="100" cy="130" rx="94" ry="118" fill="#7DD3FC" opacity=".22" class="fx-pulse"/><g class="fx-flash" fill="#FDE047" stroke="#F59E0B" stroke-width="2" stroke-linejoin="round">' +
+      '<path d="M26 40 L44 40 L32 84 L48 84 L18 140 L28 96 L12 96 Z"/><path d="M174 70 L188 70 L178 108 L192 108 L166 160 L174 120 L160 120 Z"/><path d="M150 -6 L162 -6 L154 22 L166 22 L144 58 L150 32 L140 32 Z"/></g>',
+    rainbowaura: '<g class="fx-spin">' + ["#FF5E5E", "#FFA94D", "#FFE066", "#69DB7C", "#4DABF7", "#B197FC"].map(function (c, i) {
+      return '<circle cx="100" cy="130" r="94" fill="none" stroke="' + c + '" stroke-width="11" stroke-dasharray="98.4 492.2" stroke-dashoffset="' + (-98.4 * i).toFixed(1) + '" opacity=".85"/>';
+    }).join("") + "</g>",
+    starorbit: '<g class="fx-spin slow">' + ring(8, 96, 100, 130, function (x, y) { return star(x, y, 11, "#FFD43B", "#F59F00"); }) + "</g>",
+    bubbleaura: rising(9, function (x, i) { return '<circle class="fx-rise" style="animation-delay:' + (-i * 0.45) + 's" cx="' + x + '" cy="230" r="' + (6 + i % 3 * 4) + '" fill="rgba(255,255,255,.35)" stroke="#74C0FC" stroke-width="2.5"/>'; }),
+    snowaura: rising(10, function (x, i) { return '<text class="fx-fall" style="animation-delay:' + (-i * 0.6) + 's" x="' + x + '" y="-10" font-size="' + (14 + i % 3 * 6) + '" text-anchor="middle">❄️</text>'; }),
+    heartaura: rising(9, function (x, i) { return '<path class="fx-rise" style="animation-delay:' + (-i * 0.5) + 's" d="' + heart(x, 226) + '" fill="' + ["#FF6B9A", "#F783AC", "#E64980"][i % 3] + '"/>'; }),
+    galaxyaura: '<defs><radialGradient id="gx-g"><stop offset="0" stop-color="#7048E8" stop-opacity=".75"/><stop offset=".6" stop-color="#3B2A8A" stop-opacity=".55"/><stop offset="1" stop-color="#1A1446" stop-opacity="0"/></radialGradient></defs>' +
+      '<ellipse cx="100" cy="128" rx="100" ry="124" fill="url(#gx-g)"/><g class="fx-spin slow"><ellipse cx="100" cy="130" rx="96" ry="34" fill="none" stroke="#B197FC" stroke-width="3" opacity=".6" transform="rotate(-20 100 130)"/></g>' +
+      ring(14, 88, 100, 128, function (x, y, i) { return '<circle class="fx-twinkle" style="animation-delay:' + (-i * 0.3) + 's" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (1.5 + i % 3) + '" fill="#FFFFFF"/>'; }),
+    goldaura: '<defs><radialGradient id="gd-g"><stop offset="0" stop-color="#FFE066" stop-opacity=".9"/><stop offset=".7" stop-color="#FCC419" stop-opacity=".35"/><stop offset="1" stop-color="#FCC419" stop-opacity="0"/></radialGradient></defs>' +
+      '<g class="fx-spin slow" opacity=".55">' + ring(12, 0, 100, 130, function (x, y, i) { var a = i / 12 * Math.PI * 2, b = a + 0.12; return '<path d="M100 130 L' + (100 + Math.cos(a) * 130).toFixed(1) + " " + (130 + Math.sin(a) * 130).toFixed(1) + " L" + (100 + Math.cos(b) * 130).toFixed(1) + " " + (130 + Math.sin(b) * 130).toFixed(1) + ' Z" fill="#FFE066"/>'; }) + "</g>" +
+      '<ellipse class="fx-pulse" cx="100" cy="130" rx="98" ry="120" fill="url(#gd-g)"/>',
+    propeller: '<path d="M62 46 Q100 0 138 46 Z" fill="#228BE6"/><path d="M100 4 Q118 6 138 46 L120 46 Q114 18 100 4 Z" fill="#FA5252"/><path d="M100 4 Q82 6 62 46 L80 46 Q86 18 100 4 Z" fill="#FCC419"/>' +
+      '<path d="M58 46 Q100 38 154 50 Q100 54 58 50 Z" fill="#1971C2"/><rect x="97" y="-8" width="6" height="14" fill="#495057"/><g class="fx-prop"><ellipse cx="100" cy="-9" rx="30" ry="5" fill="#FA5252"/><ellipse cx="100" cy="-9" rx="30" ry="5" fill="#FCC419" transform="rotate(8 100 -9)" opacity=".6"/></g><circle cx="100" cy="-9" r="4" fill="#212529"/>',
+    halo: '<g class="fx-float"><ellipse cx="100" cy="2" rx="36" ry="9" fill="none" stroke="#FFE066" stroke-width="7" class="fx-glow"/><ellipse cx="100" cy="2" rx="36" ry="9" fill="none" stroke="#FFF9DB" stroke-width="2"/></g>',
+    flamecrown: '<path d="M64 46 Q100 36 136 46 L134 52 Q100 42 66 52 Z" fill="#E8590C"/>' + [[70, 30, 9], [85, 42, 10], [100, 50, 11], [115, 42, 10], [130, 30, 9]].map(function (f, i) {
+      return flameT(f[0], 46, f[1], f[2], "#FF6B1A", -i * 0.15) + flameT(f[0], 46, f[1] * 0.6, f[2] * 0.55, "#FFE066", -i * 0.2);
+    }).join(""),
+    diamondcrown: '<path d="M66 44 L72 10 L86 28 L100 0 L114 28 L128 10 L134 44 Z" fill="#DEE2E6" stroke="#868E96" stroke-width="3" stroke-linejoin="round"/>' +
+      '<path d="M100 18 L108 28 L100 38 L92 28 Z" fill="#74C0FC" stroke="#1C7ED6" stroke-width="2"/><path d="M80 30 L85 36 L80 42 L75 36 Z M120 30 L125 36 L120 42 L115 36 Z" fill="#F783AC" stroke="#D6336C" stroke-width="1.5"/>' +
+      '<g class="fx-twinkle" fill="#FFFFFF"><path d="M60 6 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 Z"/></g><g class="fx-twinkle" style="animation-delay:-.7s" fill="#FFFFFF"><path d="M140 2 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z"/></g>',
+    laservisor: '<rect x="56" y="66" width="88" height="24" rx="12" fill="#212529"/><rect class="fx-pulse" x="62" y="72" width="76" height="12" rx="6" fill="#FF3B3B"/><path class="fx-scan" d="M66 78 H82" stroke="#FFD8D8" stroke-width="3" stroke-linecap="round"/>',
+    cybereye: '<circle cx="118" cy="78" r="16" fill="#495057" stroke="#212529" stroke-width="3"/><circle class="fx-pulse" cx="118" cy="78" r="9" fill="#22D3EE"/><circle cx="118" cy="78" r="3.5" fill="#E3FAFC"/><path d="M134 72 L150 64 M102 70 L90 64" stroke="#495057" stroke-width="3" stroke-linecap="round"/>',
+    stargoggles: star(82, 78, 17, "#F783AC", "#D6336C") + star(118, 78, 17, "#FFD43B", "#F59F00") + '<path d="M66 72 L52 66 M134 72 L148 66" stroke="#862E9C" stroke-width="4" stroke-linecap="round"/>' +
+      '<g class="fx-twinkle" fill="#FFFFFF"><path d="M140 52 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z"/></g>',
+    jetpack: '<rect x="34" y="128" width="26" height="64" rx="12" fill="#ADB5BD" stroke="#495057" stroke-width="3"/><rect x="140" y="128" width="26" height="64" rx="12" fill="#ADB5BD" stroke="#495057" stroke-width="3"/>' +
+      '<rect x="34" y="128" width="26" height="14" rx="7" fill="#FA5252"/><rect x="140" y="128" width="26" height="14" rx="7" fill="#FA5252"/>' +
+      flameT(47, 192, -46, 10, "#FF6B1A", 0) + flameT(47, 192, -28, 6, "#FFE066", -.2) + flameT(153, 192, -46, 10, "#FF6B1A", -.1) + flameT(153, 192, -28, 6, "#FFE066", -.3),
+    dragonwings: '<g class="fx-flap-l"><path d="M68 150 L4 84 L18 126 L-8 132 L18 156 L0 182 L66 176 Z" fill="#E03131" stroke="#A61E1E" stroke-width="3" stroke-linejoin="round"/><path d="M66 156 L18 126 M64 168 L18 156" stroke="#FFA94D" stroke-width="2.5"/></g>' +
+      '<g class="fx-flap-r"><path d="M132 150 L196 84 L182 126 L208 132 L182 156 L200 182 L134 176 Z" fill="#E03131" stroke="#A61E1E" stroke-width="3" stroke-linejoin="round"/><path d="M134 156 L182 126 M136 168 L182 156" stroke="#FFA94D" stroke-width="2.5"/></g>',
+    angelwings: '<g class="fx-flap-l slow"><path d="M70 146 Q20 100 8 130 Q4 150 24 160 Q6 168 18 184 Q34 190 70 172 Z" fill="#FFFFFF" stroke="#CED4DA" stroke-width="2.5"/><path d="M60 150 Q34 136 20 146 M60 162 Q38 156 26 168" stroke="#DEE2E6" stroke-width="2" fill="none"/></g>' +
+      '<g class="fx-flap-r slow"><path d="M130 146 Q180 100 192 130 Q196 150 176 160 Q194 168 182 184 Q166 190 130 172 Z" fill="#FFFFFF" stroke="#CED4DA" stroke-width="2.5"/><path d="M140 150 Q166 136 180 146 M140 162 Q162 156 174 168" stroke="#DEE2E6" stroke-width="2" fill="none"/></g>',
+    butterflywings: '<g class="fx-flap-l"><path d="M70 150 Q6 70 12 140 Q18 168 70 164 Z" fill="#DA77F2" stroke="#9C36B5" stroke-width="2.5"/><path d="M70 166 Q24 176 34 210 Q56 212 72 176 Z" fill="#74C0FC" stroke="#1C7ED6" stroke-width="2.5"/><circle cx="34" cy="130" r="8" fill="#FFE066"/></g>' +
+      '<g class="fx-flap-r"><path d="M130 150 Q194 70 188 140 Q182 168 130 164 Z" fill="#DA77F2" stroke="#9C36B5" stroke-width="2.5"/><path d="M130 166 Q176 176 166 210 Q144 212 128 176 Z" fill="#74C0FC" stroke="#1C7ED6" stroke-width="2.5"/><circle cx="166" cy="130" r="8" fill="#FFE066"/></g>',
+    magicwand: '<path d="M156 206 L182 158" stroke="#343A40" stroke-width="6" stroke-linecap="round"/><path d="M178 166 L182 158" stroke="#F1F3F5" stroke-width="6" stroke-linecap="round"/>' + star(184, 150, 14, "#FFD43B", "#F59F00") +
+      '<g class="fx-twinkle" fill="#FFF3BF"><path d="M196 128 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z"/></g><g class="fx-twinkle" style="animation-delay:-.6s" fill="#FFF3BF"><path d="M166 134 l2 4 4 2 -4 2 -2 4 -2 -4 -4 -2 4 -2 Z"/></g>',
+    bubblewand: '<path d="M156 206 L178 164" stroke="#F06595" stroke-width="5" stroke-linecap="round"/><circle cx="182" cy="154" r="11" fill="none" stroke="#F06595" stroke-width="4"/>' +
+      [0, 1, 2, 3].map(function (i) { return '<circle class="fx-rise short" style="animation-delay:' + (-i * 0.6) + 's" cx="' + (178 + i % 2 * 10) + '" cy="140" r="' + (5 + i % 2 * 3) + '" fill="rgba(255,255,255,.4)" stroke="#74C0FC" stroke-width="2"/>'; }).join(""),
+    lasersword: '<rect x="150" y="190" width="14" height="22" rx="3" fill="#495057" transform="rotate(20 157 201)"/><path d="M164 190 L192 108" stroke="#4DABF7" stroke-width="16" stroke-linecap="round" opacity=".35" class="fx-pulse"/><path d="M164 190 L192 108" stroke="#E7F5FF" stroke-width="6" stroke-linecap="round"/>',
+    flamesword: '<rect x="150" y="190" width="14" height="22" rx="3" fill="#7F4F24" transform="rotate(20 157 201)"/><rect x="146" y="188" width="26" height="6" rx="3" fill="#FCC419" transform="rotate(20 159 191)"/><path d="M164 188 L190 112 L196 116 L170 190 Z" fill="#DEE2E6" stroke="#868E96" stroke-width="2"/>' +
+      flameT(176, 160, 26, 7, "#FF6B1A", 0) + flameT(184, 136, 26, 7, "#FF6B1A", -.2) + flameT(192, 114, 22, 6, "#FFE066", -.35),
+    robotarmour: '<path d="M58 142 Q100 128 142 142 L150 206 Q100 220 50 206 Z" fill="#ADB5BD" stroke="#495057" stroke-width="3"/><path d="M70 150 H130 M66 176 H134 M70 200 H130" stroke="#868E96" stroke-width="2"/>' +
+      '<circle class="fx-pulse" cx="100" cy="172" r="12" fill="#22D3EE" stroke="#0B7285" stroke-width="3"/><circle class="fx-blink" cx="74" cy="160" r="4" fill="#FA5252"/><circle class="fx-blink" style="animation-delay:-.5s" cx="126" cy="160" r="4" fill="#51CF66"/><circle class="fx-blink" style="animation-delay:-.9s" cx="126" cy="190" r="4" fill="#FCC419"/>',
+    galaxypjs: '<path d="M58 142 Q100 128 142 142 L150 206 Q100 220 50 206 Z" fill="#364FC7"/><path d="M118 156 a12 12 0 1 0 0.1 0 Z" fill="#FFE066"/><path d="M122 154 a10 10 0 1 0 0.1 0 Z" fill="#364FC7"/>' +
+      ring(7, 26, 92, 182, function (x, y, i) { return '<circle class="fx-twinkle" style="animation-delay:' + (-i * 0.4) + 's" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.2" fill="#FFFFFF"/>'; }),
+    rocketboots: (function () { var b = '<path d="M50 222 Q50 204 72 205 Q94 206 96 220 L96 230 H50 Z" fill="#E03131" stroke="#A61E1E" stroke-width="2"/><path d="M54 214 H92" stroke="#FFFFFF" stroke-width="3"/><rect x="60" y="230" width="24" height="7" rx="3" fill="#495057"/>' + flameT(72, 237, -26, 9, "#FF6B1A", 0) + flameT(72, 237, -16, 5, "#FFE066", -.2); return b + mirror(b); })(),
+    lightshoes: (function () { var b = '<path d="M46 224 Q46 206 70 207 Q93 208 98 222 Q98 234 72 234 Q46 234 46 224 Z" fill="#F8F9FA" stroke="#ADB5BD" stroke-width="2"/>' +
+      '<circle class="fx-blink" cx="56" cy="230" r="3.5" fill="#FF6B6B"/><circle class="fx-blink" style="animation-delay:-.3s" cx="68" cy="231" r="3.5" fill="#51CF66"/><circle class="fx-blink" style="animation-delay:-.6s" cx="80" cy="231" r="3.5" fill="#339AF0"/><circle class="fx-blink" style="animation-delay:-.9s" cx="91" cy="229" r="3.5" fill="#FCC419"/>'; return b + mirror(b); })(),
+    hoverboard: '<g class="fx-float"><ellipse cx="100" cy="242" rx="78" ry="9" fill="#212529"/><ellipse class="fx-pulse" cx="100" cy="248" rx="70" ry="6" fill="#22D3EE" opacity=".7"/><path d="M40 240 H160" stroke="#F06595" stroke-width="3"/></g>'
+  };
+  function buddy(emoji, fly) {
+    return '<g class="' + (fly ? "fx-fly" : "fx-bob") + '">' + (fly ? "" : '<ellipse cx="24" cy="234" rx="18" ry="4" fill="rgba(0,0,0,.15)"/>') +
+      '<text x="24" y="' + (fly ? 122 : 210) + '" text-anchor="middle" dominant-baseline="central" font-size="' + (fly ? 40 : 44) + '">' + emoji + "</text></g>";
+  }
+  var BOX = [
+    // auras
+    { id: "bubbleaura", slot: "aura", name: "Bubble aura", icon: "🫧", rarity: "rare" },
+    { id: "snowaura", slot: "aura", name: "Snow aura", icon: "❄️", rarity: "rare" },
+    { id: "heartaura", slot: "aura", name: "Heart aura", icon: "💕", rarity: "rare", style: "girl" },
+    { id: "fireaura", slot: "aura", name: "Fire aura", icon: "🔥", rarity: "epic", style: "boy" },
+    { id: "lightningaura", slot: "aura", name: "Lightning aura", icon: "⚡", rarity: "epic" },
+    { id: "starorbit", slot: "aura", name: "Star orbit", icon: "💫", rarity: "epic" },
+    { id: "rainbowaura", slot: "aura", name: "Rainbow ring", icon: "🌈", rarity: "legendary" },
+    { id: "galaxyaura", slot: "aura", name: "Galaxy aura", icon: "🌌", rarity: "legendary" },
+    { id: "goldaura", slot: "aura", name: "Golden glow", icon: "🌟", rarity: "legendary" },
+    // buddies
+    { id: "b-puppy", slot: "buddy", name: "Puppy buddy", icon: "🐶", rarity: "rare", e: "🐶" },
+    { id: "b-kitten", slot: "buddy", name: "Kitten buddy", icon: "🐱", rarity: "rare", e: "🐱", style: "girl" },
+    { id: "b-penguin", slot: "buddy", name: "Penguin buddy", icon: "🐧", rarity: "rare", e: "🐧" },
+    { id: "b-fox", slot: "buddy", name: "Fox buddy", icon: "🦊", rarity: "rare", e: "🦊" },
+    { id: "b-bee", slot: "buddy", name: "Bee buddy", icon: "🐝", rarity: "rare", e: "🐝", fly: true },
+    { id: "b-octopus", slot: "buddy", name: "Octopus buddy", icon: "🐙", rarity: "rare", e: "🐙" },
+    { id: "b-owl", slot: "buddy", name: "Owl buddy", icon: "🦉", rarity: "epic", e: "🦉", fly: true },
+    { id: "b-robot", slot: "buddy", name: "Robot buddy", icon: "🤖", rarity: "epic", e: "🤖", style: "boy" },
+    { id: "b-alien", slot: "buddy", name: "Alien buddy", icon: "👽", rarity: "epic", e: "👽", fly: true },
+    { id: "b-trex", slot: "buddy", name: "T-rex buddy", icon: "🦖", rarity: "epic", e: "🦖", style: "boy" },
+    { id: "b-unicorn", slot: "buddy", name: "Unicorn buddy", icon: "🦄", rarity: "epic", e: "🦄", style: "girl" },
+    { id: "b-dragon", slot: "buddy", name: "Baby dragon", icon: "🐉", rarity: "legendary", e: "🐉", fly: true },
+    // hats
+    { id: "propeller", slot: "hat", name: "Propeller cap", icon: "🧢", rarity: "rare" },
+    { id: "halo", slot: "hat", name: "Glowing halo", icon: "😇", rarity: "epic" },
+    { id: "flamecrown", slot: "hat", name: "Flame crown", icon: "🔥", rarity: "epic", style: "boy" },
+    { id: "diamondcrown", slot: "hat", name: "Diamond crown", icon: "💎", rarity: "legendary", style: "girl" },
+    // faces
+    { id: "laservisor", slot: "face", name: "Laser visor", icon: "🥽", rarity: "rare", style: "boy" },
+    { id: "stargoggles", slot: "face", name: "Star goggles", icon: "🤩", rarity: "rare", style: "girl" },
+    { id: "cybereye", slot: "face", name: "Cyber eye", icon: "🦾", rarity: "epic" },
+    // backs
+    { id: "angelwings", slot: "back", name: "Angel wings", icon: "👼", rarity: "rare" },
+    { id: "butterflywings", slot: "back", name: "Butterfly wings", icon: "🦋", rarity: "epic", style: "girl" },
+    { id: "dragonwings", slot: "back", name: "Fire dragon wings", icon: "🐲", rarity: "epic", style: "boy" },
+    { id: "jetpack", slot: "back", name: "Jetpack", icon: "🚀", rarity: "legendary" },
+    // in the paw
+    { id: "magicwand", slot: "hand", name: "Magic wand", icon: "🪄", rarity: "rare", style: "girl" },
+    { id: "bubblewand", slot: "hand", name: "Bubble wand", icon: "🫧", rarity: "rare" },
+    { id: "lasersword", slot: "hand", name: "Laser sword", icon: "🗡️", rarity: "epic", style: "boy" },
+    { id: "flamesword", slot: "hand", name: "Flame sword", icon: "⚔️", rarity: "legendary", style: "boy" },
+    // outfits and feet
+    { id: "galaxypjs", slot: "body", name: "Galaxy pyjamas", icon: "🌙", rarity: "rare" },
+    { id: "robotarmour", slot: "body", name: "Robot armour", icon: "🤖", rarity: "epic", style: "boy" },
+    { id: "lightshoes", slot: "feet", name: "Light-up shoes", icon: "👟", rarity: "rare" },
+    { id: "rocketboots", slot: "feet", name: "Rocket boots", icon: "🥾", rarity: "epic" },
+    { id: "hoverboard", slot: "feet", name: "Hoverboard", icon: "🛹", rarity: "legendary" }
+  ];
+  BOX.forEach(function (it) { it.box = true; it.svg = it.slot === "buddy" ? buddy(it.e, it.fly) : BOX_SVG[it.id]; ITEMS.push(it); });
+  var RARITY = {
+    rare: { name: "Rare", color: "#339AF0" }, epic: { name: "Epic", color: "#AE3EC9" }, legendary: { name: "Legendary", color: "#F59F00" }
+  };
+  // Mystery boxes: price in grapes and chance of each rarity. Every 5th Mystery Box is at least Epic.
+  var BOXES = {
+    mystery: { id: "mystery", name: "Mystery Box", icon: "🎁", price: 20, odds: { rare: 70, epic: 25, legendary: 5 } },
+    golden: { id: "golden", name: "Golden Box", icon: "🌟", price: 50, odds: { rare: 0, epic: 70, legendary: 30 } }
+  };
+
   var BY_ID = {};
   ITEMS.forEach(function (it) { BY_ID[it.id] = it; });
 
   var SLOTS = [
     { id: "hat", name: "Hats" }, { id: "face", name: "Faces" }, { id: "neck", name: "Necks" }, { id: "body", name: "Outfits" },
-    { id: "back", name: "Backs" }, { id: "hand", name: "In his paw" }, { id: "feet", name: "Feet" }
+    { id: "back", name: "Backs" }, { id: "hand", name: "In his paw" }, { id: "feet", name: "Feet" },
+    { id: "aura", name: "Auras" }, { id: "buddy", name: "Buddies" }
   ];
 
-  window.TeddyItems = { FURS: FURS, ITEMS: ITEMS, BY_ID: BY_ID, SLOTS: SLOTS };
+  window.TeddyItems = { FURS: FURS, ITEMS: ITEMS, BY_ID: BY_ID, SLOTS: SLOTS, BOX: BOX, BOXES: BOXES, RARITY: RARITY };
 })();

@@ -115,7 +115,7 @@
     var sparkle = F.sparkle ? '<g class="sparkle" fill="#FFFFFF"><path d="M30 60 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 Z"/><path d="M170 150 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5 Z"/><path d="M36 196 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z"/></g>' : "";
 
     return '<svg class="teddy-svg" viewBox="0 -20 200 260" aria-hidden="true">' + defs +
-      '<g transform="translate(100 236) scale(' + S.scale + ') translate(-100 -236)"><g class="rig">' +
+      '<g transform="translate(100 236) scale(' + S.scale + ') translate(-100 -236)">' + item("aura") + '<g class="rig">' +
       item("back") +
       '<ellipse cx="72" cy="222" rx="24" ry="15" fill="' + F.dark + '"/><ellipse cx="128" cy="222" rx="24" ry="15" fill="' + F.dark + '"/>' +
       '<ellipse cx="72" cy="224" rx="12" ry="7" fill="' + F.light + '"/><ellipse cx="128" cy="224" rx="12" ry="7" fill="' + F.light + '"/>' +
@@ -138,7 +138,7 @@
       '<g class="eye-happy" stroke="' + INK + '" stroke-width="4.5" fill="none" stroke-linecap="round"><path d="M74 82 Q82 70 90 82"/><path d="M110 82 Q118 70 126 82"/></g>' +
       '<circle cx="66" cy="102" r="8" fill="#E89BA8" opacity=".75"/><circle cx="134" cy="102" r="8" fill="#E89BA8" opacity=".75"/>' +
       item("face") + item("hat") +
-      "</g>" + sparkle + "</g></g></svg>";
+      "</g>" + sparkle + "</g>" + item("buddy") + "</g></svg>";
   }
 
   var eggUid = 0;
@@ -451,9 +451,10 @@
     return wrap;
   }
   function itemTile(it, sub, cls) {
-    var b = document.createElement("button"); b.type = "button"; b.className = "w-item " + (cls || "");
+    var b = document.createElement("button"); b.type = "button"; b.className = "w-item " + (cls || "") + (it.rarity ? " r-" + it.rarity : "");
     b.innerHTML = '<span class="wi" aria-hidden="true"></span><span class="wn"></span><span class="wl"></span>';
     b.querySelector(".wi").textContent = it.icon; b.querySelector(".wn").textContent = it.name; b.querySelector(".wl").textContent = sub;
+    if (it.rarity && T.RARITY) { var rb = document.createElement("span"); rb.className = "rar"; rb.textContent = T.RARITY[it.rarity].name; b.appendChild(rb); }
     return b;
   }
   function slotName(slot) { for (var i = 0; i < T.SLOTS.length; i++) if (T.SLOTS[i].id === slot) return T.SLOTS[i].name; return slot; }
@@ -585,6 +586,70 @@
       dance(wrap.querySelector(".ward-preview"), "d-jump");
     });
 
+    /* ---------- Mystery Box: pay, tap tap tap, and see what you got ---------- */
+    function openBox(kind) {
+      var B = T.BOXES[kind], st = load(p.id);
+      if (grapesWaiting(p.id, st) < B.price) { K.say("The " + B.name + " costs " + B.price + " grapes. You have " + grapesWaiting(p.id, st) + ". Finish a quiz to get 5 more!"); return; }
+      spend(st, B.price);
+      st.boxN = (Number(st.boxN) || 0) + (kind === "mystery" ? 1 : 0);
+      // Roll a rarity. Every 5th Mystery Box is at least Epic.
+      var odds = JSON.parse(JSON.stringify(B.odds));
+      if (kind === "mystery" && st.boxN % 5 === 0) odds.rare = 0;
+      var tot = odds.rare + odds.epic + odds.legendary, r = Math.random() * tot, rar = "rare";
+      if ((r -= odds.rare) < 0) rar = "rare"; else if ((r -= odds.epic) < 0) rar = "epic"; else rar = "legendary";
+      var g = K.gender ? K.gender(p) : null;
+      function notMine(it) { return !has(it, stars, st); }
+      var pool = T.BOX.filter(function (it) { return it.rarity === rar; }), fresh = pool.filter(notMine);
+      if (!fresh.length) { // this rarity is complete: try any rarity at least as good that still has new things
+        var order = ["rare", "epic", "legendary"].slice(["rare", "epic", "legendary"].indexOf(rar));
+        for (var i = 0; i < order.length && !fresh.length; i++) { fresh = T.BOX.filter(function (it) { return it.rarity === order[i] && notMine(it); }); if (fresh.length) rar = order[i]; }
+      }
+      var it, dup = false;
+      if (fresh.length) {
+        // Lean towards things that match this kid's style (or suit everyone).
+        var liked = fresh.filter(function (x) { return !x.style || !g || x.style === g; });
+        it = liked.length && Math.random() < 0.8 ? liked[Math.floor(Math.random() * liked.length)] : fresh[Math.floor(Math.random() * fresh.length)];
+        st.owned.push(it.id);
+      } else { it = pool[Math.floor(Math.random() * pool.length)]; dup = true; st.grapes = (Number(st.grapes) || 0) + Math.round(B.price / 2); }
+      setHearts(st, "happy", happy(st) + 1);
+      save(p.id, st);
+      reveal(B, it, dup);
+    }
+    function reveal(B, it, dup) {
+      var R0 = T.RARITY[it.rarity], ov = document.createElement("div");
+      ov.className = "box-open";
+      ov.innerHTML = '<div class="bo-inner"><div class="bo-box" role="button" aria-label="Open the box"></div><p class="bo-tip">Tap tap tap to open it!</p>' +
+        '<div class="bo-prize" hidden><div class="bo-rays"></div><div class="bo-teddy"></div><div class="bo-rar"></div><h2 class="bo-name"></h2><p class="bo-line"></p>' +
+        '<div class="bo-btns"><button type="button" class="block c-leaf bo-wear">Wear it!</button><button type="button" class="block c-sky bo-done">Done</button></div></div></div>';
+      document.body.appendChild(ov);
+      var box = ov.querySelector(".bo-box"), taps = 0;
+      box.textContent = B.icon;
+      K.say("Tap tap tap!");
+      box.addEventListener("click", function () {
+        if (taps >= 3) return;
+        taps++; box.classList.remove("shake1", "shake2", "shake3"); void box.offsetWidth; box.classList.add("shake" + taps);
+        tone(400 + taps * 160, 0, 0.12, 0.08);
+        if (taps === 3) setTimeout(open, 450);
+      });
+      function open() {
+        ov.classList.add("r-" + it.rarity); box.hidden = true; ov.querySelector(".bo-tip").hidden = true;
+        var prize = ov.querySelector(".bo-prize"); prize.hidden = false;
+        var st = JSON.parse(JSON.stringify(load(p.id))); st.wear[it.slot] = it.id;
+        ov.querySelector(".bo-teddy").innerHTML = teddySVG(stageFor(stars) || 1, st);
+        ov.querySelector(".bo-rar").textContent = R0.name + "!";
+        ov.querySelector(".bo-name").textContent = it.icon + " " + it.name;
+        ov.querySelector(".bo-line").textContent = dup ? "You already had this one, so here's 🍇 " + Math.round(B.price / 2) + " grapes back!" : "It's yours! It's in your cupboard.";
+        var notes = it.rarity === "legendary" ? [523, 659, 784, 1047, 1319, 1568, 2093] : it.rarity === "epic" ? [523, 659, 784, 1047, 1319] : [523, 659, 784, 1047];
+        notes.forEach(function (f, i) { tone(f, i * 0.11, 0.16, 0.09); });
+        K.celebrate(ov.querySelector(".bo-teddy"), it.rarity === "legendary" ? ["🌟", "💎", "👑", "✨"] : it.rarity === "epic" ? ["💜", "✨", "⭐"] : ["💙", "⭐"]);
+        K.say((it.rarity === "legendary" ? "Wow! Legendary! " : it.rarity === "epic" ? "Epic! " : "Rare! ") + it.name + "!");
+        dance(ov.querySelector(".bo-teddy"), "d-jump");
+      }
+      function close() { ov.remove(); trying = null; preview(); build(); }
+      ov.querySelector(".bo-wear").addEventListener("click", function () { var st = load(p.id); st.wear[it.slot] = it.id; save(p.id, st); close(); msg.textContent = "Looking awesome!"; });
+      ov.querySelector(".bo-done").addEventListener("click", close);
+    }
+
     function build() {
       var st = load(p.id), have = grapesWaiting(p.id, st), list = wrap.querySelector(".shop-list"); list.innerHTML = "";
       function section(title, tiles) {
@@ -599,8 +664,32 @@
         return b;
       }
       function byPrice(a, b) { return a.price - b.price; }
-      // This kid's style first (sparkle & princess for girls, action & adventure for boys), then everything by body part.
+      // Mystery boxes and the collection come first.
       var g = K.gender ? K.gender(p) : null;
+      if (T.BOXES) {
+        section("🎁 Mystery Boxes: find rare, epic and legendary things!", Object.keys(T.BOXES).map(function (k) {
+          var B = T.BOXES[k], left = B.id === "mystery" ? 5 - ((st.boxN || 0) % 5) : 0;
+          var b = itemTile({ icon: B.icon, name: B.name }, "🍇 " + B.price, "box-tile box-" + B.id + (have >= B.price ? " afford" : " dear"));
+          var odds = document.createElement("span"); odds.className = "box-odds";
+          odds.textContent = B.id === "golden" ? "Epic or Legendary!" : left === 1 ? "Next one is Epic or better!" : "Epic or better in " + left;
+          b.appendChild(odds);
+          b.addEventListener("click", function () { openBox(B.id); });
+          return b;
+        }));
+        var found = T.BOX.filter(function (it) { return has(it, stars, st); }).length;
+        section("✨ My collection: " + found + " of " + T.BOX.length + " found", T.BOX.slice().sort(function (a, b) {
+          var o = { rare: 0, epic: 1, legendary: 2 }; return o[a.rarity] - o[b.rarity];
+        }).map(function (it) {
+          var mine = has(it, stars, st);
+          var b = itemTile(mine ? it : { icon: "❓", name: "???", rarity: it.rarity }, mine ? "✓ Yours" : "In a box", (mine ? "mine" : "unfound") + (trying && trying.it === it ? " trying" : ""));
+          b.addEventListener("click", function () {
+            if (mine) { trying = { kind: "item", it: it }; preview(); build(); msg.textContent = it.name + "! It's in your cupboard."; buyBtn.hidden = true; K.say(msg.textContent); dance(wrap.querySelector(".ward-preview"), "d-wiggle"); }
+            else K.say("That's a secret " + T.RARITY[it.rarity].name.toLowerCase() + " thing. Find it in a mystery box!");
+          });
+          return b;
+        }));
+      }
+      // This kid's style first (sparkle & princess for girls, action & adventure for boys), then everything by body part.
       if (g) section(g === "girl" ? "✨ Picked for you: sparkle and princess" : "⚡ Picked for you: action and adventure",
         SHOP.filter(function (it) { return it.style === g; }).sort(byPrice).map(tile));
       T.SLOTS.forEach(function (slot) {

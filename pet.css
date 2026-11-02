@@ -270,3 +270,78 @@
 .shop-top { position: sticky; top: -24px; z-index: 2; background: var(--card); padding: 10px 0 12px; margin-top: -10px; box-shadow: 0 10px 12px -12px rgba(0,0,0,.35); }
 .shop-top .ward-preview { width: 130px; }
 @media (max-width: 520px) { .tama-btns { flex-wrap: wrap; row-gap: 8px; } }
+
+/* ---------- Mystery Box items: animations (fx-*) ---------- */
+.teddy-svg .fx-flicker { transform-box: fill-box; transform-origin: 50% 100%; animation: fxflick .45s ease-in-out infinite alternate; }
+@keyframes fxflick { from { transform: scaleY(.82) scaleX(1.05); } to { transform: scaleY(1.12) scaleX(.94); } }
+.teddy-svg .fx-flash { animation: fxflash 1.6s steps(1) infinite; }
+@keyframes fxflash { 0%, 40%, 60%, 100% { opacity: 1; } 45%, 55% { opacity: .1; } 80% { opacity: .5; } }
+.teddy-svg .fx-pulse { animation: fxpulse 1.4s ease-in-out infinite alternate; }
+@keyframes fxpulse { from { opacity: .55; } to { opacity: 1; } }
+.teddy-svg .fx-spin { transform-box: fill-box; transform-origin: center; animation: fxspin 6s linear infinite; }
+.teddy-svg .fx-spin.slow { animation-duration: 14s; }
+@keyframes fxspin { to { transform: rotate(360deg); } }
+.teddy-svg .fx-rise { animation: fxrise 4s linear infinite; }
+.teddy-svg .fx-rise.short { animation: fxrises 2.4s linear infinite; }
+@keyframes fxrise { from { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } to { transform: translateY(-230px); opacity: 0; } }
+@keyframes fxrises { from { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(-70px); opacity: 0; } }
+.teddy-svg .fx-fall { animation: fxfall 6s linear infinite; }
+@keyframes fxfall { from { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } to { transform: translateY(250px); opacity: 0; } }
+.teddy-svg .fx-twinkle { transform-box: fill-box; transform-origin: center; animation: fxtwinkle 1.5s ease-in-out infinite; }
+@keyframes fxtwinkle { 0%, 100% { transform: scale(.3); opacity: .2; } 50% { transform: scale(1.15); opacity: 1; } }
+.teddy-svg .fx-prop { transform-box: fill-box; transform-origin: center; animation: fxprop .18s linear infinite; }
+@keyframes fxprop { 50% { transform: scaleX(-1); } }
+.teddy-svg .fx-float { animation: fxfloat 2.4s ease-in-out infinite; }
+@keyframes fxfloat { 50% { transform: translateY(-5px); } }
+.teddy-svg .fx-glow { filter: drop-shadow(0 0 4px #FFE066); }
+.teddy-svg .fx-scan { animation: fxscan 1.6s ease-in-out infinite alternate; }
+@keyframes fxscan { to { transform: translateX(50px); } }
+.teddy-svg .fx-blink { animation: fxblink 1.2s steps(1) infinite; }
+@keyframes fxblink { 50% { opacity: .15; } }
+.teddy-svg .fx-flap-l { transform-box: fill-box; transform-origin: 100% 60%; animation: fxflapl .9s ease-in-out infinite; }
+.teddy-svg .fx-flap-r { transform-box: fill-box; transform-origin: 0% 60%; animation: fxflapr .9s ease-in-out infinite; }
+.teddy-svg .fx-flap-l.slow, .teddy-svg .fx-flap-r.slow { animation-duration: 1.8s; }
+@keyframes fxflapl { 50% { transform: rotate(14deg) scaleX(.9); } }
+@keyframes fxflapr { 50% { transform: rotate(-14deg) scaleX(.9); } }
+.teddy-svg .fx-bob { animation: fxbob 1.6s ease-in-out infinite; }
+@keyframes fxbob { 50% { transform: translateY(-6px); } }
+.teddy-svg .fx-fly { animation: fxfly 3s ease-in-out infinite; }
+@keyframes fxfly { 25% { transform: translate(4px, -10px) rotate(-6deg); } 50% { transform: translate(0, -2px); } 75% { transform: translate(-4px, -12px) rotate(6deg); } }
+@media (prefers-reduced-motion: reduce) { .teddy-svg [class*="fx-"] { animation: none !important; } }
+
+/* rarity on tiles */
+.w-item.r-rare { box-shadow: 0 5px 0 var(--shadow, rgba(0,0,0,.15)), inset 0 0 0 4px #339AF0; }
+.w-item.r-epic { box-shadow: 0 5px 0 var(--shadow, rgba(0,0,0,.15)), inset 0 0 0 4px #AE3EC9; }
+.w-item.r-legendary { box-shadow: 0 5px 0 var(--shadow, rgba(0,0,0,.15)), inset 0 0 0 4px #F59F00, 0 0 14px rgba(245,159,0,.5); }
+.w-item { position: relative; }
+.w-item .rar { position: absolute; top: 4px; left: 4px; font-size: .58rem; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #fff; border-radius: 999px; padding: 1px 6px; }
+.w-item.r-rare .rar { background: #339AF0; } .w-item.r-epic .rar { background: #AE3EC9; } .w-item.r-legendary .rar { background: linear-gradient(90deg, #F59F00, #FFD43B); color: #5C3B00; }
+.w-item.unfound .wi { filter: grayscale(1); opacity: .55; }
+.w-item.box-tile { background: linear-gradient(160deg, #FFF0F6, #E5DBFF); }
+.w-item.box-golden { background: linear-gradient(160deg, #FFF9DB, #FFE066); }
+.w-item.box-tile .wi { font-size: 46px; animation: boxwob 2.2s ease-in-out infinite; display: inline-block; }
+@keyframes boxwob { 0%, 70%, 100% { transform: none; } 78% { transform: rotate(-10deg); } 86% { transform: rotate(9deg); } 93% { transform: rotate(-4deg); } }
+.w-item .box-odds { display: block; font-size: .7rem; font-weight: 800; color: #862E9C; margin-top: 2px; }
+
+/* opening a box */
+.box-open { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: rgba(20, 16, 40, .88); padding: 16px; }
+.bo-inner { text-align: center; color: #fff; width: min(440px, 100%); }
+.bo-box { font-size: clamp(120px, 34vw, 180px); line-height: 1; cursor: pointer; display: inline-block; user-select: none; animation: boxwob 1.6s ease-in-out infinite; }
+.bo-box.shake1 { animation: boshake .35s ease-in-out; }
+.bo-box.shake2 { animation: boshake .3s ease-in-out 2; transform: scale(1.1); }
+.bo-box.shake3 { animation: boshake .2s ease-in-out 3; transform: scale(1.22); }
+@keyframes boshake { 25% { transform: rotate(-14deg) scale(1.12); } 75% { transform: rotate(14deg) scale(1.12); } }
+.bo-tip { font-family: var(--display, inherit); font-weight: 800; font-size: 1.6rem; margin: 10px 0 0; }
+.bo-prize { position: relative; animation: popout .5s cubic-bezier(.3,1.4,.5,1); }
+.bo-rays { position: absolute; left: 50%; top: 34%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%; z-index: -1; opacity: .5;
+  background: repeating-conic-gradient(var(--rc, #339AF0) 0 10deg, transparent 10deg 30deg); animation: fxspin 10s linear infinite;
+  -webkit-mask: radial-gradient(circle, #000 20%, transparent 70%); mask: radial-gradient(circle, #000 20%, transparent 70%); }
+.box-open.r-epic { --rc: #AE3EC9; } .box-open.r-legendary { --rc: #FFD43B; }
+.bo-teddy { width: min(260px, 64vw); margin: 0 auto; }
+.bo-teddy .teddy-svg { width: 100%; height: auto; display: block; }
+.bo-rar { display: inline-block; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; border-radius: 999px; padding: 4px 16px; background: var(--rc, #339AF0); color: #fff; margin-top: 6px; }
+.box-open.r-legendary .bo-rar { color: #5C3B00; box-shadow: 0 0 20px #FFD43B; }
+.bo-name { font-family: var(--display, inherit); font-weight: 800; font-size: clamp(1.6rem, 6vw, 2.2rem); margin: 8px 0 2px; }
+.bo-line { margin: 0 0 14px; font-weight: 700; opacity: .9; }
+.bo-btns { display: flex; gap: 12px; justify-content: center; }
+.bo-btns .block { min-height: 64px; padding: 0 26px; font-size: 1.2rem; }
