@@ -327,15 +327,33 @@
     set("pet." + id, d);
     if (URL_) pushPet(id, d);
   }
-  // Lessons a grown-up has locked for this kid (on the grown-ups page) so they move on to harder ones.
+  /* ---------- per-kid settings: focus topic, quiz length, strict quizzes ----------
+     Saved on the grown-ups page (teddy doc); otherwise the defaults in config.js kidDefaults. */
+  function kidSetting(key, id) {
+    id = id || playerId();
+    var d = petDoc(id);
+    if (d[key] !== undefined && d[key] !== null) return d[key];
+    var D = (cfg.kidDefaults || {})[id];
+    return D ? D[key] : undefined;
+  }
+  function focusTopics(id) { var f = kidSetting("focus", id); return Array.isArray(f) ? f.filter(Boolean) : []; }
+  function lessonCfg(lessonId) { var L = cfg.lessons || []; for (var i = 0; i < L.length; i++) if (L[i].id === lessonId) return L[i]; return null; }
+  // With a focus set, every lesson outside the focus topics is locked.
+  function outOfFocus(lessonId, id) {
+    var f = focusTopics(id); if (!f.length) return false;
+    var l = lessonCfg(lessonId); return !l || f.indexOf(l.topic) === -1;
+  }
+  function inFocus(lessonId, id) { return focusTopics(id).length > 0 && !outOfFocus(lessonId, id); }
+  function quizSettings(id) { return { len: Number(kidSetting("quizLen", id)) || 0, strict: !!kidSetting("strict", id) }; }
+  // Lessons a grown-up has locked for this kid (on the grown-ups page) so they move on to harder ones, or that sit outside their focus.
   function isBlocked(lessonId, id) {
     var d = petDoc(id || playerId());
-    return Array.isArray(d.blocked) && d.blocked.indexOf(lessonId) !== -1;
+    return (Array.isArray(d.blocked) && d.blocked.indexOf(lessonId) !== -1) || outOfFocus(lessonId, id);
   }
   // When the lesson opens again (ms timestamp), or 0 if it's open now.
   function lockedUntil(lessonId, id) {
     id = id || playerId();
-    if (isPractice(lessonId, id)) return 0;
+    if (isPractice(lessonId, id) || inFocus(lessonId, id)) return 0; // focus lessons never rest
     var d = petDoc(id), t = d.locks && Number(d.locks[lessonId]) || 0;
     return t > Date.now() ? t : 0;
   }
@@ -445,7 +463,7 @@
     player: player, playerId: playerId, setPlayer: setPlayer,
     stars: stars, addStars: addStars, record: record, leaderboard: leaderboard, flush: flush,
     connected: !!URL_, progress: progress, gender: gender,
-    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, addTokens: addTokens, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, lockLesson: lockLesson, lockedUntil: lockedUntil, isBlocked: isBlocked, addFightBonus: addFightBonus, addParts: addParts, addFuelBonus: addFuelBonus, fightDay: fightDay, weakLessons: weakLessons, pushPet: pushPet, visiblePlayers: visiblePlayers,
+    fetchState: fetchState, serverPet: serverPet, postBattle: postBattle, grapes: grapes, addGrapes: addGrapes, addTokens: addTokens, markDone: markDone, isDone: isDone, recordAnswer: recordAnswer, isPractice: isPractice, lockLesson: lockLesson, lockedUntil: lockedUntil, isBlocked: isBlocked, outOfFocus: outOfFocus, inFocus: inFocus, focusTopics: focusTopics, quizSettings: quizSettings, kidSetting: kidSetting, addFightBonus: addFightBonus, addParts: addParts, addFuelBonus: addFuelBonus, fightDay: fightDay, weakLessons: weakLessons, pushPet: pushPet, visiblePlayers: visiblePlayers,
     celebrate: celebrate, home: home, backButton: backButton
   };
 })();

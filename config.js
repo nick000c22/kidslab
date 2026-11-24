@@ -36,6 +36,12 @@ window.KIDSLAB_CONFIG = {
   // A finished Basics quiz locks that lesson for this many days, so kids move on to harder ones.
   // A grown-up's 🎯 practise flag (or "Clear tick") opens it again.
   basicsLockDays: 2,
+  // Per-kid quiz and focus settings. The grown-ups page can change these; what's saved there wins.
+  //   focus: topic ids to work on (every other lesson is locked). quizLen: questions in an end quiz.
+  //   strict: true = must get them all right in a row, a wrong answer starts the quiz again.
+  kidDefaults: {
+    jack: { focus: ["times"], quizLen: 10, strict: true }
+  },
   subjects: [
     { id: "maths",   title: "Maths",   emoji: "🔢", color: "grape", sections: ["Basics", "Concepts", "Special"] },
     { id: "science", title: "Science", emoji: "🔬", color: "leaf",  sections: ["Basics", "Concepts", "Special"] },
@@ -100,9 +106,20 @@ window.KIDSLAB_CONFIG = {
     { id: "sub2digit", subject: "maths", section: "Basics", topic: "takeaway", title: "Taking Away Big Numbers", emoji: "🧮", color: "berry", href: "lessons/basics.html?l=sub2digit", status: "ready" },
     { id: "subborrow", subject: "maths", section: "Basics", topic: "takeaway", title: "Taking Away with Swapping", emoji: "🔁", color: "grape", href: "lessons/basics.html?l=subborrow", status: "ready" },
     // ---- times ----
+    { id: "groups", subject: "maths", section: "Basics", topic: "times", title: "Groups Of", emoji: "🍎", color: "leaf", href: "lessons/basics.html?l=groups", status: "ready" },
+    { id: "skipcount", subject: "maths", section: "Basics", topic: "times", title: "Skip Counting", emoji: "🦘", color: "sky", href: "lessons/basics.html?l=skipcount", status: "ready" },
     { id: "times",    subject: "maths", section: "Basics", topic: "times", title: "Times Tables",     emoji: "✖️", color: "berry", href: "lessons/basics.html?l=times",    status: "ready" },
+    { id: "times2", subject: "maths", section: "Basics", topic: "times", title: "2 Times Table", emoji: "👟", color: "sun", href: "lessons/basics.html?l=times2", status: "ready" },
+    { id: "times10", subject: "maths", section: "Basics", topic: "times", title: "10 Times Table", emoji: "🔟", color: "grape", href: "lessons/basics.html?l=times10", status: "ready" },
+    { id: "times5", subject: "maths", section: "Basics", topic: "times", title: "5 Times Table", emoji: "🖐️", color: "berry", href: "lessons/basics.html?l=times5", status: "ready" },
+    { id: "timesdoubles", subject: "maths", section: "Basics", topic: "times", title: "Doubles", emoji: "👯", color: "tang", href: "lessons/basics.html?l=timesdoubles", status: "ready" },
+    { id: "arrays", subject: "maths", section: "Basics", topic: "times", title: "Arrays", emoji: "🧇", color: "leaf", href: "lessons/basics.html?l=arrays", status: "ready" },
+    { id: "turnaround", subject: "maths", section: "Basics", topic: "times", title: "Turnaround Facts", emoji: "🔄", color: "sky", href: "lessons/basics.html?l=turnaround", status: "ready" },
     { id: "times34", subject: "maths", section: "Basics", topic: "times", title: "3 and 4 Times Tables", emoji: "🍀", color: "leaf", href: "lessons/basics.html?l=times34", status: "ready" },
+    { id: "timesmissing", subject: "maths", section: "Basics", topic: "times", title: "Missing Numbers", emoji: "🕵️", color: "grape", href: "lessons/basics.html?l=timesmissing", status: "ready" },
+    { id: "timesstory", subject: "maths", section: "Basics", topic: "times", title: "Times Stories", emoji: "📖", color: "sun", href: "lessons/basics.html?l=timesstory", status: "ready" },
     { id: "times69", subject: "maths", section: "Basics", topic: "times", title: "6, 7, 8, 9 Times Tables", emoji: "🕷️", color: "grape", href: "lessons/basics.html?l=times69", status: "ready" },
+    { id: "timesspeed", subject: "maths", section: "Basics", topic: "times", title: "Speed Round", emoji: "⚡", color: "berry", href: "lessons/basics.html?l=timesspeed", status: "ready" },
     { id: "timesmix", subject: "maths", section: "Basics", topic: "times", title: "Times Tables Challenge", emoji: "🏆", color: "tang", href: "lessons/basics.html?l=timesmix", status: "ready" },
     // ---- divide ----
     { id: "share",    subject: "maths", section: "Basics", topic: "divide", title: "Sharing Fairly",   emoji: "➗", color: "tang",  href: "lessons/basics.html?l=share",    status: "ready" },

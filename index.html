@@ -163,6 +163,9 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
 .folders.topics .block { min-height: 170px; }
 .folders.topics .emoji { font-size: clamp(56px, 9vw, 80px); }
 .folders.topics .label { font-size: clamp(1.3rem, 2.8vw, 1.8rem); }
+.focus-tile { grid-column: 1 / -1; min-height: 150px; }
+.focus-tile .label { font-size: clamp(1.6rem, 4.5vw, 2.4rem); }
+.focus-tile .emoji { animation: newpulse 1.6s ease-in-out infinite; }
 .folder-note { font-family: var(--body); font-weight: 700; font-size: .9rem; text-shadow: none; opacity: .92; }
 .subject-head { display: flex; align-items: center; gap: 14px; margin: 0 0 8px; }
 .subject-title { font-family: var(--display); font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0; }
@@ -507,8 +510,30 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   try { subjectId = sessionStorage.getItem("kidslab.subject"); } catch (e) {}
   function currentSubject() { return subjects().filter(function (s) { return s.id === subjectId; })[0] || null; }
   function setSubject(id) { subjectId = id; folderId = null; try { sessionStorage.removeItem("kidslab.folder"); } catch (e) {} try { if (id) sessionStorage.setItem("kidslab.subject", id); else sessionStorage.removeItem("kidslab.subject"); } catch (e) {} renderHome(); window.scrollTo(0, 0); }
+  function allBlocked(list, pid) { return list.length > 0 && list.every(function (l) { return K.isBlocked && K.isBlocked(l.id, pid); }); }
+  // A grown-up's focus (e.g. times tables): one big mission tile that goes straight there.
+  function focusTile(p) {
+    var f = K.focusTopics ? K.focusTopics(p.id) : [];
+    if (!f.length) return null;
+    var T = (C.topics || []).filter(function (t) { return t.id === f[0]; })[0];
+    var first = lessonsFor(p.id).filter(function (l) { return l.topic === f[0] && l.status === "ready"; });
+    if (!T || !first.length) return null;
+    var done = first.filter(function (l) { return K.isDone && K.isDone(l.id, p.id); }).length;
+    var b = block({ emoji: "🎯", label: "My mission: " + T.title, color: "sun" });
+    b.classList.add("subject", "focus-tile");
+    var meta = document.createElement("span"); meta.className = "subject-meta"; meta.textContent = done + " of " + first.length + " done"; b.appendChild(meta);
+    b.addEventListener("click", function () {
+      K.say("Let's do " + T.title + "!");
+      var l0 = first[0];
+      subjectId = l0.subject || "maths"; folderId = l0.section || "Basics"; topicId = f[0];
+      try { sessionStorage.setItem("kidslab.subject", subjectId); sessionStorage.setItem("kidslab.folder", folderId); sessionStorage.setItem("kidslab.topic", topicId); } catch (e) {}
+      renderHome(); window.scrollTo(0, 0);
+    });
+    return b;
+  }
   function renderSubjects(p) {
     var wrap = $("subjects"); wrap.innerHTML = "";
+    var ft = focusTile(p); if (ft) wrap.appendChild(ft);
     subjects().forEach(function (sub, i) {
       var list = lessonsFor(p.id).filter(function (l) { return (l.subject || "maths") === sub.id && l.status === "ready"; });
       var done = list.filter(function (l) { return K.isDone && K.isDone(l.id, p.id); }).length;
@@ -518,7 +543,13 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       var meta = document.createElement("span"); meta.className = "subject-meta";
       meta.textContent = list.length ? done + " of " + list.length + " done" : "Coming soon";
       b.appendChild(meta);
-      b.addEventListener("click", function () { K.say(sub.title + "!"); setSubject(sub.id); });
+      // Every lesson locked (by a focus or a grown-up)? Show it locked. English stays open for the Garage.
+      var shut = allBlocked(list, p.id) && sub.id !== "english";
+      if (shut) { b.classList.add("locked"); var lk = document.createElement("span"); lk.className = "badge"; lk.textContent = "🔒 Locked"; b.appendChild(lk); }
+      b.addEventListener("click", function () {
+        if (shut) { b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake"); K.say(ft ? "That's locked for now. Do your mission first!" : "That's locked for now."); return; }
+        K.say(sub.title + "!"); setSubject(sub.id);
+      });
       wrap.appendChild(b);
     });
   }
@@ -570,12 +601,17 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         var done = inF.filter(function (l) { return K.isDone && K.isDone(l.id, p.id); }).length;
         var b = block({ emoji: F.emoji || "📁", label: sec, color: F.color || "grape" });
         b.classList.add("folder"); b.style.animationDelay = (i * 70) + "ms";
+        var fShut = allBlocked(inF, p.id);
+        if (fShut) { b.classList.add("locked"); var flk = document.createElement("span"); flk.className = "badge"; flk.textContent = "🔒 Locked"; b.appendChild(flk); }
         var meta = document.createElement("span"); meta.className = "subject-meta"; meta.textContent = done + " of " + inF.length + " done"; b.appendChild(meta);
         var noteTxt = (subj.notes && subj.notes[sec]) || F.note;
         if (noteTxt) { F = { note: noteTxt }; var nt = document.createElement("span"); nt.className = "folder-note"; nt.textContent = F.note; b.appendChild(nt); }
         var toPractise = inF.filter(function (l) { return K.isPractice && K.isPractice(l.id, p.id); }).length;
         if (toPractise) { b.classList.add("practise"); var pt = document.createElement("span"); pt.className = "practise-tag"; pt.style.top = "10px"; pt.style.bottom = "auto"; pt.textContent = "🎯 " + toPractise + " to practise"; b.appendChild(pt); }
-        b.addEventListener("click", function () { K.say(sec + "!"); setFolder(sec); });
+        b.addEventListener("click", function () {
+          if (fShut) { b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake"); K.say("That's locked for now."); return; }
+          K.say(sec + "!"); setFolder(sec);
+        });
         fg.appendChild(b);
       });
       // The Garage lives in English: it runs on English quizzes.

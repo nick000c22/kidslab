@@ -92,6 +92,9 @@ a.btn { text-decoration: none; display: inline-block; }
 .pr-btn.lock-on { background: #3B3F55; color: #fff; }
 .rep-table tr.blocked td { opacity: .5; }
 .rep-table tr.blocked td:nth-last-child(1), .rep-table tr.blocked td:nth-last-child(2) { opacity: 1; }
+.kid-set { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin: 10px 0 2px; padding: 12px 14px; border-radius: 14px; background: var(--head); font-weight: 700; }
+.kid-set select { margin-left: 6px; }
+.kid-set .ks-chk { display: inline-flex; gap: 8px; align-items: center; }
 .rep-table tr.topic-row td { background: var(--head); font-weight: 800; padding-top: 10px; }
 .rep-table tr.topic-row .btn { margin-left: 8px; }
 
@@ -201,6 +204,12 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
         <button class="btn small" id="block-done" type="button">🔒 Lock every lesson they've finished</button>
         <button class="btn small" id="block-none" type="button">Unlock all</button>
       </div>
+      <div class="kid-set" id="kid-set">
+        <label>🎯 Focus <select id="ks-focus"></select></label>
+        <label>📝 Quiz length <select id="ks-len"></select></label>
+        <label class="ks-chk"><input type="checkbox" id="ks-strict"> All right in a row, or start again</label>
+      </div>
+      <p class="hint">Focus locks every lesson outside that topic (Garage, teddy and gym stay open, and their top-up quizzes use the focus topic). Focus lessons never rest for 2 days.</p>
       <div class="report-head">
         <h2>Lesson report</h2>
         <span class="sub">Tap 🎯 to flag a lesson for practice. It glows on that kid's home screen. Tap 🔒 to lock a lesson so they move on to harder ones (it shows as locked on their iPad). Each topic has "Lock topic". Remember to Save.</span>
@@ -428,6 +437,24 @@ td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--grape);
     }
     $("block-done").onclick = function () { setBlocked(lessons.filter(function (l) { return pet.done.indexOf(l.id) !== -1; }).map(function (l) { return l.id; }), true); };
     $("block-none").onclick = function () { pet.blocked = []; changed(); };
+    // Per-kid quiz settings: what's saved here wins over config.js kidDefaults.
+    var KD = (window.KIDSLAB_CONFIG.kidDefaults || {})[r.p.id] || {};
+    function eff(k) { return pet[k] !== undefined && pet[k] !== null ? pet[k] : KD[k]; }
+    var fSel = $("ks-focus"), lSel = $("ks-len"), sChk = $("ks-strict");
+    fSel.innerHTML = ""; lSel.innerHTML = "";
+    var topicsWithLessons = (window.KIDSLAB_CONFIG.topics || []).filter(function (t) { return lessons.some(function (l) { return l.topic === t.id; }); });
+    [["", "No focus (everything open)"]].concat(topicsWithLessons.map(function (t) {
+      var sj = lessons.filter(function (l) { return l.topic === t.id; })[0].subject || "maths";
+      return [t.id, (sj === "maths" ? "Maths" : sj === "english" ? "English" : "Science") + " · " + t.title];
+    })).forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; fSel.appendChild(op); });
+    var fNow = eff("focus"); fSel.value = Array.isArray(fNow) && fNow.length ? fNow[0] : "";
+    [["0", "Lesson default (5)"], ["8", "8 questions"], ["10", "10 questions"], ["15", "15 questions"], ["20", "20 questions"]].forEach(function (o) {
+      var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; lSel.appendChild(op); });
+    lSel.value = String(Number(eff("quizLen")) || 0); if (!lSel.value) lSel.value = "0";
+    sChk.checked = !!eff("strict");
+    fSel.onchange = function () { pet.focus = fSel.value ? [fSel.value] : []; changed(); };
+    lSel.onchange = function () { pet.quizLen = Number(lSel.value) || 0; changed(); };
+    sChk.onchange = function () { pet.strict = sChk.checked; changed(); };
     var n = 0, lastTopic = null, lastGroup = null;
     lessons.forEach(function (l) {
       // A header row for each subject + topic, with lock/unlock for the whole group.

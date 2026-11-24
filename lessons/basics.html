@@ -617,6 +617,72 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
     },
     times34: { title: "3 and 4 Times Tables", emoji: "🍀", color: "leaf", intro: "Groups of 3 and groups of 4. Count in 3s and 4s!", gen: function (quiz) { return timesQ([3, 4], quiz ? 12 : 10, false); } },
     times69: { title: "6, 7, 8 and 9 Times Tables", emoji: "🕷️", color: "grape", intro: "The tricky tables! Use ones you already know to help.", gen: function (quiz) { return timesQ([6, 7, 8, 9], quiz ? 12 : 10, quiz); } },
+    /* ---- more multiplication: from groups to a typed speed round ---- */
+    groups: { title: "Groups Of", emoji: "🍎", color: "leaf", intro: "Times means groups of. 3 groups of 4 apples is 3 × 4!",
+      gen: function (quiz) {
+        var a = rnd(2, quiz ? 5 : 4), b = rnd(2, quiz ? 5 : 4), e = pickOne(["🍎", "🍓", "⭐", "🐟", "🍪", "🚗"]), ans = a * b, g = "";
+        for (var i = 0; i < a; i++) g += '<span style="display:inline-flex;flex-wrap:wrap;gap:2px;justify-content:center;width:' + Math.min(4, b) * 34 + 'px;padding:8px;margin:5px;border:4px dashed var(--grape);border-radius:18px;font-size:26px">' + new Array(b + 1).join(e) + "</span>";
+        return { prompt: a + " groups of " + b + ". How many altogether?", sum: a + " × " + b + " = ?", visual: '<div style="display:flex;flex-wrap:wrap;justify-content:center">' + g + "</div>",
+          answer: ans, choices: options(ans, 4, 1, 30, 1), explain: a + " groups of " + b + " is " + new Array(a + 1).join(b + " + ").slice(0, -3) + " = " + ans + ". So " + a + " × " + b + " = " + ans + "." };
+      } },
+    skipcount: { title: "Skip Counting", emoji: "🦘", color: "sky", intro: "Jump along in 2s, 5s and 10s. 5, 10, 15, 20...",
+      gen: function (quiz) {
+        var st = pickOne(quiz ? [2, 3, 4, 5, 10] : [2, 5, 10]), k = rnd(1, quiz ? 8 : 6), seq = [k * st, (k + 1) * st, (k + 2) * st, (k + 3) * st], gap = quiz ? rnd(1, 3) : 3, ans = seq[gap];
+        var vis = '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">' + seq.map(function (n, i) {
+          return '<span style="min-width:74px;height:74px;border-radius:18px;display:grid;place-items:center;font:800 2rem var(--display);background:' + (i === gap ? "var(--sun);color:#fff" : "var(--bg-2)") + '">' + (i === gap ? "?" : n) + "</span>"; }).join("") + "</div>";
+        return { prompt: "Count in " + st + "s. What's missing?", visual: vis, answer: ans, choices: options(ans, 4, st, 120, st),
+          explain: "Counting in " + st + "s: " + seq.join(", ") + ". Each jump adds " + st + "." };
+      } },
+    times2: { title: "2 Times Table", emoji: "👟", color: "sun", intro: "2, 4, 6, 8... Everything comes in pairs, like shoes!", gen: function (quiz) { return timesQ([2], quiz ? 12 : 10, quiz); } },
+    times10: { title: "10 Times Table", emoji: "🔟", color: "grape", intro: "10, 20, 30... Just add a zero!", gen: function (quiz) { return timesQ([10], quiz ? 12 : 10, quiz); } },
+    times5: { title: "5 Times Table", emoji: "🖐️", color: "berry", intro: "5, 10, 15, 20... like counting fingers on hands!", gen: function (quiz) { return timesQ([5], quiz ? 12 : 10, quiz); } },
+    timesdoubles: { title: "Doubles", emoji: "👯", color: "tang", intro: "Double means two lots of the same. Double 4 is 4 + 4 = 8!",
+      gen: function (quiz) {
+        var n = rnd(1, quiz ? 15 : 10), ans = n * 2;
+        return { prompt: "What is double " + n + "?", sum: n + " + " + n + " = ?", visual: n <= 10 ? '<div class="array" style="grid-template-columns:repeat(' + n + ', 28px)">' + grapes(ans) + '</div><div class="vlabel">2 rows of ' + n + "</div>" : '<div class="bignum">' + n + " + " + n + "</div>",
+          answer: ans, choices: options(ans, 4, 2, 40, 2), explain: "Double " + n + " is " + n + " + " + n + " = " + ans + ". That's 2 × " + n + "!" };
+      } },
+    arrays: { title: "Arrays", emoji: "🧇", color: "leaf", intro: "Rows and columns! 3 rows of 5 is 3 × 5.",
+      gen: function (quiz) {
+        var r = rnd(2, 5), c = rnd(2, 6); if (r === c) c = r + 1;
+        var right = r + " × " + c, wrong = [r + " + " + c, (r + 1) + " × " + c, r + " × " + (c + 1), (r - 1 || r + 2) + " × " + c].filter(function (x, i, a) { return x !== right && x !== c + " × " + r && a.indexOf(x) === i; }).slice(0, 3);
+        if (!quiz || Math.random() < .5) return { prompt: "Which one matches the dots?", visual: '<div class="array" style="grid-template-columns:repeat(' + c + ', 30px)">' + grapes(r * c) + '</div><div class="vlabel">' + r + " rows of " + c + "</div>",
+          answer: right, choices: shuffle([right].concat(wrong)), explain: r + " rows of " + c + " is " + right + " = " + r * c + "." };
+        var ans = r * c;
+        return { prompt: "How many dots? " + r + " rows of " + c, sum: r + " × " + c + " = ?", visual: '<div class="array" style="grid-template-columns:repeat(' + c + ', 30px)">' + grapes(ans) + "</div>",
+          answer: ans, choices: options(ans, 4, 1, 40, 1), explain: r + " rows of " + c + ": " + r + " × " + c + " = " + ans + "." };
+      } },
+    turnaround: { title: "Turnaround Facts", emoji: "🔄", color: "sky", intro: "3 × 4 and 4 × 3 give the same answer. Turn it around!",
+      gen: function (quiz) {
+        var a = pickOne(quiz ? [2, 3, 4, 5, 10] : [2, 5, 10]), b = rnd(2, 9); if (a === b) b++;
+        if (Math.random() < .5) return { prompt: a + " × " + b + " = " + a * b + ". So what is " + b + " × " + a + "?", sum: b + " × " + a + " = ?", visual: '<div class="bignum">' + a + " × " + b + " = " + a * b + "</div>",
+          answer: a * b, choices: options(a * b, 4, 1, 100, Math.min(a, b)), explain: "Turn it around and the answer stays the same: " + b + " × " + a + " = " + a * b + "." };
+        var right = b + " × " + a, wrong = [a + " + " + b, a + " × " + a, b + " × " + b].filter(function (x) { return x !== right; });
+        return { prompt: "Which one is the same as " + a + " × " + b + "?", visual: '<div class="bignum">' + a + " × " + b + "</div>", answer: right, choices: shuffle([right].concat(wrong)),
+          explain: a + " × " + b + " and " + b + " × " + a + " are both " + a * b + "." };
+      } },
+    timesmissing: { title: "Missing Numbers", emoji: "🕵️", color: "grape", intro: "Be a detective! What number is hiding? ? × 5 = 20",
+      gen: function (quiz) {
+        var t = pickOne(quiz ? [2, 3, 4, 5, 10] : [2, 5, 10]), m = rnd(1, 10), ans = t * m, first = Math.random() < .5;
+        var s = first ? "? × " + t + " = " + ans : t + " × ? = " + ans;
+        return { prompt: "What's the missing number?", sum: s, visual: '<div class="bignum">' + s + "</div>", answer: m, choices: options(m, 4, 1, 12, 1),
+          explain: (first ? m + " × " + t : t + " × " + m) + " = " + ans + ", so the missing number is " + m + "." };
+      } },
+    timesstory: { title: "Times Stories", emoji: "📖", color: "sun", intro: "Real life times tables! Cars have 4 wheels. How many wheels on 3 cars?",
+      gen: function (quiz) {
+        var S = pickOne([["cars", 4, "wheels", "🚗"], ["dogs", 4, "legs", "🐶"], ["hands", 5, "fingers", "🖐️"], ["bikes", 2, "wheels", "🚲"], ["ducks", 2, "legs", "🦆"],
+          ["packs", 10, "pencils", "✏️"], ["boxes", 3, "cakes", "🧁"], ["plates", 5, "strawberries", "🍓"], ["trees", 3, "birds", "🐦"], ["bags", 10, "lollies", "🍬"]]);
+        var a = rnd(2, quiz ? 9 : 5), ans = a * S[1];
+        return { prompt: "There are " + a + " " + S[0] + ". Each one has " + S[1] + " " + S[2] + ". How many " + S[2] + " altogether?", sum: a + " × " + S[1] + " = ?",
+          visual: '<div style="font-size:38px;line-height:1.3;max-width:420px;text-align:center">' + new Array(a + 1).join(S[3]) + "</div>", answer: ans, choices: options(ans, 4, 1, 100, S[1]),
+          explain: a + " " + S[0] + " with " + S[1] + " " + S[2] + " each: " + a + " × " + S[1] + " = " + ans + "." };
+      } },
+    timesspeed: { title: "Speed Round", emoji: "⚡", color: "berry", intro: "No choices to tap! Type the answer on the number pad. 2s, 3s, 4s, 5s and 10s.",
+      gen: function (quiz) {
+        var a = pickOne([2, 3, 4, 5, 10]), b = rnd(1, 10); if (Math.random() < .5) { var t = a; a = b; b = t; }
+        return { prompt: "What is " + a + " × " + b + "?", visual: '<div class="bignum">' + a + " × " + b + "</div>", answer: a * b, input: true, speak: "What is " + a + " times " + b + "?",
+          hint: "Count in " + Math.max(a, b) + "s.", explain: a + " × " + b + " = " + a * b + "." };
+      } },
     timesmix: { title: "Times Tables Challenge", emoji: "🏆", color: "tang", intro: "All the tables up to 12 × 12, and missing numbers too!", gen: function (quiz) { return timesQ([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 12, true); } },
     divfacts: {
       title: "Dividing by 2, 5 and 10", emoji: "🍰", color: "sky", intro: "Dividing is the opposite of times. 20 ÷ 5: how many 5s make 20?",
@@ -986,14 +1052,18 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   var BASICS = CFG.section === "Basics";
   var ENGLISH = CFG.subject === "english";   // English quizzes give 🔧 car parts for the garage instead of grapes and tokens
   var QUIZ_N = L.quizN || 5;
+  // Grown-ups can make quizzes longer, and strict: a wrong answer sends you back to the start.
+  var QS = K.quizSettings ? K.quizSettings() : { len: 0, strict: false };
+  if (QS.len && !STRENGTH) QUIZ_N = Math.max(QUIZ_N, QS.len);
+  var STRICT = !!QS.strict;
   document.title = L.title;
   $("m-emoji").textContent = L.emoji; $("m-title").textContent = L.title; $("m-intro").textContent = L.intro;
-  $("quiz-sub").textContent = "Get " + QUIZ_N + " right: " + (ENGLISH ? "🔧 5 car parts" + (SPIN ? " + a spin!" : " for your garage!") : "🍇 5 grapes" + (SPIN ? " + a spin!" : " for your teddy!"));
+  $("quiz-sub").textContent = "Get " + QUIZ_N + (STRICT ? " in a row" : "") + " right: " + (ENGLISH ? "🔧 5 car parts" + (SPIN ? " + a spin!" : " for your garage!") : "🍇 5 grapes" + (SPIN ? " + a spin!" : " for your teddy!"));
   if (STRENGTH) {
     $("go-practice").hidden = true;
     $("go-quiz").querySelector(".m-emoji").textContent = "💪⚡";
     $("go-quiz").querySelector("span:nth-child(2)").textContent = "Start!";
-    $("quiz-sub").textContent = FUEL ? "Get 5 right: ⛽ +1 race" : "Get 5 right: ⚡ +1 battle energy";
+    $("quiz-sub").textContent = (STRICT ? "Get 5 in a row right: " : "Get 5 right: ") + (FUEL ? "⛽ +1 race" : "⚡ +1 battle energy");
     if (FUEL) $("go-quiz").querySelector(".m-emoji").textContent = "⛽🏎️";
   }
   if (L.parts) {
@@ -1033,6 +1103,12 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
         .concat(Object.keys(allowed).filter(function (k) { return playable(k) && allowed[k].section === "Basics" && allowed[k].subject === "english"; }))
         .slice(0, 4).forEach(function (k) { pool.push({ id: k, w: 1 }); });
     }
+    if (!pool.length) { // nothing open in this subject (e.g. a focus on times tables): use any lesson they can play
+      (window.KIDSLAB_CONFIG.lessons || []).forEach(function (c) {
+        var X = LESSONS[c.id];
+        if (c.status === "ready" && (!c.players || c.players.indexOf(me.id) !== -1) && X && (X.gen || X.parts) && !K.isBlocked(c.id)) pool.push({ id: c.id, w: 1 });
+      });
+    }
     var last = null;
     function pickLesson() {
       var opts = pool.length > 1 ? pool.filter(function (p) { return p.id !== last; }) : pool;
@@ -1058,7 +1134,7 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
   function lockCheck() {
     if (!STRENGTH && K.isBlocked && K.isBlocked(LESSON_ID)) {
       var t0 = $("m-done"); t0.hidden = false; t0.classList.add("lock-tag");
-      t0.textContent = "🔒 A grown-up has locked this one. Try a harder lesson!";
+      t0.textContent = K.outOfFocus && K.outOfFocus(LESSON_ID) ? "🎯 This one's locked for now. Focus on your times tables!" : "🔒 A grown-up has locked this one. Try a harder lesson!";
       ["go-practice", "go-quiz"].forEach(function (k) { $(k).disabled = true; $(k).classList.add("off"); });
       $("parts").querySelectorAll("button").forEach(function (b) { b.disabled = true; b.classList.add("off"); });
       return true;
@@ -1228,6 +1304,14 @@ button:focus-visible { outline: 4px solid var(--sun); outline-offset: 4px; }
       K.recordAnswer(LESSON_ID, false, mistake(v));
       locked = true; if (!Q.input) btn.classList.add("wrong");
       $("choices").querySelectorAll(".block").forEach(function (b) { if (b.textContent === String(Q.answer)) b.classList.add("right"); });
+      if (STRICT) {
+        // Strict quiz: no guessing your way through. Back to the start.
+        var had = right; right = 0; renderDots();
+        say("Oops! The answer is " + (Q.answerText || Q.answer) + ". " + Q.explain + (had ? " Back to the start! You need " + QUIZ_N + " in a row." : " You need " + QUIZ_N + " in a row."), "bad");
+        K.say("Oops! The answer is " + (Q.answerText || Q.answer) + "." + (had ? " Back to the start!" : ""));
+        setAction("Start again ▶", "leaf", next);
+        return;
+      }
       say("Oops! The answer is " + (Q.answerText || Q.answer) + ". " + Q.explain, "bad");
       setAction("Try another one ▶", "leaf", next);
     }
